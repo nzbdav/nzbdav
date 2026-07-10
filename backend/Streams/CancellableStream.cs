@@ -57,7 +57,16 @@ public class CancellableStream(Stream innerStream, CancellationToken token) : Fa
     public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
         CheckDisposed();
-        return _innerStream.ReadAsync(buffer, cancellationToken);
+        token.ThrowIfCancellationRequested();
+        return !cancellationToken.CanBeCanceled || cancellationToken == token
+            ? _innerStream.ReadAsync(buffer, token)
+            : ReadWithLinkedTokenAsync(buffer, cancellationToken);
+    }
+
+    private async ValueTask<int> ReadWithLinkedTokenAsync(Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token, cancellationToken);
+        return await _innerStream.ReadAsync(buffer, linkedCts.Token).ConfigureAwait(false);
     }
 
     public override void SetLength(long value)

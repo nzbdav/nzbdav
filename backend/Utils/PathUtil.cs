@@ -6,7 +6,7 @@ public class PathUtil
     {
         var directoryName = Path.GetDirectoryName(path);
         return !string.IsNullOrEmpty(directoryName)
-            ? GetAllParentDirectories(directoryName).Prepend(directoryName)
+            ? GetAllParentDirectories(directoryName).Append(directoryName)
             : [];
     }
 

@@ -92,7 +92,8 @@ public class BaseNntpClient : NntpClient
         CancellationToken cancellationToken
     )
     {
-        var bodyResponse = await _client.BodyAsync(segmentId, onConnectionReadyAgain, cancellationToken);
+        var bodyResponse = await _client.DecodedBodyAsync(
+            segmentId, onConnectionReadyAgain, cancellationToken);
 
         if (bodyResponse.ResponseType != UsenetResponseType.ArticleRetrievedBodyFollows)
             throw new UsenetArticleNotFoundException(segmentId);
@@ -102,7 +103,7 @@ public class BaseNntpClient : NntpClient
             SegmentId = bodyResponse.SegmentId,
             ResponseCode = bodyResponse.ResponseCode,
             ResponseMessage = bodyResponse.ResponseMessage,
-            Stream = new YencStream(bodyResponse.Stream!),
+            Stream = bodyResponse.Stream!,
         };
     }
 

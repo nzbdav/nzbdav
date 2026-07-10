@@ -33,7 +33,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@react-router/dev": "^7.18.1",
+    "@react-router/dev": "^8.1.0",
     "@tailwindcss/vite": "^4.3.2",
     "@types/compression": "^1.7.5",
     "@types/express": "^5.0.6",

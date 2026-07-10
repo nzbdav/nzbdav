@@ -56,6 +56,8 @@ public class WebsocketManager
         lock (_lastMessage) _lastMessage[topic] = message;
         List<WebSocket>? authenticatedSockets;
         lock (_authenticatedSockets) authenticatedSockets = _authenticatedSockets.ToList();
+        if (authenticatedSockets.Count == 0) return Task.CompletedTask;
+
         var topicMessage = new TopicMessage(topic, message);
         var bytes = new ArraySegment<byte>(Encoding.UTF8.GetBytes(topicMessage.ToJson()));
         return Task.WhenAll(authenticatedSockets.Select(x => SendMessage(x, bytes)));

@@ -36,6 +36,12 @@ public class ProbingStream(Stream stream) : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
+        if (count == 0)
+        {
+            ValidateBufferArguments(buffer, offset, count);
+            return 0;
+        }
+
         if (!_isEmpty.HasValue)
         {
             var read = stream.Read(buffer, offset, count);
@@ -56,6 +62,12 @@ public class ProbingStream(Stream stream) : Stream
 
     public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
     {
+        if (count == 0)
+        {
+            ValidateBufferArguments(buffer, offset, count);
+            return 0;
+        }
+
         if (!_isEmpty.HasValue)
         {
             var read = await stream.ReadAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);

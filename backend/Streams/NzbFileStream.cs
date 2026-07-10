@@ -47,9 +47,25 @@ public class NzbFileStream(
 
     public override long Seek(long offset, SeekOrigin origin)
     {
-        var absoluteOffset = origin == SeekOrigin.Begin ? offset
-            : origin == SeekOrigin.Current ? _position + offset
-            : throw new InvalidOperationException("SeekOrigin must be Begin or Current.");
+        long absoluteOffset;
+        try
+        {
+            absoluteOffset = origin switch
+            {
+                SeekOrigin.Begin => offset,
+                SeekOrigin.Current => checked(_position + offset),
+                SeekOrigin.End => checked(fileSize + offset),
+                _ => throw new ArgumentOutOfRangeException(nameof(origin), origin, "Invalid seek origin.")
+            };
+        }
+        catch (OverflowException)
+        {
+            throw new ArgumentOutOfRangeException(nameof(offset), offset, "Seek position is outside stream bounds.");
+        }
+
+        if (absoluteOffset < 0 || absoluteOffset > fileSize)
+            throw new ArgumentOutOfRangeException(nameof(offset), offset, "Seek position is outside stream bounds.");
+
         if (_position == absoluteOffset) return _position;
         _position = absoluteOffset;
         _innerStream?.Dispose();
@@ -114,9 +130,13 @@ public class NzbFileStream(
 
     protected override void Dispose(bool disposing)
     {
-        if (_disposed) return;
-        _innerStream?.Dispose();
-        _disposed = true;
+        if (!_disposed)
+        {
+            if (disposing) _innerStream?.Dispose();
+            _disposed = true;
+        }
+
+        base.Dispose(disposing);
     }
 
     public override async ValueTask DisposeAsync()

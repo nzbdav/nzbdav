@@ -17,7 +17,7 @@ public class MultipartFileStream(MultipartFile multipartFile, INntpClient usenet
     public override long Position
     {
         get => _position;
-        set => throw new NotSupportedException();
+        set => Seek(value, SeekOrigin.Begin);
     }
 
     public override int Read(byte[] buffer, int offset, int count)

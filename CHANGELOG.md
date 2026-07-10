@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.6.9](https://github.com/nzbdav/nzbdav/compare/v0.6.8...v0.6.9) (2026-07-10)
+
+
+### Features
+
+* modernize console logging ([ad3f3ba](https://github.com/nzbdav/nzbdav/commit/ad3f3baebc2fab5b945429256323c5e8be90ad7e))
+* **ui:** add tailwind design foundation ([2a4f4f4](https://github.com/nzbdav/nzbdav/commit/2a4f4f44a5c15e84a50eddb61b9a9cea4e977b80))
+* **ui:** restyle application shell ([d91d211](https://github.com/nzbdav/nzbdav/commit/d91d211d4373dd2c98c94b712010f4cf40a32fd1))
+* **ui:** restyle authentication screens ([7ad644b](https://github.com/nzbdav/nzbdav/commit/7ad644b43d3339d150a9b22a9de25ab40db6339f))
+* **ui:** restyle explore and health views ([bb7a07c](https://github.com/nzbdav/nzbdav/commit/bb7a07c0c33f2c49661bbc437ddee7dc5f5cd3ef))
+* **ui:** restyle queue interface ([b924989](https://github.com/nzbdav/nzbdav/commit/b92498957606d8849098a1d66eb0cbf741c6b806))
+* **ui:** restyle settings interface ([cdac26e](https://github.com/nzbdav/nzbdav/commit/cdac26e332690573742bd7f5cc3e73dafc327a9f))
+
+
+### Bug Fixes
+
+* **ci:** publish only v-prefixed release tags ([55329a6](https://github.com/nzbdav/nzbdav/commit/55329a6c76cb3a09c2dc4268fdc48571bfd6fcfc))
+* **deps:** Bump @types/node from 25.9.5 to 26.1.0 in /frontend ([#24](https://github.com/nzbdav/nzbdav/issues/24)) ([e9d7620](https://github.com/nzbdav/nzbdav/commit/e9d7620e0fbca372fd56aaab1db469a206b9dd69))
+* **deps:** Bump http-proxy-middleware from 3.0.7 to 4.1.1 in /frontend ([#26](https://github.com/nzbdav/nzbdav/issues/26)) ([849bbf4](https://github.com/nzbdav/nzbdav/commit/849bbf4247327812d1540596bcdf6dfdc268c073))
+* **deps:** bump SharpCompress from 0.39.0 to 0.49.1 ([f0a1788](https://github.com/nzbdav/nzbdav/commit/f0a1788a946ff1599c160de522c2cb58fed893e3))
+* **deps:** Bump typescript from 5.9.3 to 6.0.3 in /frontend ([#20](https://github.com/nzbdav/nzbdav/issues/20)) ([2584aa9](https://github.com/nzbdav/nzbdav/commit/2584aa961f0595bedd8d668715620fe4057ccc9e))
+* **ui:** handle unavailable WebDAV directories ([ae29142](https://github.com/nzbdav/nzbdav/commit/ae2914211fda737cae065af4f1e378844f0f6f43))
+
 ## [0.6.8](https://github.com/nzbdav/nzbdav/compare/v0.6.7...v0.6.8) (2026-07-10)
 
 

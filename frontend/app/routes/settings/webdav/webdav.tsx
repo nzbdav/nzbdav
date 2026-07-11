@@ -148,7 +148,9 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
                     <span>Pipelined article downloads</span>
                 </label>
                 <p className="text-xs leading-relaxed text-slate-400" id="pipelined-body-requests-help">
-                    Fetch articles in small NNTP batches for smoother streaming. Disable this to use the legacy one-at-a-time API while retaining the configured article buffer.
+                    Fetch articles in small NNTP batches for smoother WebDAV streaming. Queue imports use the
+                    separate <strong>Enable NNTP pipelining</strong> toggle under Usenet settings. Disable this
+                    to use the legacy one-at-a-time API while retaining the configured article buffer.
                 </p>
             </div>
             <hr />

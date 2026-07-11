@@ -230,20 +230,24 @@ public abstract class NntpClient : INntpClient
         [EnumeratorCancellation] CancellationToken cancellationToken
     )
     {
-        foreach (var segmentId in segmentIds)
-        {
-            PipelinedBodyResult result;
-            try
-            {
-                var response = await DecodedBodyAsync(segmentId, cancellationToken).ConfigureAwait(false);
-                result = new PipelinedBodyResult { SegmentId = segmentId, Found = true, Stream = response.Stream };
-            }
-            catch (UsenetArticleNotFoundException)
-            {
-                result = new PipelinedBodyResult { SegmentId = segmentId, Found = false, Stream = null };
-            }
+        if (segmentIds.Count == 0) yield break;
 
-            yield return result;
+        depth = Math.Max(1, depth);
+        for (var batchStart = 0; batchStart < segmentIds.Count; batchStart += depth)
+        {
+            var batchSize = Math.Min(depth, segmentIds.Count - batchStart);
+            var batchIds = new SegmentId[batchSize];
+            for (var index = 0; index < batchSize; index++)
+                batchIds[index] = segmentIds[batchStart + index];
+
+            var batch = await DecodedBodiesAsync(
+                batchIds, onConnectionReadyAgain: null, cancellationToken).ConfigureAwait(false);
+            for (var index = 0; index < batch.Responses.Count; index++)
+            {
+                var segmentId = segmentIds[batchStart + index];
+                yield return await MapPipelinedBodyResultAsync(
+                    batch.Responses[index], segmentId, cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 
@@ -254,26 +258,59 @@ public abstract class NntpClient : INntpClient
         [EnumeratorCancellation] CancellationToken cancellationToken
     )
     {
-        foreach (var segmentId in segmentIds)
+        await foreach (var body in DecodedBodiesPipelinedAsync(segmentIds, depth, cancellationToken)
+                           .WithCancellation(cancellationToken).ConfigureAwait(false))
         {
-            PipelinedArticleResult result;
-            try
+            yield return new PipelinedArticleResult
             {
-                var response = await DecodedArticleAsync(segmentId, cancellationToken).ConfigureAwait(false);
-                result = new PipelinedArticleResult
+                SegmentId = body.SegmentId,
+                Found = body.Found,
+                Stream = body.Stream,
+                ArticleHeaders = null,
+            };
+        }
+    }
+
+    private static async Task<PipelinedBodyResult> MapPipelinedBodyResultAsync
+    (
+        Task<UsenetDecodedBodyResponse> responseTask,
+        string segmentId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var response = await responseTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (response.ResponseType == UsenetResponseType.NoArticleWithThatMessageId)
+            {
+                return new PipelinedBodyResult
                 {
                     SegmentId = segmentId,
-                    Found = true,
-                    Stream = response.Stream,
-                    ArticleHeaders = response.ArticleHeaders,
+                    Found = false,
+                    Stream = null,
                 };
             }
-            catch (UsenetArticleNotFoundException)
+
+            if (response.ResponseType != UsenetResponseType.ArticleRetrievedBodyFollows)
             {
-                result = new PipelinedArticleResult { SegmentId = segmentId, Found = false };
+                throw new UsenetUnexpectedResponseException(segmentId, response.ResponseMessage);
             }
 
-            yield return result;
+            return new PipelinedBodyResult
+            {
+                SegmentId = segmentId,
+                Found = true,
+                Stream = response.Stream,
+            };
+        }
+        catch (UsenetArticleNotFoundException)
+        {
+            return new PipelinedBodyResult
+            {
+                SegmentId = segmentId,
+                Found = false,
+                Stream = null,
+            };
         }
     }
 

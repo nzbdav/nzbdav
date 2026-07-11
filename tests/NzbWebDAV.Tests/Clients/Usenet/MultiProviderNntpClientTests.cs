@@ -120,7 +120,7 @@ public class MultiProviderNntpClientTests
         var writer = new MetricsWriter();
         var connection = new ScriptedNntpClient
         {
-            BatchResponseCode = 222,
+            BatchResponseCode = responseCode,
             SingularResponseCode = responseCode,
         };
         using var client = new MultiProviderNntpClient(
@@ -132,6 +132,8 @@ public class MultiProviderNntpClientTests
                 await result.Stream.DisposeAsync();
 
         Assert.Equal(1, writer.Stats.QueuedFetches);
+        Assert.Equal(1, connection.BatchRequests);
+        Assert.Equal(0, connection.SingularRequests);
     }
 
     private static MultiConnectionNntpClient CreateProvider(INntpClient connection)

@@ -1,88 +1,62 @@
 # NNTP Pipelining
 
-Pipelining sends multiple NNTP commands per connection without waiting for each
-response, then reads the responses in order. It removes the per-article
-round-trip stall that otherwise dominates small-request workloads (queue
-imports) and per-segment streaming, especially on high-latency providers.
+NzbDav uses **UsenetSharp 2.x** batch BODY requests to pipeline multiple NNTP
+commands on one connection without waiting for each response. Responses are read
+strictly in order with bounded backpressure.
 
-It is **off by default** and gated behind a settings switch.
+There are **two separate toggles**:
 
-## What it speeds up
+| Setting | Location | Default | What it controls |
+|---------|----------|---------|------------------|
+| `usenet.pipelining.enabled` | Settings → Usenet | off | Queue first-segment fetch and provider benchmark batch downloads |
+| `usenet.pipelined-body-requests` | Settings → WebDAV | on | WebDAV streaming read-ahead via `DecodedBodiesAsync` batches |
 
-| Path | Before | With pipelining |
-|------|--------|-----------------|
-| Queue first-segment fetch (0→50%) | one `ARTICLE` per file, each a full round-trip | first segments pipelined on one connection, back-to-back |
-| Health check (100→200%) | one `STAT` per article | `STAT`s pipelined, falling back to per-segment failover on a miss |
-| Streaming playback | up to `article-buffer-size` connections, one segment each | one connection streaming consecutive segments with no round-trip gaps |
+## What the Usenet toggle speeds up
 
-## Enabling it
+| Path | Without pipelining | With pipelining |
+|------|-------------------|-----------------|
+| Queue first-segment fetch (0→50%) | one `BODY` per file, concurrent across connections | first segments fetched in depth-sized batches on one connection |
+| Provider benchmark | one `BODY` per article | depth-sized `DecodedBodiesAsync` batches |
+| Health check (100→200%) | concurrent `STAT` across the pool | unchanged — always concurrent `STAT` |
 
-Settings → Usenet → **NNTP Pipelining (Experimental)**:
+## Enabling queue pipelining
+
+Settings → Usenet → **NNTP Pipelining**:
 
 - **Enable NNTP pipelining** — toggles `usenet.pipelining.enabled`.
-- **Pipeline depth** — `usenet.pipelining.depth`, the number of requests kept in
-  flight per connection (1–64, default 8). Higher helps more on high-latency
-  links; 8 is a good default.
+- **Pipeline depth** — `usenet.pipelining.depth`, requests per batch (1–64,
+  default 8). Each provider can override this in its own settings.
 
-(Config keys can also be set directly via the SAB-compatible config API.)
+For WebDAV playback, use Settings → WebDAV → **Pipelined article downloads**
+(`usenet.pipelined-body-requests`).
 
 ## How it's built
 
-The pipelining engine lives in **UsenetSharp** (`UsenetClient.PipelinedAsync.cs`):
-a windowed FIFO pipeline (`StatPipelinedAsync` / `BodyPipelinedAsync` /
-`ArticlePipelinedAsync`) that writes up to *depth* commands ahead and reads
-responses strictly in order. The existing single-command methods are unchanged.
+UsenetSharp exposes batch pipelining through `DecodedBodiesAsync`. nzbdav routes
+`*PipelinedAsync` body paths through that API in batches of the configured
+depth. The client chain is:
 
-nzbdav consumes it through the existing client chain. Each layer is handled:
-- `BaseNntpClient` — real pipelining + yEnc decode
-- `MultiConnectionNntpClient` — leases one connection per batch; **destroys it if
-  the batch is abandoned early** so a half-read socket never returns to the pool
-- `DownloadingNntpClient` — priority permit · `MultiProviderNntpClient` — provider
-  selection + byte counting · `WrappingNntpClient` — delegation
-- The abstract base provides a **non-pipelined fallback** for every batch method,
-  so any path that isn't pipelined still works correctly.
+- `BaseNntpClient` — delegates batch calls to UsenetSharp
+- `MultiConnectionNntpClient` — leases one connection per batch
+- `MultiProviderNntpClient` — provider selection and byte counting
+- `DownloadingNntpClient` / `WrappingNntpClient` — permits and delegation
 
-## Build / release workflow
-
-The pipelining engine is a change to the **UsenetSharp** library
-(`github.com/nzbdav-dev/UsenetSharp`). `NzbWebDAV.csproj` references it
-conditionally:
-
-- **Local dev** — if a sibling checkout exists at `../../UsenetSharp` (overridable
-  via the `UsenetSharpProject` MSBuild property), it's used as a `ProjectReference`
-  so you can build both together.
-- **Docker / CI** — when no sibling exists, it falls back to
-  `PackageReference UsenetSharp 1.0.7`.
-
-So to release:
-1. Merge the UsenetSharp pipelining branch and **publish UsenetSharp 1.0.7** to
-   NuGet.
-2. The conditional reference then resolves to the package automatically — the
-   Dockerfile needs no changes.
+`StatsPipelinedAsync` remains a sequential fallback because UsenetSharp 2.x does
+not ship a pipelined `STAT` API. Health checks always use concurrent `STAT`
+across the connection pool.
 
 ## Testing
 
-UsenetSharp ships integration tests that run against a real provider. Fill in
-`UsenetSharpTest/Credentials.cs` and valid segment ids, then run the
-`UsenetClientPipelinedAsyncTests` suite — it verifies in-order delivery,
-byte-for-byte equality with sequential fetches, mixed found/missing handling, and
-that the connection stays reusable after a batch.
+Validate with the Usenet toggle **on** against your providers before relying on
+it for queue imports. The provider benchmark can recommend a depth and whether
+pipelining helps at your connection count.
 
-Because pipelining touches the core I/O path, validate with the switch **on**
-against your providers before relying on it.
+## Limitations
 
-## v1 characteristics / limitations
-
-- **Streaming uses one connection per stream** (pipelined, gap-free). This frees
-  the connection pool dramatically versus the previous one-connection-per-segment
-  read-ahead and is sufficient for typical bitrates. Striping a single stream
-  across multiple connections is possible future work for very high bitrates.
-- **Cross-provider failover for misses is reduced on the pipelined path.** A batch
-  runs on the selected provider; per-segment failover to a backup provider mid-batch
-  is not performed. Misses degrade gracefully per consumer:
+- **Cross-provider failover mid-batch is limited.** A batch runs on the selected
+  provider; per-segment failover to a backup provider mid-batch is not performed.
+  Misses degrade gracefully per consumer:
   - queue first-segment → marked `MissingFirstSegment` (name still recoverable via par2)
-  - streaming → zero-filled to keep playback alive
-  - health check → falls back to the full per-segment failover check
-  If you depend heavily on multi-provider redundancy, prefer leaving pipelining off
-  until per-segment failover is added to the pipelined path.
-- The segment/article cache is bypassed on the pipelined path in v1.
+  - streaming → handled by the WebDAV batch path and provider failover logic
+  - health check → concurrent per-segment failover across providers
+- The segment cache bypasses pipelined queue paths when caching is enabled.

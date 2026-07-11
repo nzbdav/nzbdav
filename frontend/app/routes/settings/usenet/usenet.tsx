@@ -570,7 +570,7 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
 
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
-                    <div>NNTP Pipelining (Experimental)</div>
+                    <div>NNTP Pipelining</div>
                 </div>
                 <div className={styles["form-group"]} style={{ marginTop: 12 }}>
                     <div className={styles["form-checkbox-wrapper"]}>
@@ -589,8 +589,9 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                         </label>
                     </div>
                     <div className={styles["form-hint"]}>
-                        Sends multiple article requests per connection without waiting for each response.
-                        Speeds up queue imports and streaming, especially on high-latency providers.
+                        Batch BODY requests on a single connection during queue imports and benchmarks.
+                        WebDAV streaming uses the separate <strong>Pipelined article downloads</strong> toggle
+                        under WebDAV settings.
                     </div>
                 </div>
                 <div className={styles["form-group"]} style={{ marginTop: 12 }}>

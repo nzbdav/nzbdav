@@ -32,16 +32,21 @@ public class MultiProviderNntpClientTests
     }
 
     [Fact]
-    public async Task BatchResponse_WithCleanNotFound_ThrowsArticleNotFoundWithoutRetry()
+    public async Task BatchResponse_WithCleanNotFound_RetriesOnSameProvider()
     {
-        var connection = new ScriptedNntpClient { BatchResponseCode = 430 };
+        var connection = new ScriptedNntpClient
+        {
+            BatchResponseCode = 430,
+            SingularResponseCode = 222,
+        };
         using var client = new MultiProviderNntpClient([CreateProvider(connection)]);
 
         var batch = await client.DecodedBodiesAsync(
             ["segment"], onConnectionReadyAgain: null, CancellationToken.None);
+        var response = await batch.Responses[0];
 
-        await Assert.ThrowsAsync<UsenetArticleNotFoundException>(() => batch.Responses[0]);
-        Assert.Equal(0, connection.SingularRequests);
+        Assert.Equal(UsenetResponseType.ArticleRetrievedBodyFollows, response.ResponseType);
+        Assert.Equal(1, connection.SingularRequests);
     }
 
     [Fact]

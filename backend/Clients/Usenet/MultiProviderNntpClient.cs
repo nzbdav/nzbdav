@@ -160,11 +160,12 @@ public class MultiProviderNntpClient(List<MultiConnectionNntpClient> providers) 
                 return response;
             }
 
-            // Only a clean 430 proves the primary provider is missing the article.
+            // Retry the primary provider once before falling back. Even a clean 430 can
+            // be transient when a provider routes requests across different spool nodes.
             // Anything else (a faulted response task, or a stale connection's buffered
-            // goodbye line such as "400 idle timeout") is a connection-level failure:
-            // retry on the primary provider with another connection before falling back.
-            var retryProviders = fallbackProviders;
+            // goodbye line such as "400 idle timeout") remains a connection-level failure.
+            IReadOnlyList<MultiConnectionNntpClient> retryProviders =
+                [primaryProvider, .. fallbackProviders];
             if (response?.ResponseType != UsenetResponseType.NoArticleWithThatMessageId)
             {
                 if (response != null)
@@ -172,8 +173,6 @@ public class MultiProviderNntpClient(List<MultiConnectionNntpClient> providers) 
                     lastException = ExceptionDispatchInfo.Capture(
                         new UsenetUnexpectedResponseException(segmentId, response.ResponseMessage));
                 }
-
-                retryProviders = [primaryProvider, .. fallbackProviders];
             }
 
             await previousFallbackCompletion.WaitAsync(cancellationToken)

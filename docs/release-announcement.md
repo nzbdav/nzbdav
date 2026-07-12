@@ -1,4 +1,7 @@
-# NzbDav stack release announcement (0.7.x / .NET 10)
+> **Historical document (frozen as of 0.7.2).**  
+> This announcement captures the coordinated 0.7.2 stack release. Version numbers below are **not** kept current — see [GitHub Releases](https://github.com/nzbdav/nzbdav/releases) for the latest. Do not bump the tables in this file.
+
+# NzbDav stack release announcement (historical, 0.7.2)
 
 This document summarizes the coordinated releases across the [nzbdav](https://github.com/nzbdav) organization: a fork of [nzbdav-dev/nzbdav](https://github.com/nzbdav-dev/nzbdav) with ownership of the full Usenet streaming dependency tree.
 

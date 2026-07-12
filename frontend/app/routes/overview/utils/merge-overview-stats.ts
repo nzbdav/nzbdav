@@ -1,4 +1,10 @@
-import type { OverviewStatsResponse } from "~/clients/backend-client.server";
+import type {
+    LiveStatsMessage,
+    OverviewStatsResponse,
+    OverviewWindow,
+} from "~/clients/backend-client.server";
+
+export type { LiveStatsMessage, OverviewStatsResponse, OverviewWindow };
 
 export const EMPTY_OVERVIEW_STATS: OverviewStatsResponse = {
     window: "24h",

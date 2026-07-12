@@ -1,6 +1,5 @@
 import type { Route } from "./+types/route";
 import styles from "./route.module.css";
-import { type LiveStatsMessage, type OverviewStatsResponse, type OverviewWindow } from "~/clients/backend-client.server";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { receiveMessage } from "~/utils/websocket-util";
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from "@dnd-kit/core";
@@ -21,7 +20,13 @@ import { RecordsBlock } from "./components/records-block/records-block";
 import { FailoverSaves } from "./components/failover-saves/failover-saves";
 import { SortableRow } from "./components/sortable-row/sortable-row";
 import { useRowOrder } from "./utils/use-row-order";
-import { EMPTY_OVERVIEW_STATS, mergeOverviewStats } from "./utils/merge-overview-stats";
+import {
+    EMPTY_OVERVIEW_STATS,
+    mergeOverviewStats,
+    type LiveStatsMessage,
+    type OverviewStatsResponse,
+    type OverviewWindow,
+} from "./utils/merge-overview-stats";
 
 const topicNames = {
     liveStats: 'ls',

@@ -36,7 +36,7 @@ namespace NzbWebDAV.Database.Migrations
                 WHERE NzbContents IS NOT NULL
             ");
 
-            
+
             migrationBuilder.DropColumn(
                 name: "NzbContents",
                 table: "QueueItems");
@@ -51,7 +51,7 @@ namespace NzbWebDAV.Database.Migrations
                 type: "TEXT",
                 nullable: false,
                 defaultValue: "");
-            
+
             // Populate the re-introduced column from QueueNzbContents
             migrationBuilder.Sql(@"
                 UPDATE QueueItems
@@ -62,7 +62,7 @@ namespace NzbWebDAV.Database.Migrations
                 )
                 WHERE Id IN (SELECT Id FROM QueueNzbContents);
             ");
-            
+
             migrationBuilder.DropTable(
                 name: "QueueNzbContents");
         }

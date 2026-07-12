@@ -388,7 +388,7 @@ public class MultiConnectionNntpClient(
                 deferredCallback.Discard();
                 LogException(() => connectionLock?.Dispose());
             }
-            
+
             // body and article
             else if ((result?.Success ?? false) == false)
             {

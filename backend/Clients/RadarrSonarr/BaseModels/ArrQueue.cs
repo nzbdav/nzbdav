@@ -2,7 +2,7 @@
 
 namespace NzbWebDAV.Clients.RadarrSonarr.BaseModels;
 
-public class ArrQueue<T> where T: ArrQueueRecord
+public class ArrQueue<T> where T : ArrQueueRecord
 {
     [JsonPropertyName("page")]
     public int Page { get; set; }

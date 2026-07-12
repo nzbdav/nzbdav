@@ -40,8 +40,8 @@ const forwardToBackend = createProxyMiddleware({
 const setApiKeyForAuthenticatedRequests = async (req: express.Request) => {
   // if the path is not /api, do nothing
   if (!req.path.startsWith("/api")) return;
-  var apikey = req.query.apikey || req.query.apiKey || req.headers["x-api-key"];
-  var hasApiKey = apikey && typeof apikey === "string";
+  const apikey = req.query.apikey || req.query.apiKey || req.headers["x-api-key"];
+  const hasApiKey = apikey && typeof apikey === "string";
 
   // if the request already has an apikey, do nothing
   if (hasApiKey) return;

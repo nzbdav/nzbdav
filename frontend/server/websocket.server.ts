@@ -23,14 +23,14 @@ function initializeWebsocketServer(wss: WebSocketServer) {
             // handle topic subscription
             ws.onmessage = (event: WebSocket.MessageEvent) => {
                 try {
-                    var topics = JSON.parse(event.data.toString());
+                    const topics = JSON.parse(event.data.toString());
                     websockets.set(ws, topics);
                     for (const topic in topics) {
-                        var topicSubscriptions = subscriptions.get(topic);
+                        const topicSubscriptions = subscriptions.get(topic);
                         if (topicSubscriptions) topicSubscriptions.add(ws);
                         else subscriptions.set(topic, new Set<WebSocket>([ws]));
                         if (topics[topic] === 'state') {
-                            var messageToSend = lastMessage.get(topic);
+                            const messageToSend = lastMessage.get(topic);
                             if (messageToSend) ws.send(messageToSend);
                         }
                     }
@@ -41,11 +41,11 @@ function initializeWebsocketServer(wss: WebSocketServer) {
 
             // unsubscribe from topics
             ws.onclose = () => {
-                var topics = websockets.get(ws);
+                const topics = websockets.get(ws);
                 if (topics) {
                     websockets.delete(ws);
                     for (const topic in topics) {
-                        var topicSubscriptions = subscriptions.get(topic);
+                        const topicSubscriptions = subscriptions.get(topic);
                         if (topicSubscriptions) topicSubscriptions.delete(ws);
                     }
                 }

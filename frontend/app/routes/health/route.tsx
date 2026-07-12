@@ -45,7 +45,7 @@ export default function Health({ loaderData }: Route.ComponentProps) {
     useEffect(() => {
         if (queueItems.length >= 15) return;
         const refetchData = async () => {
-            var response = await fetch('/api/get-health-check-queue?pageSize=30');
+            const response = await fetch('/api/get-health-check-queue?pageSize=30');
             if (response.ok) {
                 const healthCheckQueue = await response.json();
                 setQueueItems(healthCheckQueue.items);
@@ -95,7 +95,7 @@ export default function Health({ loaderData }: Route.ComponentProps) {
         const [davItemId, progress] = message.split('|');
         if (progress === "done") return;
         setQueueItems(queueItems => {
-            var index = queueItems.findIndex(x => x.id === davItemId);
+            const index = queueItems.findIndex(x => x.id === davItemId);
             if (index === -1) return queueItems;
             return queueItems
                 .filter((_, i) => i >= index)

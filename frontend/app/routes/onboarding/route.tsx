@@ -22,7 +22,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function Index({ loaderData, actionData }: Route.ComponentProps) {
-    var pageData = actionData || loaderData;
+    const pageData = actionData || loaderData;
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,8 +30,8 @@ export default function Index({ loaderData, actionData }: Route.ComponentProps) 
     const navigation = useNavigation();
     const isLoading = navigation.state == "submitting";
 
-    var submitButtonDisabled = false;
-    var submitButtonText = "Register";
+    let submitButtonDisabled = false;
+    let submitButtonText = "Register";
     if (isLoading) {
         submitButtonDisabled = true;
         submitButtonText = "Registering...";
@@ -142,9 +142,9 @@ export async function action({ request }: Route.ActionArgs) {
         const username = formData.get("username")?.toString();
         const password = formData.get("password")?.toString();
         if (!username || !password) throw new Error("username and password required");
-        var isSuccess = await backendClient.createAccount(username, password);
+        const isSuccess = await backendClient.createAccount(username, password);
         if (!isSuccess) throw new Error("Unknown error creating account");
-        var responseInit = await setSessionUser(request, username);
+        const responseInit = await setSessionUser(request, username);
         return redirect("/", responseInit);
     }
     catch (error) {

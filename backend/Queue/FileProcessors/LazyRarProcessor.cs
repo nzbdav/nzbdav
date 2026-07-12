@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using NzbWebDAV.Clients.Usenet;
-using NzbWebDAV.Config;
 using NzbWebDAV.Database.Models;
 using NzbWebDAV.Extensions;
 using NzbWebDAV.Models;
@@ -19,7 +18,6 @@ namespace NzbWebDAV.Queue.FileProcessors;
 public class LazyRarProcessor(
     List<GetFileInfosStep.FileInfo> fileInfos,
     INntpClient usenetClient,
-    ConfigManager configManager,
     string? password,
     CancellationToken ct
 ) : BaseProcessor

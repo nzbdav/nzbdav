@@ -3,7 +3,7 @@ using NzbWebDAV.Clients.RadarrSonarr.BaseModels;
 
 namespace NzbWebDAV.Clients.RadarrSonarr.SonarrModels;
 
-public class SonarrQueueRecord: ArrQueueRecord
+public class SonarrQueueRecord : ArrQueueRecord
 {
     [JsonPropertyName("seriesId")]
     public int SeriesId { get; set; }

@@ -173,7 +173,7 @@ export function ArrsSettings({ config, setNewConfig }: ArrsSettingsProps) {
 
     const updateQueueAction = useCallback((searchTerm: string, action: number) => {
         // update the queue rule if it already exists
-        var newQueueRules = (arrConfig.QueueRules || [])
+        const newQueueRules = (arrConfig.QueueRules || [])
             .filter((queueRule: QueueRule) => queueStatusMessages.map(x => x.searchTerm).includes(queueRule.Message))
             .map((queueRule: QueueRule) => queueRule.Message == searchTerm
                 ? { Message: searchTerm, Action: action }

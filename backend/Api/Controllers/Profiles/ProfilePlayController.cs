@@ -33,7 +33,6 @@ public class ProfilePlayController(
     QueueManager queueManager,
     WebsocketManager websocketManager,
     QueueItemSourceTracker sourceTracker,
-    LazyRarResolver lazyRarResolver,
     NzbFetchCoalescer nzbFetchCoalescer,
     PreflightCache preflightCache,
     PreflightSessionRegistry preflightSessions,

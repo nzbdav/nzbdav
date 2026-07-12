@@ -42,8 +42,8 @@ export function QueueTable({
     onUploadClicked,
 }: QueueTableProps) {
     const [isConfirmingRemoval, setIsConfirmingRemoval] = useState(false);
-    var selectedCount = queueSlots.filter(x => !!x.isSelected).length;
-    var headerCheckboxState: TriCheckboxState = selectedCount === 0 ? 'none' : selectedCount === queueSlots.length ? 'all' : 'some';
+    const selectedCount = queueSlots.filter(x => !!x.isSelected).length;
+    const headerCheckboxState: TriCheckboxState = selectedCount === 0 ? 'none' : selectedCount === queueSlots.length ? 'all' : 'some';
 
     // row events
     const onRowIsSelectedChanged = useCallback((id: string, isSelected: boolean) => {

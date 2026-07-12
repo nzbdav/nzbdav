@@ -35,7 +35,7 @@ public class GetAndHeadHandlerPatch : IRequestHandler
         _providerUsageTracker = providerUsageTracker;
         _activeReadRegistry = activeReadRegistry;
     }
-    
+
     /// <summary>
     /// Handle a GET or HEAD request.
     /// </summary>

@@ -52,7 +52,7 @@ async function processUploadQueue(
             }
         });
 
-        var response: any = await new Promise<void>((resolve, reject) => {
+        const response: any = await new Promise<void>((resolve, reject) => {
             xhr.addEventListener('load', () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
                     resolve(xhr.response);

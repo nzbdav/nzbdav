@@ -256,8 +256,14 @@ public class GetOverviewStatsController(
                 .Where(p => p.Minute >= windowStart)
                 .Select(p => new
                 {
-                    p.Minute, p.Provider, p.Articles, p.BytesFetched, p.Errors, p.Retries,
-                    p.FailoverSaves, p.SumDurationMs
+                    p.Minute,
+                    p.Provider,
+                    p.Articles,
+                    p.BytesFetched,
+                    p.Errors,
+                    p.Retries,
+                    p.FailoverSaves,
+                    p.SumDurationMs
                 })
                 .ToListAsync();
             var throughputMinutesTask = metricsB.ThroughputMinutes
@@ -429,13 +435,13 @@ public class GetOverviewStatsController(
 
     private static (long WindowMs, long BucketSize, string Label) ResolveWindow(
         GetOverviewStatsRequest.OverviewWindow window, long nowMs) => window switch
-    {
-        GetOverviewStatsRequest.OverviewWindow.Last24Hours => (OneDay, OneMinute, "24h"),
-        GetOverviewStatsRequest.OverviewWindow.Last7Days => (7 * OneDay, OneHour, "7d"),
-        GetOverviewStatsRequest.OverviewWindow.Last30Days => (30 * OneDay, OneHour, "30d"),
-        GetOverviewStatsRequest.OverviewWindow.AllTime => (nowMs, OneDay, "all"),
-        _ => (OneDay, OneMinute, "24h"),
-    };
+        {
+            GetOverviewStatsRequest.OverviewWindow.Last24Hours => (OneDay, OneMinute, "24h"),
+            GetOverviewStatsRequest.OverviewWindow.Last7Days => (7 * OneDay, OneHour, "7d"),
+            GetOverviewStatsRequest.OverviewWindow.Last30Days => (30 * OneDay, OneHour, "30d"),
+            GetOverviewStatsRequest.OverviewWindow.AllTime => (nowMs, OneDay, "all"),
+            _ => (OneDay, OneMinute, "24h"),
+        };
 
     private static long ResolveFailoverBucket(GetOverviewStatsRequest.OverviewWindow window) => window switch
     {

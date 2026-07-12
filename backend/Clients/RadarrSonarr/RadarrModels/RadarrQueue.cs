@@ -2,7 +2,7 @@
 
 namespace NzbWebDAV.Clients.RadarrSonarr.RadarrModels;
 
-public class RadarrQueue: ArrQueue<RadarrQueueRecord>
+public class RadarrQueue : ArrQueue<RadarrQueueRecord>
 {
     public ArrQueue<ArrQueueRecord> ToGeneric()
     {

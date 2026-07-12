@@ -11,7 +11,7 @@ namespace NzbWebDAV.Database.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("DROP TRIGGER IF EXISTS TR_HistoryItems_Delete_AddHistoryCleanup;");
-            
+
             migrationBuilder.AddColumn<bool>(
                 name: "DeleteMountedFiles",
                 table: "HistoryCleanupItems",
@@ -26,7 +26,7 @@ namespace NzbWebDAV.Database.Migrations
             migrationBuilder.DropColumn(
                 name: "DeleteMountedFiles",
                 table: "HistoryCleanupItems");
-            
+
             migrationBuilder.Sql(
                 """
                 CREATE TRIGGER TR_HistoryItems_Delete_AddHistoryCleanup

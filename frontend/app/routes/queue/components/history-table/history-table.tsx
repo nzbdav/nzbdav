@@ -25,8 +25,8 @@ export type HistoryTableProps = {
 
 export function HistoryTable({ historySlots, totalHistoryCount, pageNumber, totalPages, isLive, onPageSelected, onIsSelectedChanged, onIsRemovingChanged, onRemoved }: HistoryTableProps) {
     const [isConfirmingRemoval, setIsConfirmingRemoval] = useState(false);
-    var selectedCount = historySlots.filter(x => !!x.isSelected).length;
-    var headerCheckboxState: TriCheckboxState = selectedCount === 0 ? 'none' : selectedCount === historySlots.length ? 'all' : 'some';
+    const selectedCount = historySlots.filter(x => !!x.isSelected).length;
+    const headerCheckboxState: TriCheckboxState = selectedCount === 0 ? 'none' : selectedCount === historySlots.length ? 'all' : 'some';
 
     const onSelectAll = useCallback((isSelected: boolean) => {
         onIsSelectedChanged(new Set<string>(historySlots.map(x => x.nzo_id)), isSelected);
@@ -41,7 +41,7 @@ export function HistoryTable({ historySlots, totalHistoryCount, pageNumber, tota
     }, [setIsConfirmingRemoval]);
 
     const onConfirmRemoval = useCallback(async (deleteCompletedFiles?: boolean) => {
-        var nzo_ids = new Set<string>(historySlots.filter(x => !!x.isSelected).map(x => x.nzo_id));
+        const nzo_ids = new Set<string>(historySlots.filter(x => !!x.isSelected).map(x => x.nzo_id));
         setIsConfirmingRemoval(false);
         onIsRemovingChanged(nzo_ids, true);
         try {
@@ -64,7 +64,7 @@ export function HistoryTable({ historySlots, totalHistoryCount, pageNumber, tota
         onIsRemovingChanged(nzo_ids, false);
     }, [historySlots, setIsConfirmingRemoval, onIsRemovingChanged, onRemoved]);
 
-    var sectionTitle = (
+    const sectionTitle = (
         <div className="flex items-center gap-2.5">
             <h2 className="text-xl font-semibold text-white">History</h2>
             {headerCheckboxState !== 'none' &&
@@ -185,12 +185,12 @@ export function Actions({ slot, onRemove }: { slot: PresentationHistorySlot, onR
     const folderLink = getExploreContentLink(slot.storage, slot.category);
 
     // determine nzb download URL
-    var nzbDownloadUrl = slot.nzb_blob_id
+    const nzbDownloadUrl = slot.nzb_blob_id
         ? `/api/download-nzb?nzbBlobId=${slot.nzb_blob_id}`
         : null;
 
     // determine whether explore action should be disabled
-    var isFolderDisabled = !folderLink || !!slot.isRemoving || !!slot.fail_message;
+    const isFolderDisabled = !folderLink || !!slot.isRemoving || !!slot.fail_message;
 
     const onMenuClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();

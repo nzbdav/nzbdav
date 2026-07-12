@@ -269,7 +269,7 @@ function useEnsureArticleExistanceSetting(
     }, [manualCategoryValue]);
 
     const categories = useMemo(() => {
-        var list = !!(categoriesValue?.trim())
+        const list = !!(categoriesValue?.trim())
             ? categoriesValue.split(",").map(c => c.trim()).filter(c => c.length > 0)
             : ["audio", "software", "tv", "movies"];
         return [manualCategory, ...list];
@@ -339,7 +339,7 @@ export function generateNewApiKey(): string {
 
 function isValidCategories(categories: string): boolean {
     if (categories === "") return true;
-    var parts = categories.split(",");
+    const parts = categories.split(",");
     return parts.map(x => x.trim()).every(x => isAlphaNumericWithDashes(x));
 }
 

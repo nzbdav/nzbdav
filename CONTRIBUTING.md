@@ -126,9 +126,11 @@ docker compose up
 
 ## Contributing
 
-You might check types before creating a PR:
+Before creating a PR:
 
 ```bash
 cd frontend
+npm run lint
 npm run typecheck
+npm test
 ```

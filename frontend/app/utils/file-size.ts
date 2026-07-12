@@ -1,5 +1,5 @@
 export function formatFileSize(bytes: number | null | undefined) {
-    var suffix = "B";
+    let suffix = "B";
     if (bytes === null || bytes === undefined) return "unknown size"
     if (bytes >= 1024) { bytes /= 1024; suffix = "KB"; }
     if (bytes >= 1024) { bytes /= 1024; suffix = "MB"; }

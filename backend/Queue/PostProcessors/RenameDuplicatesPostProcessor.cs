@@ -26,7 +26,7 @@ public class RenameDuplicatesPostProcessor(DavDatabaseClient dbClient)
         var canonicalExtension = Path.GetExtension(duplicates[0].Name);
         for (var i = 1; i < duplicates.Count; i++)
         {
-            var newName = $"{canonicalName} ({i+1}){canonicalExtension}";
+            var newName = $"{canonicalName} ({i + 1}){canonicalExtension}";
             var parentPath = Path.GetDirectoryName(duplicates[i].Path);
             duplicates[i].Name = newName;
             duplicates[i].Path = Path.Join(parentPath, newName);

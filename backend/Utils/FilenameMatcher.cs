@@ -16,8 +16,16 @@ public static class FilenameMatcher
 
     private static readonly Dictionary<char, string> LatinFolding = new()
     {
-        ['ø'] = "o", ['œ'] = "oe", ['æ'] = "ae", ['ł'] = "l", ['đ'] = "d",
-        ['ð'] = "d", ['þ'] = "th", ['ß'] = "ss", ['ı'] = "i", ['ŋ'] = "n",
+        ['ø'] = "o",
+        ['œ'] = "oe",
+        ['æ'] = "ae",
+        ['ł'] = "l",
+        ['đ'] = "d",
+        ['ð'] = "d",
+        ['þ'] = "th",
+        ['ß'] = "ss",
+        ['ı'] = "i",
+        ['ŋ'] = "n",
     };
 
     private static string Fold(string s)

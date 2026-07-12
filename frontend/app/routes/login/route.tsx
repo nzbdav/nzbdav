@@ -85,7 +85,7 @@ export default function Index({ loaderData, actionData }: Route.ComponentProps) 
 
 export async function action({ request }: Route.ActionArgs) {
     try {
-        var responseInit = await login(request);
+        const responseInit = await login(request);
         return redirect("/", responseInit);
     }
     catch (error) {

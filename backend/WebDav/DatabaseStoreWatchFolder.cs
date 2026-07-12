@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using NWebDav.Server.Stores;
-using NzbWebDAV.Clients.Usenet;
 using NzbWebDAV.Config;
 using NzbWebDAV.Database;
 using NzbWebDAV.Database.Models;
@@ -14,10 +12,8 @@ namespace NzbWebDAV.WebDav;
 
 public class DatabaseStoreWatchFolder(
     DavItem davDirectory,
-    HttpContext httpContext,
     DavDatabaseClient dbClient,
     ConfigManager configManager,
-    UsenetStreamingClient usenetClient,
     QueueManager queueManager,
     WebsocketManager websocketManager
 ) : BaseStoreReadonlyCollection

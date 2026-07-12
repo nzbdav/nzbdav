@@ -5,7 +5,7 @@ namespace NzbWebDAV.Tasks;
 public abstract class BaseTask
 {
     protected abstract Task ExecuteInternal();
-    
+
     private static readonly SemaphoreSlim Semaphore = new(1, 1);
     private static Task? _runningTask;
 

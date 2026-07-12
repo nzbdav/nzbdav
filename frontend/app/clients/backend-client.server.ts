@@ -101,8 +101,8 @@ class BackendClient {
     }
 
     public async addNzb(nzbFile: File): Promise<string> {
-        var config = await this.getConfig(["api.manual-category"]);
-        var category = config.find(item => item.configName === "api.manual-category")?.configValue || "uncategorized";
+        const config = await this.getConfig(["api.manual-category"]);
+        const category = config.find(item => item.configName === "api.manual-category")?.configValue || "uncategorized";
         const url = process.env.BACKEND_URL + `/api?mode=addfile&cat=${category}&priority=0&pp=0`;
 
         const apiKey = process.env.FRONTEND_BACKEND_API_KEY || "";

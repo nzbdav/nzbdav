@@ -14,7 +14,7 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
         arrConfig.RadarrInstances.length > 0 ||
         arrConfig.SonarrInstances.length > 0;
     const canEnableRepairs = !!libraryDirConfig && areArrInstancesConfigured;
-    var helpText = canEnableRepairs
+    const helpText = canEnableRepairs
         ? "When enabled, usenet items will be continuously monitored for health. Unhealthy items will be removed. If an unhealthy item is part of your Radarr/Sonarr library, a new search will be triggered to find a replacement."
         : "When enabled, usenet items will be continuously monitored for health. Unhealthy items will be removed and replaced. This setting can only be enabled once your Library-Directory and Radarr/Sonarr instances are configured.";
 

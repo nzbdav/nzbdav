@@ -125,7 +125,7 @@ const defaultConfig = {
 
 export async function loader({ request }: Route.LoaderArgs) {
     // fetch the config items
-    var configItems = await backendClient.getConfig(Object.keys(defaultConfig));
+    const configItems = await backendClient.getConfig(Object.keys(defaultConfig));
 
     // transform to a map
     const config: Record<string, string> = defaultConfig;

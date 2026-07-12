@@ -243,7 +243,7 @@ public class QueueItemProcessor(
         var rarFiles = fileInfos.Where(x => GetGroupName(x) == "rar").ToList();
         if (configManager.IsLazyRarParsingEnabled() && rarFiles.Count > 0)
         {
-            var lazyProc = new LazyRarProcessor(rarFiles, usenetClient, configManager, archivePassword, ct);
+            var lazyProc = new LazyRarProcessor(rarFiles, usenetClient, archivePassword, ct);
             lazyRarResult = await lazyProc.ProcessAsync().ConfigureAwait(false) as LazyRarProcessor.Result;
         }
         var msRar = stepTimer.ElapsedMilliseconds;
@@ -363,12 +363,12 @@ public class QueueItemProcessor(
     private async Task<DavItem?> GetMountFolder()
     {
         var query = from mountFolder in dbClient.Ctx.Items
-            join categoryFolder in dbClient.Ctx.Items on mountFolder.ParentId equals categoryFolder.Id
-            where mountFolder.Name == queueItem.JobName
-                  && mountFolder.ParentId != null
-                  && categoryFolder.Name == queueItem.Category
-                  && categoryFolder.ParentId == DavItem.ContentFolder.Id
-            select mountFolder;
+                    join categoryFolder in dbClient.Ctx.Items on mountFolder.ParentId equals categoryFolder.Id
+                    where mountFolder.Name == queueItem.JobName
+                          && mountFolder.ParentId != null
+                          && categoryFolder.Name == queueItem.Category
+                          && categoryFolder.ParentId == DavItem.ContentFolder.Id
+                    select mountFolder;
 
         return await query.FirstOrDefaultAsync(ct).ConfigureAwait(false);
     }

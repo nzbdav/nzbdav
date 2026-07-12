@@ -79,6 +79,8 @@ export FRONTEND_BACKEND_API_KEY=$(head -c 32 /dev/urandom | hexdump -ve '1/1 "%.
 export BACKEND_URL=http://localhost:5000
 ```
 
+Preferred: `./scripts/run-backend.sh` (Terminal 1) + `cd frontend && npm run dev` (Terminal 2; `predev` runs `scripts/sync-dev-env.sh`). Manual alternative:
+
 ```bash
 # Terminal 1 — backend
 cd backend && dotnet publish -c Release -o ./publish

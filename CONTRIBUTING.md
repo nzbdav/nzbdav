@@ -28,6 +28,20 @@ Example installation for Arch based systems:
 sudo pacman -S dotnet-sdk aspnet-runtime nodejs npm
 ```
 
+## Preferred local workflow
+
+Use the helper scripts so the frontend and backend share env automatically:
+
+```bash
+# Terminal 1 — backend (builds, migrates, writes frontend/.env)
+./scripts/run-backend.sh
+
+# Terminal 2 — frontend (`predev` runs scripts/sync-dev-env.sh)
+cd frontend && npm install && npm run dev
+```
+
+`npm run dev` silently runs `scripts/sync-dev-env.sh` via the `predev` hook; if the API key drifts, restart the backend with `scripts/run-backend.sh`. The manual `dotnet publish` / env-var flow below remains supported.
+
 ## Build / run backend
 
 The `NzbDav.UsenetSharp` dependency is published on NuGet.org and restores without

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.7](https://github.com/nzbdav/nzbdav/compare/v0.7.6...v0.7.7) (2026-07-12)
+
+
+### Bug Fixes
+
+* **queue:** heal lazy RAR volume size underestimates ([#211](https://github.com/nzbdav/nzbdav/issues/211)) ([eaa4cf6](https://github.com/nzbdav/nzbdav/commit/eaa4cf66c5260bcc22545ddf5a701bff389471d1)), closes [#168](https://github.com/nzbdav/nzbdav/issues/168)
+
 ## [0.7.6](https://github.com/nzbdav/nzbdav/compare/v0.7.5...v0.7.6) (2026-07-12)
 
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.8](https://github.com/nzbdav/nzbdav/compare/v0.7.7...v0.7.8) (2026-07-12)
+
+
+### Features
+
+* **ui:** restyle sidebar version display as bordered status card ([e043b84](https://github.com/nzbdav/nzbdav/commit/e043b8433391e428df23dcced76717a569e97c62))
+* **ui:** sort providers in Usenet settings by type and priority ([#249](https://github.com/nzbdav/nzbdav/issues/249)) ([cf2ccb1](https://github.com/nzbdav/nzbdav/commit/cf2ccb1624ac96b5ace7f3c9fa3d16168dc395e0)), closes [#246](https://github.com/nzbdav/nzbdav/issues/246)
+* **usenet:** skip same StorageGroup providers after article 430 ([#250](https://github.com/nzbdav/nzbdav/issues/250)) ([cc1113f](https://github.com/nzbdav/nzbdav/commit/cc1113f77db50f765656226c2b12129fc83674a8)), closes [#244](https://github.com/nzbdav/nzbdav/issues/244)
+
 ## [0.7.7](https://github.com/nzbdav/nzbdav/compare/v0.7.6...v0.7.7) (2026-07-12)
 
 

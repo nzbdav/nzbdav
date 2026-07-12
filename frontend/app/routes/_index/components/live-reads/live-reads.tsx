@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import styles from "./live-reads.module.css";
 import { receiveMessage } from "~/utils/websocket-util";
-import { useNavigate } from "react-router";
 
 const activeReadsTopic = { ar: 'state' };
 
@@ -37,7 +36,6 @@ function shortName(name: string): string {
 }
 
 export function LiveReads() {
-    const navigate = useNavigate();
     const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
 
     useEffect(() => {
@@ -56,7 +54,7 @@ export function LiveReads() {
         }
         function onClose(e: CloseEvent) {
             if (e.code === 1008) {
-                navigate('/login');
+                globalThis.location.assign("/login");
                 return;
             }
             !disposed && setTimeout(() => connect(), 1000);

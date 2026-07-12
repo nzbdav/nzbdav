@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { receiveMessage } from "~/utils/websocket-util";
-import { useNavigate } from "react-router";
 import { Icon } from "~/components/ui";
 
 const usenetConnectionsTopic = {'cxs': 'state'};
@@ -10,7 +9,6 @@ type LiveUsenetConnectionsProps = {
 };
 
 export function LiveUsenetConnections({ hasUsenetProviders }: LiveUsenetConnectionsProps) {
-    const navigate = useNavigate();
     const [connections, setConnections] = useState<string | null>(null);
     const parts = (connections || "0|0|0|0|1|0").split("|");
     const [_0, _1, _2, live, max, idle] = parts.map(x => Number(x));
@@ -35,12 +33,15 @@ export function LiveUsenetConnections({ hasUsenetProviders }: LiveUsenetConnecti
             return () => { disposed = true; ws.close(); }
         }
         function onClose(e: CloseEvent) {
-            if (e.code == 1008) navigate('/login');
+            if (e.code == 1008) {
+                globalThis.location.assign("/login");
+                return;
+            }
             !disposed && setTimeout(() => connect(), 1000);
             setConnections(null);
         }
         return connect();
-    }, [hasUsenetProviders, navigate]);
+    }, [hasUsenetProviders]);
 
     return (
         <section className="mt-6 rounded border border-slate-700/70 bg-slate-800/50 p-3">

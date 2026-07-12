@@ -21,9 +21,12 @@ import { getAppVersion } from "./utils/version.server";
 import { backendClient } from "./clients/backend-client.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  let path = new URL(request.url).pathname;
-  if (path === "/login") return { useLayout: false };
-  if (path === "/onboarding") return { useLayout: false };
+  // Single-fetch navigation/revalidation uses internal `.data` URLs
+  // (e.g. /login.data), so strip that suffix before the layout check.
+  let path = new URL(request.url).pathname.replace(/\.data$/, "");
+  if (path === "/login" || path === "/onboarding") {
+    return { useLayout: false };
+  }
 
   const config = await backendClient.getConfig([
     "usenet.providers",
@@ -93,8 +96,10 @@ export default function App({ loaderData }: Route.ComponentProps) {
   const isCurrentExplorePage = location.pathname.startsWith("/explore");
   const isNextExplorePage = navigation.location?.pathname?.startsWith("/explore");
   const showLoading = isNavigating && !(isCurrentExplorePage && isNextExplorePage);
+  const hideShell =
+    location.pathname === "/login" || location.pathname === "/onboarding";
 
-  if (useLayout) {
+  if (useLayout && !hideShell) {
     return (
       <PageLayout
         topNavComponent={TopNavigation}

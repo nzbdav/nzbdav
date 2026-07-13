@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.9](https://github.com/nzbdav/nzbdav/compare/v0.7.8...v0.7.9) (2026-07-13)
+
+
+### Bug Fixes
+
+* **usenet:** include file path in missing-article zero-fill warnings ([#251](https://github.com/nzbdav/nzbdav/issues/251)) ([9591d36](https://github.com/nzbdav/nzbdav/commit/9591d36f9c44095489e0f68cdfbcccc6a3402453))
+
 ## [0.7.8](https://github.com/nzbdav/nzbdav/compare/v0.7.7...v0.7.8) (2026-07-12)
 
 

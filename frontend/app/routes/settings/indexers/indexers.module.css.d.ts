@@ -49,6 +49,13 @@ declare const styles: {
   readonly "pattern-error-pattern": string;
   readonly "pattern-error-message": string;
   readonly "pattern-hint": string;
+  readonly "sync-controls": string;
+  readonly "sync-refresh-label": string;
+  readonly "sync-refresh-input": string;
+  readonly "sync-status": string;
+  readonly "sync-status-row": string;
+  readonly "sync-status-ok": string;
+  readonly "sync-status-bad": string;
   readonly "form-checkbox-wrapper": string;
   readonly "form-checkbox": string;
   readonly "form-checkbox-label": string;

@@ -271,6 +271,28 @@ class BackendClient {
         return data.entries ?? [];
     }
 
+    public async getExcludeSyncStatus(): Promise<ExcludeSyncUrlStatus[]> {
+        const url = process.env.BACKEND_URL + "/api/exclude-sync";
+        const apiKey = process.env.FRONTEND_BACKEND_API_KEY || "";
+        const response = await fetch(url, { method: "GET", headers: { "x-api-key": apiKey } });
+        if (!response.ok) {
+            throw new Error(`Failed to get exclude-sync status: ${(await response.json()).error}`);
+        }
+        const data = await response.json();
+        return data.urls || [];
+    }
+
+    public async refreshExcludeSync(): Promise<ExcludeSyncUrlStatus[]> {
+        const url = process.env.BACKEND_URL + "/api/exclude-sync";
+        const apiKey = process.env.FRONTEND_BACKEND_API_KEY || "";
+        const response = await fetch(url, { method: "POST", headers: { "x-api-key": apiKey } });
+        if (!response.ok) {
+            throw new Error(`Failed to refresh exclude-sync: ${(await response.json()).error}`);
+        }
+        const data = await response.json();
+        return data.urls || [];
+    }
+
     public async clearWatchdogEntries(): Promise<number> {
         const url = process.env.BACKEND_URL + `/api/clear-watchdog-entries`;
         const apiKey = process.env.FRONTEND_BACKEND_API_KEY || "";
@@ -480,6 +502,14 @@ export type DirectoryItem = {
 export type ConfigItem = {
     configName: string,
     configValue: string,
+}
+
+export type ExcludeSyncUrlStatus = {
+    url: string,
+    count: number,
+    fetchedAt: number | null,
+    lastChecked: number | null,
+    error: string | null,
 }
 
 export type WatchtowerQuery = {

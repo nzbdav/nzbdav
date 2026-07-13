@@ -6,6 +6,7 @@ import { isMaskedSecret } from "~/utils/config-mask";
 type IndexersSettingsProps = {
     config: Record<string, string>
     setNewConfig: Dispatch<SetStateAction<Record<string, string>>>
+    savedConfig?: Record<string, string>
 };
 
 interface ResultFilter {
@@ -85,6 +86,53 @@ function validateExcludePatterns(raw: string): PatternIssue[] {
     return issues;
 }
 
+type ExcludeSyncUrlStatus = {
+    url: string,
+    count: number,
+    fetchedAt: number | null,
+    lastChecked: number | null,
+    error: string | null,
+};
+
+type SyncUrlIssue = { line: number, value: string, error: string };
+
+function validateSyncUrls(raw: string): SyncUrlIssue[] {
+    const issues: SyncUrlIssue[] = [];
+    const lines = raw.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+        const trimmed = lines[i].trim();
+        if (trimmed.length === 0 || trimmed.startsWith("#")) continue;
+        try {
+            const parsed = new URL(trimmed);
+            if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+                issues.push({ line: i + 1, value: trimmed, error: "must be http(s)" });
+            }
+        } catch {
+            issues.push({ line: i + 1, value: trimmed, error: "invalid URL" });
+        }
+    }
+    return issues;
+}
+
+function isRefreshValid(raw: string): boolean {
+    const trimmed = raw.trim();
+    if (trimmed === "") return true; // blank → server default (720)
+    const n = Number(trimmed);
+    return Number.isInteger(n) && n >= 15 && n <= 10080;
+}
+
+function syncHostLabel(url: string): string {
+    try { return new URL(url).host; } catch { return url; }
+}
+
+function syncRelativeTime(unixSeconds: number): string {
+    const diff = Math.floor(Date.now() / 1000) - unixSeconds;
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+}
+
 function parseConfig(raw: string): IndexerConfig {
     try {
         const parsed = JSON.parse(raw || "{}");
@@ -132,7 +180,7 @@ function isProxyUrlValid(raw: string): boolean {
     }
 }
 
-export function IndexersSettings({ config, setNewConfig }: IndexersSettingsProps) {
+export function IndexersSettings({ config, setNewConfig, savedConfig }: IndexersSettingsProps) {
     const indexerConfig = useMemo(() => parseConfig(config["indexers.instances"]), [config]);
     const [showModal, setShowModal] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -205,6 +253,47 @@ export function IndexersSettings({ config, setNewConfig }: IndexersSettingsProps
     const handleExcludePatternsChange = useCallback((value: string) => {
         setNewConfig({ ...config, "search.exclude-patterns": value });
     }, [config, setNewConfig]);
+
+    const excludeSyncUrls = config["search.exclude-sync-urls"] ?? "";
+    const excludeSyncRefresh = config["search.exclude-sync-refresh-minutes"] ?? "";
+    const syncUrlIssues = useMemo(() => validateSyncUrls(excludeSyncUrls), [excludeSyncUrls]);
+    const handleSyncUrlsChange = useCallback((value: string) => {
+        setNewConfig({ ...config, "search.exclude-sync-urls": value });
+    }, [config, setNewConfig]);
+    const handleSyncRefreshChange = useCallback((value: string) => {
+        const cleaned = value.replace(/[^0-9]/g, "");
+        setNewConfig({ ...config, "search.exclude-sync-refresh-minutes": cleaned });
+    }, [config, setNewConfig]);
+
+    const [syncStatus, setSyncStatus] = useState<ExcludeSyncUrlStatus[]>([]);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const loadSyncStatus = useCallback(async () => {
+        try {
+            const res = await fetch("/settings/exclude-sync");
+            if (res.ok) setSyncStatus((await res.json()).urls ?? []);
+        } catch {
+            // status is best-effort; ignore transient failures
+        }
+    }, []);
+    // Load on mount, and re-pull after a save changes the synced URLs. The backend
+    // refetches on config change, so poll once immediately and once after it settles.
+    const savedSyncUrls = savedConfig?.["search.exclude-sync-urls"] ?? "";
+    useEffect(() => {
+        void loadSyncStatus();
+        const timer = setTimeout(() => { void loadSyncStatus(); }, 2000);
+        return () => clearTimeout(timer);
+    }, [savedSyncUrls, loadSyncStatus]);
+    const handleSyncNow = useCallback(async () => {
+        setIsSyncing(true);
+        try {
+            const res = await fetch("/settings/exclude-sync", { method: "POST" });
+            if (res.ok) setSyncStatus((await res.json()).urls ?? []);
+        } catch {
+            // ignore; the row shows the backend-reported error on the next status load
+        } finally {
+            setIsSyncing(false);
+        }
+    }, []);
 
     const defaultSearchUserAgent = config["api.search-user-agent"] ?? "";
     const handleSearchUserAgentChange = useCallback((value: string) => {
@@ -335,6 +424,66 @@ export function IndexersSettings({ config, setNewConfig }: IndexersSettingsProps
                             are dropped before being returned. Case-insensitive by default — use <code>(?-i:Foo)</code> for
                             case-sensitive. Lines starting with <code>#</code> are comments. Use this to skip
                             releases your setup can't handle, whatever the reason.
+                        </p>
+                    </div>
+
+                    <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
+                        <label htmlFor="indexers-exclude-sync-urls" className={styles["form-label"]}>
+                            Synced exclude URLs <span className={styles["label-hint"]}>(auto-updating; one URL per line)</span>
+                        </label>
+                        <Textarea
+                            id="indexers-exclude-sync-urls"
+                            rows={3}
+                            spellCheck={false}
+                            className={`${styles["form-input"]} ${styles["pattern-input"]} ${syncUrlIssues.length > 0 ? styles.error : ""}`}
+                            placeholder={"# one URL per line\nhttps://raw.githubusercontent.com/.../excluded-regex.json"}
+                            value={excludeSyncUrls}
+                            onChange={e => handleSyncUrlsChange(e.target.value)} />
+                        {syncUrlIssues.length > 0 && (
+                            <div className={styles["pattern-errors"]}>
+                                {syncUrlIssues.map((iss, i) => (
+                                    <div key={i} className={styles["pattern-error"]}>
+                                        <span className={styles["pattern-error-line"]}>Line {iss.line}</span>
+                                        <code className={styles["pattern-error-pattern"]}>{iss.value}</code>
+                                        <span className={styles["pattern-error-message"]}>— {iss.error}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <div className={styles["sync-controls"]}>
+                            <label htmlFor="indexers-exclude-sync-refresh" className={styles["sync-refresh-label"]}>
+                                Refresh every
+                            </label>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                id="indexers-exclude-sync-refresh"
+                                className={`${styles["form-input"]} ${styles["sync-refresh-input"]} ${!isRefreshValid(excludeSyncRefresh) ? styles.error : ""}`}
+                                placeholder="720"
+                                value={excludeSyncRefresh}
+                                onChange={e => handleSyncRefreshChange(e.target.value)} />
+                            <span className={styles["label-hint"]}>minutes</span>
+                            <Button variant="secondary" size="small" onClick={handleSyncNow} disabled={isSyncing}>
+                                {isSyncing ? "Syncing…" : "Sync now"}
+                            </Button>
+                        </div>
+                        {syncStatus.length > 0 && (
+                            <div className={styles["sync-status"]}>
+                                {syncStatus.map((s, i) => (
+                                    <div key={i} className={styles["sync-status-row"]}>
+                                        {s.error
+                                            ? <span className={styles["sync-status-bad"]}>✗ {syncHostLabel(s.url)} — {s.error}</span>
+                                            : <span className={styles["sync-status-ok"]}>✓ {syncHostLabel(s.url)} — {s.count} pattern{s.count === 1 ? "" : "s"}{s.lastChecked ? ` · synced ${syncRelativeTime(s.lastChecked)}` : ""}</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <p className={styles["pattern-hint"]}>
+                            Point at one or more JSON lists of regex patterns (e.g. TRaSH-derived exclude URLs).
+                            Accepts <code>{`{ "values": ["…"] }`}</code> or <code>{`[{ "pattern": "…" }]`}</code>.
+                            Synced patterns are fetched on the interval above and take precedence; your manual
+                            patterns above are merged in after, with exact duplicates removed. If a URL can't be
+                            reached, the last good copy keeps working. Save your changes first, then use <strong>Sync now</strong>.
                         </p>
                     </div>
                 </div>
@@ -1273,7 +1422,9 @@ export function isIndexersSettingsUpdated(config: Record<string, string>, newCon
     return config["indexers.instances"] !== newConfig["indexers.instances"]
         || (config["api.user-agent"] ?? "") !== (newConfig["api.user-agent"] ?? "")
         || (config["api.search-user-agent"] ?? "") !== (newConfig["api.search-user-agent"] ?? "")
-        || (config["search.exclude-patterns"] ?? "") !== (newConfig["search.exclude-patterns"] ?? "");
+        || (config["search.exclude-patterns"] ?? "") !== (newConfig["search.exclude-patterns"] ?? "")
+        || (config["search.exclude-sync-urls"] ?? "") !== (newConfig["search.exclude-sync-urls"] ?? "")
+        || (config["search.exclude-sync-refresh-minutes"] ?? "") !== (newConfig["search.exclude-sync-refresh-minutes"] ?? "");
 }
 
 export function isIndexersSettingsValid(newConfig: Record<string, string>) {
@@ -1297,6 +1448,9 @@ export function isIndexersSettingsValid(newConfig: Record<string, string>) {
             if (i.ExtraTvCategories !== undefined && !isCategoryListValid(i.ExtraTvCategories)) return false;
         }
         if (validateExcludePatterns(newConfig["search.exclude-patterns"] ?? "").length > 0) return false;
+        if (validateSyncUrls(newConfig["search.exclude-sync-urls"] ?? "").length > 0) return false;
+        const syncRefresh = newConfig["search.exclude-sync-refresh-minutes"] ?? "";
+        if (syncRefresh.trim() !== "" && !isRefreshValid(syncRefresh)) return false;
         return true;
     } catch {
         return false;

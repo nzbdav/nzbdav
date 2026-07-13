@@ -33,6 +33,7 @@ Early adopters are reporting **2x network throughput** capability and a **400% r
 
 Special thanks to the forks and contributors whose ideas we absorbed:
 
+* [@Nzbdav-dev](https://github.com/Nzbdav-dev)
 * [@Pukabyte](https://github.com/Pukabyte)
 * [@elfhosted](https://github.com/elfhosted)
 * [@kha-kis](https://github.com/kha-kis)

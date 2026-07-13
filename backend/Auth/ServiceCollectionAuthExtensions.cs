@@ -8,6 +8,7 @@ using NWebDav.Server;
 using NWebDav.Server.Authentication;
 using NzbWebDAV.Config;
 using NzbWebDAV.Database;
+using NzbWebDAV.Extensions;
 using NzbWebDAV.Utils;
 
 namespace NzbWebDAV.Auth;
@@ -59,8 +60,14 @@ public static class ServiceCollectionAuthExtensions
             return Task.CompletedTask;
         }
 
-        if (context.Username == user &&
-            VerifyPasswordWithCache(context.Username, context.Password, passwordHash))
+        // Always run hash verification (dummy when username mismatches) so timing
+        // does not enumerate the configured WebDAV username.
+        var usernameMatches = context.Username.FixedTimeEquals(user);
+        var passwordOk = usernameMatches
+            ? VerifyPasswordWithCache(context.Username, context.Password, passwordHash)
+            : RunDummyPasswordVerify(context.Password);
+
+        if (usernameMatches && passwordOk)
         {
             var claims = new[]
             {
@@ -101,5 +108,11 @@ public static class ServiceCollectionAuthExtensions
         {
             CryptographicOperations.ZeroMemory(credentialBytes);
         }
+    }
+
+    private static bool RunDummyPasswordVerify(string password)
+    {
+        PasswordUtil.VerifyDummy(password);
+        return false;
     }
 }

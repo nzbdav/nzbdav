@@ -11,6 +11,9 @@ public static class PasswordUtil
     private static readonly PasswordHasher<object> Hasher = new();
     private static readonly byte[] CacheKeySecret = RandomNumberGenerator.GetBytes(32);
 
+    // Used when the account/user is missing so Verify still runs (closes username-enumeration timing).
+    private static readonly string DummyHash = Hasher.HashPassword(null!, "nzbdav-dummy-password");
+
     public static string Hash(string password, string salt = "")
     {
         return Hasher.HashPassword(null!, password + salt);
@@ -32,6 +35,15 @@ public static class PasswordUtil
             cacheEntry.SetSlidingExpiration(TimeSpan.FromMinutes(5));
             return Hasher.VerifyHashedPassword(null!, hash, password + salt);
         }) == PasswordVerificationResult.Success;
+    }
+
+    /// <summary>
+    /// Runs the same PBKDF2 verify path against a static dummy hash and discards the result.
+    /// Call this when the account/user does not exist so timing matches a failed password check.
+    /// </summary>
+    public static void VerifyDummy(string password, string salt = "")
+    {
+        _ = Verify(DummyHash, password, salt);
     }
 
     private static string CreateCacheKey(string hash, string password, string salt)

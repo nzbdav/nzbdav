@@ -87,6 +87,14 @@ public class UtilityTests
     }
 
     [Fact]
+    public void PasswordVerifyDummy_DoesNotAuthenticate()
+    {
+        // Dummy verify must complete without throwing and must not imply success.
+        PasswordUtil.VerifyDummy("any-password");
+        PasswordUtil.VerifyDummy("any-password", "salt");
+    }
+
+    [Fact]
     public void InterpolationSearch_FindsIrregularByteRange()
     {
         LongRange[] ranges =

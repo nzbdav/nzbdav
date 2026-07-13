@@ -119,6 +119,8 @@ The image runs two processes: the frontend and public proxy on port `3000`, and 
 
 > [!IMPORTANT]
 > Port `3000` serves plain HTTP. If NzbDav will be reachable outside your trusted network, put it behind an HTTPS reverse proxy and do not expose the container port directly to the internet. WebDAV uses Basic authentication, so remote access without TLS exposes credentials. When the proxy runs on the Docker host, bind the port to localhost with `127.0.0.1:3000:3000`.
+>
+> For adapter/Newznab absolute links and STRM URLs, set an explicit **Base URL** under Settings (preferred). Without it, public scheme/host come only from trusted forwarded headers: the frontend strips client `X-Forwarded-*` and rewrites canonical values for the backend (which trusts loopback by default). TLS-terminating reverse proxies should set `TRUST_PROXY=1` on the container so Express honors the proxy’s forwarded headers when rewriting, **or** set Base URL explicitly — otherwise generated links may stay `http://`. Split-container topologies can widen backend trust with `TRUSTED_PROXY_CIDRS` (comma-separated IPs or CIDRs).
 
 ### 2. Core configuration
 

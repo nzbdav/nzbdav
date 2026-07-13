@@ -41,10 +41,11 @@ public static class HttpContextExtensions
         var trimmed = configuredBaseUrl.TrimEnd('/');
         if (!string.IsNullOrWhiteSpace(trimmed) && trimmed != "http://localhost:3000")
             return trimmed;
-        var scheme = httpContext.Request.Headers["X-Forwarded-Proto"].FirstOrDefault()
-                     ?? httpContext.Request.Scheme;
-        var host = httpContext.Request.Headers["X-Forwarded-Host"].FirstOrDefault()
-                   ?? httpContext.Request.Host.Value;
+
+        // Prefer Scheme/Host as populated by ForwardedHeadersMiddleware from a
+        // trusted proxy — never read raw X-Forwarded-* (spoofable).
+        var scheme = httpContext.Request.Scheme;
+        var host = httpContext.Request.Host.Value;
         return $"{scheme}://{host}";
     }
 }

@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Net;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NWebDav.Server;
@@ -113,6 +115,19 @@ class Program
             builder.Host.UseSerilog();
             builder.Services.AddControllers();
             builder.Services.AddHealthChecks();
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                    | ForwardedHeaders.XForwardedProto
+                    | ForwardedHeaders.XForwardedHost;
+                // Default: only trust the in-container frontend proxy (loopback).
+                // Widen via TRUSTED_PROXY_CIDRS for split-container topologies.
+                options.KnownProxies.Clear();
+                options.KnownIPNetworks.Clear();
+                options.KnownProxies.Add(IPAddress.Loopback);
+                options.KnownProxies.Add(IPAddress.IPv6Loopback);
+                ApplyTrustedProxyCidrs(options);
+            });
             builder.Services
                 .AddWebdavBasicAuthentication(configManager)
                 .AddSingleton(configManager)
@@ -201,6 +216,8 @@ class Program
 
             // run
             var app = builder.Build();
+            // Must run before anything that reads Scheme/Host/RemoteIpAddress.
+            app.UseForwardedHeaders();
             _ = app.Services.GetRequiredService<QueueManager>();
             app.UseMiddleware<ExceptionMiddleware>();
             app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
@@ -226,6 +243,28 @@ class Program
     private static LogEventLevel AtLeast(LogEventLevel configured, LogEventLevel minimum)
     {
         return configured > minimum ? configured : minimum;
+    }
+
+    private static void ApplyTrustedProxyCidrs(ForwardedHeadersOptions options)
+    {
+        var raw = EnvironmentUtil.GetEnvironmentVariable("TRUSTED_PROXY_CIDRS");
+        if (raw is null) return;
+
+        foreach (var part in raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (System.Net.IPNetwork.TryParse(part, out var network))
+            {
+                options.KnownIPNetworks.Add(network);
+            }
+            else if (IPAddress.TryParse(part, out var proxyAddress))
+            {
+                options.KnownProxies.Add(proxyAddress);
+            }
+            else
+            {
+                Log.Warning("Ignoring invalid TRUSTED_PROXY_CIDRS entry: {Entry}", part);
+            }
+        }
     }
 
     private static void BlockUpgradesToV06X()

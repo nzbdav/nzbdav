@@ -13,9 +13,20 @@ import {
   isExpectedBackendConnectionError,
   isWithinBackendStartupGrace,
 } from "./startup-grace";
+import { applyCanonicalForwardedHeaders } from "./forwarded-headers";
 
 export const app = express();
 export const initializeWebsocketServer = websocketServer.initialize;
+
+const trustProxy =
+  process.env.TRUST_PROXY === "1"
+  || process.env.TRUST_PROXY?.toLowerCase() === "true"
+  || process.env.TRUST_PROXY?.toLowerCase() === "yes";
+if (trustProxy) {
+  // Opt-in: honor X-Forwarded-* from the reverse proxy in front of this container.
+  // Required for correct public scheme/host when rewriting headers to the backend.
+  app.set("trust proxy", 1);
+}
 
 let loggedStartupWait = false;
 let lastProxyFailureLogAt = 0;
@@ -42,6 +53,9 @@ const forwardToBackend = createProxyMiddleware({
   target: process.env.BACKEND_URL,
   changeOrigin: true,
   on: {
+    proxyReq: (proxyReq, req) => {
+      applyCanonicalForwardedHeaders(proxyReq, req as express.Request, { trustProxy });
+    },
     error: (error, req, res) => {
       logProxyFailure(
         `Backend proxy failed for ${req.method ?? "UNKNOWN"} ${req.url ?? "unknown URL"}`,
@@ -74,6 +88,9 @@ const credentialRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
+    // When TRUST_PROXY is set, req.ip reflects the client behind the reverse proxy.
+    // Default stays socket-IP keyed (spoof-safe without a trusted proxy story).
+    if (trustProxy && req.ip) return ipKeyGenerator(req.ip);
     const remoteAddress = req.socket.remoteAddress;
     return remoteAddress ? ipKeyGenerator(remoteAddress) : "unknown";
   },

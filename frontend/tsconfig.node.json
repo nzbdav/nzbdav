@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["server.ts", "server/logger.ts", "server/startup-grace.ts", "vite.config.ts", "vitest.config.ts"],
+  "include": ["server.ts", "server/logger.ts", "server/proxy-path.ts", "server/startup-grace.ts", "vite.config.ts", "vitest.config.ts"],
   "compilerOptions": {
     "composite": true,
     "strict": true,

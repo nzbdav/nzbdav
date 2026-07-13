@@ -177,12 +177,48 @@ public class ConfigManager
         return StringUtil.EmptyToNull(GetConfigValue("media.library-dir"));
     }
 
+    // The total connection budget used for webdav streaming. "0" or empty means
+    // "auto": use the combined connection limit of the primary Pool providers
+    // (backups excluded), recomputed as providers change. Any positive value is
+    // a manual override.
     public int GetMaxDownloadConnections()
     {
-        return int.Parse(
-            StringUtil.EmptyToNull(GetConfigValue("usenet.max-download-connections"))
-            ?? Math.Min(GetUsenetProviderConfig().TotalPooledConnections, 15).ToString()
-        );
+        var configured = StringUtil.EmptyToNull(GetConfigValue("usenet.max-download-connections"));
+        if (configured is null || !int.TryParse(configured, out var value) || value <= 0)
+            return GetUsenetProviderConfig().TotalPooledConnections;
+        return value;
+    }
+
+    // When true, the max-download-connections budget is applied per playback
+    // stream (each concurrent stream gets its own budget) rather than as a
+    // single pool shared across all streams. The provider's connection limit
+    // still caps the actual number of open connections.
+    public bool IsMaxDownloadConnectionsPerStream()
+    {
+        var v = StringUtil.EmptyToNull(GetConfigValue("usenet.max-download-connections-per-stream"));
+        return v != null && bool.Parse(v);
+    }
+
+    // The per-stream streaming budget used when "per stream" mode is on. Each
+    // stream is allowed a performance-preset fraction (Low/Medium/High/Max) of
+    // the overall download-connection budget, at least 1.
+    public int GetMaxDownloadConnectionsPerStreamCount()
+    {
+        var fraction = GetMaxDownloadConnectionsPerStreamFraction();
+        return Math.Max(1, (int)Math.Round(GetMaxDownloadConnections() * fraction));
+    }
+
+    private double GetMaxDownloadConnectionsPerStreamFraction()
+    {
+        var preset = StringUtil.EmptyToNull(GetConfigValue("usenet.max-download-connections-per-stream-preset"));
+        return preset?.ToLowerInvariant() switch
+        {
+            "low" => 0.25,
+            "medium" => 0.5,
+            "high" => 0.75,
+            "max" => 1.0,
+            _ => 0.75,
+        };
     }
 
     public int GetMaxQueueConnections()

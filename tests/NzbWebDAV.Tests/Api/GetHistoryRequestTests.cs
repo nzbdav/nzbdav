@@ -1,0 +1,94 @@
+using Microsoft.AspNetCore.Http;
+using NzbWebDAV.Api.SabControllers.GetHistory;
+using NzbWebDAV.Config;
+using NzbWebDAV.Database.Models;
+
+namespace NzbWebDAV.Tests.Api;
+
+public class GetHistoryRequestTests
+{
+    [Fact]
+    public void CapsUnboundedLimitWhenIgnoreHistoryLimitEnabled()
+    {
+        var config = CreateConfig(ignoreLimit: true);
+        var context = new DefaultHttpContext();
+        // Arrs send limit=60 but ignore-history-limit discards it → would be int.MaxValue
+        context.Request.QueryString = new QueryString("?limit=60");
+
+        var request = new GetHistoryRequest(context, config);
+
+        Assert.Equal(10_000, request.Limit);
+    }
+
+    [Fact]
+    public void PreservesSmallPageSizeBelowCeiling()
+    {
+        var config = CreateConfig(ignoreLimit: true);
+        var context = new DefaultHttpContext();
+        context.Request.QueryString = new QueryString("?pageSize=100");
+
+        var request = new GetHistoryRequest(context, config);
+
+        Assert.Equal(100, request.Limit);
+    }
+
+    [Fact]
+    public void HonorsArrLimitWhenIgnoreDisabledAndBelowCeiling()
+    {
+        var config = CreateConfig(ignoreLimit: false);
+        var context = new DefaultHttpContext();
+        context.Request.QueryString = new QueryString("?limit=60");
+
+        var request = new GetHistoryRequest(context, config);
+
+        Assert.Equal(60, request.Limit);
+    }
+
+    [Fact]
+    public void CapsPageSizeAboveConfiguredCeiling()
+    {
+        var config = CreateConfig(ignoreLimit: true, maxPageSize: "500");
+        var context = new DefaultHttpContext();
+        context.Request.QueryString = new QueryString("?pageSize=2000");
+
+        var request = new GetHistoryRequest(context, config);
+
+        Assert.Equal(500, request.Limit);
+    }
+
+    [Fact]
+    public void GetHistoryMaxPageSize_DefaultsAndClamps()
+    {
+        Assert.Equal(10_000, new ConfigManager().GetHistoryMaxPageSize());
+
+        var custom = CreateConfig(ignoreLimit: true, maxPageSize: "2500");
+        Assert.Equal(2500, custom.GetHistoryMaxPageSize());
+
+        var clamped = CreateConfig(ignoreLimit: true, maxPageSize: "999999");
+        Assert.Equal(100_000, clamped.GetHistoryMaxPageSize());
+    }
+
+    private static ConfigManager CreateConfig(bool ignoreLimit, string? maxPageSize = null)
+    {
+        var items = new List<ConfigItem>
+        {
+            new()
+            {
+                ConfigName = ConfigKeys.ApiIgnoreHistoryLimit,
+                ConfigValue = ignoreLimit ? "true" : "false",
+            },
+        };
+        if (maxPageSize is not null)
+        {
+            items.Add(new ConfigItem
+            {
+                ConfigName = ConfigKeys.ApiHistoryMaxPageSize,
+                ConfigValue = maxPageSize,
+            });
+        }
+
+        var config = new ConfigManager();
+        config.UpdateValues(items);
+        return config;
+    }
+}

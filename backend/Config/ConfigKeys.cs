@@ -17,6 +17,7 @@ public static class ConfigKeys
     public const string ApiEnsureArticleExistenceCategories = "api.ensure-article-existence-categories";
     public const string ApiEnsureImportableVideo = "api.ensure-importable-video";
     public const string ApiIgnoreHistoryLimit = "api.ignore-history-limit";
+    public const string ApiHistoryMaxPageSize = "api.history-max-page-size";
     public const string ApiImportStrategy = "api.import-strategy";
     public const string ApiKey = "api.key";
     public const string ApiLazyRarParsing = "api.lazy-rar-parsing";

@@ -956,6 +956,18 @@ public class ConfigManager
         return (configValue != null ? bool.Parse(configValue) : defaultValue);
     }
 
+    /// <summary>
+    /// Server-side ceiling for SAB history <c>slots</c> returned in one response.
+    /// Default 10_000 — far above a typical Arr import pass — removes the unbounded
+    /// <c>int.MaxValue</c> worst case when ignore-history-limit is enabled.
+    /// </summary>
+    public int GetHistoryMaxPageSize()
+    {
+        var v = StringUtil.EmptyToNull(GetConfigValue(ConfigKeys.ApiHistoryMaxPageSize));
+        if (v == null) return 10_000;
+        return int.TryParse(v, out var n) ? Math.Clamp(n, 1, 100_000) : 10_000;
+    }
+
     public bool IsRepairJobEnabled()
     {
         var defaultValue = false;

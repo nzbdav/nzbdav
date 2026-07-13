@@ -36,7 +36,8 @@ public class GetHistoryRequest
         //   * https://github.com/Sonarr/Sonarr/issues/5452
         //
         // Because of this, NzbDAV added a setting to ignore the `limit` value specified by the Arrs.
-        // When this setting is enabled, we always return all history items.
+        // When this setting is enabled, we skip the Arr limit and apply only the server-side ceiling
+        // (see GetHistoryMaxPageSize) so responses stay bounded.
         if (limitParam is not null && !configManager.IsIgnoreSabHistoryLimitEnabled())
         {
             var isValidLimit = int.TryParse(limitParam, out var limit);
@@ -54,6 +55,10 @@ public class GetHistoryRequest
             if (!isValidPageSize) throw new BadHttpRequestException("Invalid pageSize parameter");
             Limit = pageSize;
         }
+
+        // Server-side ceiling: keep ignore-limit semantics for Arrs but never materialize
+        // an unbounded history response (default Limit is int.MaxValue).
+        Limit = Math.Min(Limit, configManager.GetHistoryMaxPageSize());
 
         if (nzoIdsParam is not null)
         {

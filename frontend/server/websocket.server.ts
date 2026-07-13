@@ -64,11 +64,27 @@ export function initializeWebsocketClient(subscriptions: Map<string, Set<WebSock
     let connected = false;
     let connectionFailures = 0;
     let lastFailureLogAt = 0;
+    let loggedStartupWait = false;
+    const startedAt = Date.now();
+    const startupGraceMs = 30_000;
     const url = getBackendWebsocketUrl();
 
     function logConnectionFailure(message: string, error?: unknown) {
         const now = Date.now();
         connectionFailures += 1;
+
+        // During the first ~30s after frontend start (e.g. Docker starts the
+        // frontend before --db-migration binds the backend port), connection
+        // refusals are expected. Log once at info without the error stack.
+        if (now - startedAt < startupGraceMs) {
+            if (!loggedStartupWait) {
+                logger.info("Waiting for backend to start...");
+                loggedStartupWait = true;
+                lastFailureLogAt = now;
+            }
+            return;
+        }
+
         if (connectionFailures === 1 || now - lastFailureLogAt >= 60_000) {
             logger.warn(`${message}; retrying in ${reconnectRetryDelay} ms`, error);
             lastFailureLogAt = now;

@@ -1,4 +1,4 @@
-import { Checkbox, Input } from "~/components/ui/form";
+import { Checkbox, Input, Select, Toggle } from "~/components/ui/form";
 import { type Dispatch, type SetStateAction } from "react";
 import { className } from "~/utils/styling";
 import { isPositiveInteger } from "../usenet/usenet";
@@ -90,19 +90,64 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="max-download-connections-input">Max Download Connections</label>
-                <Input
-                    {...className(['w-full', !isValidMaxDownloadConnections(config["usenet.max-download-connections"]) && 'border-red-500 focus:border-red-500'])}
-                    type="text"
-                    id="max-download-connections-input"
+                <label className="block text-sm font-medium text-slate-200" htmlFor="max-download-connections-auto-checkbox">Max Download Connections</label>
+                <Toggle
+                    id="max-download-connections-auto-checkbox"
                     aria-describedby="max-download-connections-help"
-                    placeholder="15"
-                    value={config["usenet.max-download-connections"]}
-                    onChange={e => setNewConfig({ ...config, "usenet.max-download-connections": e.target.value })} />
+                    label="Auto — use all Pool provider connections"
+                    checked={isAutoMaxDownloadConnections(config["usenet.max-download-connections"])}
+                    onChange={e => setNewConfig({ ...config, "usenet.max-download-connections": e.target.checked ? "0" : "15" })} />
+                {!isAutoMaxDownloadConnections(config["usenet.max-download-connections"]) && (
+                    <Input
+                        {...className(['w-full', !isValidMaxDownloadConnections(config["usenet.max-download-connections"]) && 'border-red-500 focus:border-red-500'])}
+                        type="text"
+                        id="max-download-connections-input"
+                        aria-describedby="max-download-connections-help"
+                        placeholder="15"
+                        value={config["usenet.max-download-connections"]}
+                        onChange={e => setNewConfig({ ...config, "usenet.max-download-connections": e.target.value })} />
+                )}
                 <p className="text-xs leading-relaxed text-slate-400" id="max-download-connections-help">
-                    The maximum number of connections that will be used for downloading articles from your usenet provider(s).
-                    Configure this to the minimum number of connections that will fully saturate your server's bandwidth.
+                    The total connections used for <strong>webdav streaming</strong> (playback). Leave on
+                    <strong> Auto</strong> to use the combined connection limit of your Pool providers — it
+                    tracks changes as you add or remove providers — or turn Auto off to set a fixed number.
+                    Queue imports use their own budget — see Queue Download Connections above.
                 </p>
+            </div>
+            <hr />
+            <div className="space-y-2">
+                <Toggle
+                    id="max-download-connections-per-stream-checkbox"
+                    aria-describedby="max-download-connections-per-stream-help"
+                    label="Apply limit per stream"
+                    checked={config["usenet.max-download-connections-per-stream"] === "true"}
+                    onChange={e => setNewConfig({ ...config, "usenet.max-download-connections-per-stream": String(e.target.checked) })} />
+                <p className="text-xs leading-relaxed text-slate-400" id="max-download-connections-per-stream-help">
+                    By default the budget above is a <strong>shared total</strong> across all active playback
+                    streams. Enable this to give each concurrent stream <strong>its own budget</strong> instead,
+                    sized by the performance preset below. Your provider's connection limit still applies as a
+                    hard ceiling on the total connections actually opened.
+                </p>
+                {config["usenet.max-download-connections-per-stream"] === "true" && (
+                    <div className="space-y-2 border-l border-slate-700 pl-4">
+                        <label className="block text-sm font-medium text-slate-200" htmlFor="max-download-connections-per-stream-preset-select">Per-stream performance</label>
+                        <Select
+                            className="w-full"
+                            id="max-download-connections-per-stream-preset-select"
+                            aria-describedby="max-download-connections-per-stream-preset-help"
+                            value={config["usenet.max-download-connections-per-stream-preset"] || "high"}
+                            onChange={e => setNewConfig({ ...config, "usenet.max-download-connections-per-stream-preset": e.target.value })}>
+                            <option value="low">Low — 25% of the budget per stream</option>
+                            <option value="medium">Medium — 50% of the budget per stream</option>
+                            <option value="high">High — 75% of the budget per stream</option>
+                            <option value="max">Max — 100% (full budget per stream)</option>
+                        </Select>
+                        <p className="text-xs leading-relaxed text-slate-400" id="max-download-connections-per-stream-preset-help">
+                            How aggressively each stream may use the budget above. Higher fills and seeks faster
+                            per stream; lower keeps more connections free for other simultaneous streams.
+                        </p>
+                    </div>
+                )}
             </div>
             <hr />
             <div className="space-y-2">
@@ -203,6 +248,8 @@ export function isWebdavSettingsUpdated(config: Record<string, string>, newConfi
     return config["webdav.user"] !== newConfig["webdav.user"]
         || config["webdav.pass"] !== newConfig["webdav.pass"]
         || config["usenet.max-download-connections"] !== newConfig["usenet.max-download-connections"]
+        || config["usenet.max-download-connections-per-stream"] !== newConfig["usenet.max-download-connections-per-stream"]
+        || config["usenet.max-download-connections-per-stream-preset"] !== newConfig["usenet.max-download-connections-per-stream-preset"]
         || config["usenet.max-queue-connections"] !== newConfig["usenet.max-queue-connections"]
         || config["usenet.streaming-priority"] !== newConfig["usenet.streaming-priority"]
         || config["usenet.article-buffer-size"] !== newConfig["usenet.article-buffer-size"]
@@ -236,8 +283,12 @@ function isValidUser(user: string): boolean {
     return regex.test(user);
 }
 
-function isValidMaxDownloadConnections(value: string): boolean {
-    return isPositiveInteger(value);
+function isAutoMaxDownloadConnections(value: string | undefined): boolean {
+    return !value || value.trim() === "" || value.trim() === "0";
+}
+
+function isValidMaxDownloadConnections(value: string | undefined): boolean {
+    return isAutoMaxDownloadConnections(value) || isPositiveInteger(value ?? "");
 }
 
 function isValidMaxQueueConnections(value: string): boolean {

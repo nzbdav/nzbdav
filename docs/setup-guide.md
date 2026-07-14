@@ -204,6 +204,8 @@ You can find the optimal **Max Download Connections** for your network (`Setting
 
 Skip this phase if you selected **STRM Files — Emby/Jellyfin**. For the symlink strategy, mount the NzbDav WebDAV onto the host filesystem using a sidecar container.
 
+Entries under `completed-symlinks` are `*.rclonelink` files that Rclone turns into real symlinks. Those symlinks always point at the corresponding file under `.ids` on the same mount (for example `/mnt/remote/nzbdav/.ids/...`), so media servers read on-demand content without duplicating files.
+
 ### 1. Prepare the host directory
 
 ```bash
@@ -305,7 +307,7 @@ Verify the mount is working:
 
 ```bash
 ls -la /mnt/remote/nzbdav
-# Should show: .ids, completed-symlinks, content, nzbs
+# Should show: .ids, completed-symlinks, content, nzbs (and often README)
 ```
 
 ### Understanding the flags
@@ -321,12 +323,42 @@ ls -la /mnt/remote/nzbdav
 | `--vfs-read-ahead=512M` | **Smooth playback.** Buffers 512MB ahead of the current position to handle high-bitrate spikes without stuttering. |
 | `--vfs-cache-max-size=20G` | **Disk management.** Sets a soft limit for the VFS cache; open files can temporarily exceed it. Adjust to your available storage. |
 | `--vfs-cache-max-age=24h` | **Cleanup.** Removes cache entries that have not been accessed for 24 hours. |
-| `--dir-cache-time=20s` | **Responsiveness.** Keeps the directory cache short so new downloads/links appear quickly in the mount. |
+| `--dir-cache-time=20s` | **Responsiveness (without RC).** Keeps the directory cache short so new downloads/links appear quickly. If you enable [Rclone RC notifications](#optional-rclone-rc-notifications) below, you can raise this value. |
 
 The official Rclone image does not use `PUID`/`PGID` environment variables. The `--uid` and `--gid` mount flags control the ownership presented to applications reading the mount.
 
 > [!TIP]
 > These flags are optimized for streaming. Resist the urge to add more: `unnecessary flags = potential pitfalls`. For background on buffer sizing, see this [Rclone forum discussion](https://forum.rclone.org/t/whats-the-suitable-value-to-set-for-buffer-size-with-vfs-read-ahead/39971/4).
+
+### Optional: Rclone RC notifications
+
+RC is **not** required for the basic symlink workflow. Enable it when you want NzbDav to invalidate Rclone's directory cache (`vfs/forget`) whenever WebDAV files are added or removed, which lets you raise `--dir-cache-time` without waiting for the cache to expire.
+
+**1. Add RC flags to the sidecar** — append these to the existing `command:` block (pick your own RC username/password; keep port `5572` on the Docker network only — do not publish it to the host unless you need host access):
+
+```yaml
+        --rc
+        --rc-addr=:5572
+        --rc-user=rclone
+        --rc-pass=your-rc-password
+```
+
+Also change `--dir-cache-time=20s` to a longer value such as `1h` once RC is working. Recreate the sidecar after editing:
+
+```bash
+docker compose up -d --force-recreate nzbdav_rclone
+```
+
+**2. Configure NzbDav** (`Settings` → `Rclone Server`):
+
+| Setting | Value |
+|---------|-------|
+| Enable Rclone RC Server Notifications | Checked |
+| Rclone Server Host | `http://nzbdav_rclone:5572` (same Compose network as NzbDav) |
+| Rclone Server User | The `--rc-user` value (optional if you omit RC auth) |
+| Rclone Server Password | The `--rc-pass` value (optional if you omit RC auth) |
+
+Click **Test Conn** to confirm NzbDav can reach the RC API. If the test fails, check that the sidecar includes the `--rc*` flags, the host uses the Compose service/container DNS name (`nzbdav_rclone`), and the user/password match.
 
 ---
 
@@ -383,7 +415,7 @@ Go to NzbDav `Settings` → `Radarr/Sonarr`.
 ### 3. Configure imports & repairs
 
 1. **Import strategy (`Settings` → `SABnzbd`):**
-   * **Symlinks — Plex:** Set **Rclone Mount Directory** to `/mnt/remote/nzbdav`. This tells NzbDav which completed path to report to Radarr/Sonarr.
+   * **Symlinks — Plex:** Set **Rclone Mount Directory** to `/mnt/remote/nzbdav`. This tells NzbDav which completed path to report to Radarr/Sonarr. Optionally enable [Rclone RC notifications](#optional-rclone-rc-notifications) so NzbDav can invalidate the mount directory cache when files change.
    * **STRM Files — Emby/Jellyfin:** Set **Completed Downloads Dir** to `/mnt/completed-downloads` (or another shared path), and set **Base URL** to an NzbDav URL reachable by your media server.
    * Whichever strategy you choose, the completed path NzbDav reports must be visible inside Radarr/Sonarr at the exact same path.
 2. **Repairs (`Settings` → `Repairs`):**
@@ -541,4 +573,4 @@ docker compose logs --tail=200 -f nzbdav
 docker compose logs --tail=200 -f nzbdav_rclone
 ```
 
-If the Rclone mount fails, first verify that `/dev/fuse` exists on the host, the sidecar has started after NzbDav became healthy, and the WebDAV username/password in `rclone.conf` match `Settings` → `WebDAV`. If Rclone specifically rejects `--allow-other`, enable `user_allow_other` in the FUSE configuration available inside the sidecar.
+If the Rclone mount fails, first verify that `/dev/fuse` exists on the host, the sidecar has started after NzbDav became healthy, and the WebDAV username/password in `rclone.conf` match `Settings` → `WebDAV`. If Rclone specifically rejects `--allow-other`, enable `user_allow_other` in the FUSE configuration available inside the sidecar. If **Test Conn** on `Settings` → `Rclone Server` fails, confirm the sidecar has the `--rc*` flags, the host is `http://nzbdav_rclone:5572`, and the RC user/password match.

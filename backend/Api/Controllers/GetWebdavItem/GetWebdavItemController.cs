@@ -11,6 +11,7 @@ using NzbWebDAV.Par2Recovery;
 using NzbWebDAV.Services;
 using NzbWebDAV.Utils;
 using NzbWebDAV.WebDav;
+using NzbWebDAV.WebDav.Requests;
 
 namespace NzbWebDAV.Api.Controllers.GetWebdavItem;
 
@@ -36,6 +37,10 @@ public class GetWebdavItemController(
         // handle par2 preview
         if (Path.GetExtension(item.Name).ToLower() == ".par2" && configManager.IsPreviewPar2FilesEnabled())
             return await GetPar2PreviewStream(item).ConfigureAwait(false);
+
+        // Provisional budget for fully-specified ranges before stream creation.
+        if (request.RangeStart is { } provisionalStart && request.RangeEnd is { } provisionalEnd)
+            RangeContext.SetReadBudget(provisionalEnd - provisionalStart + 1);
 
         // get the file stream and set the file-size in header
         var stream = await item.GetReadableStreamAsync(HttpContext.RequestAborted).ConfigureAwait(false);
@@ -92,6 +97,9 @@ public class GetWebdavItemController(
 
             var chunkSize = 1 + end - rangeStart.Value;
 
+            // Cap prefetch at the range end before Seek recreates segment streams.
+            RangeContext.SetReadBudget(chunkSize);
+
             // seek
             stream.Seek(rangeStart.Value, SeekOrigin.Begin);
             if (rangeEnd is not null) stream = stream.LimitLength(chunkSize);
@@ -103,6 +111,7 @@ public class GetWebdavItemController(
         }
         else
         {
+            RangeContext.SetReadBudget(null);
             Response.Headers["Content-Length"] = fileSize.ToString();
         }
 

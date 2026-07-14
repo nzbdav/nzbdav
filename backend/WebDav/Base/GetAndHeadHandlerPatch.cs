@@ -7,6 +7,7 @@ using NWebDav.Server.Props;
 using NWebDav.Server.Stores;
 using NzbWebDAV.Clients.Usenet;
 using NzbWebDAV.Services;
+using NzbWebDAV.WebDav.Requests;
 
 namespace NzbWebDAV.WebDav.Base;
 
@@ -59,6 +60,11 @@ public class GetAndHeadHandlerPatch : IRequestHandler
         var range = request.GetRange();
         var copyStart = 0L;
         long? copyEnd = null;
+
+        // Provisional budget from a fully-specified Range before the stream is
+        // constructed so MultiSegmentStream can cap prefetch from the start.
+        if (range is { Start: not null, End: not null })
+            RangeContext.SetReadBudget(range.End.Value - range.Start.Value + 1);
 
         // Obtain the WebDAV collection
         var entry = await _store.GetItemAsync(request.GetUri(), httpContext.RequestAborted).ConfigureAwait(false);
@@ -173,6 +179,12 @@ public class GetAndHeadHandlerPatch : IRequestHandler
                 // HEAD method doesn't require the actual item data
                 if (!isHeadRequest)
                 {
+                    // Cap segment prefetch at the range end (open-ended ranges leave budget null).
+                    if (copyEnd.HasValue)
+                        RangeContext.SetReadBudget(copyEnd.Value - copyStart + 1);
+                    else
+                        RangeContext.SetReadBudget(null);
+
                     var path = request.GetUri().AbsolutePath;
                     var clientKey = $"{httpContext.Connection.RemoteIpAddress}|{request.Headers.UserAgent}";
                     // DatabaseStoreIdFile.Name returns the GUID (it backs rclone symlink

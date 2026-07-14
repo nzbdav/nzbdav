@@ -23,6 +23,7 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
     private readonly Channel<Task<Stream>> _streamTasks;
     private readonly int _bodyPipelineBatchSize;
     private readonly ContextualCancellationTokenSource _cts;
+    private readonly long? _readBudget;
     private Stream? _stream;
     private bool _disposed;
 
@@ -32,7 +33,8 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
         int articleBufferSize,
         bool usePipelinedBodyRequests,
         CancellationToken cancellationToken,
-        string? fileName = null)
+        string? fileName = null,
+        long? readBudget = null)
     {
         return Create(
             segmentIds,
@@ -42,7 +44,8 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
             failFastOnFirstSegment: false,
             usePipelinedBodyRequests,
             cancellationToken,
-            fileName);
+            fileName,
+            readBudget);
     }
 
     public static Stream Create
@@ -54,7 +57,8 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
         bool failFastOnFirstSegment,
         bool usePipelinedBodyRequests,
         CancellationToken cancellationToken,
-        string? fileName = null
+        string? fileName = null,
+        long? readBudget = null
     )
     {
         return articleBufferSize == 0
@@ -67,7 +71,8 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
                 failFastOnFirstSegment,
                 usePipelinedBodyRequests,
                 cancellationToken,
-                fileName);
+                fileName,
+                readBudget);
     }
 
     private MultiSegmentStream
@@ -79,7 +84,8 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
         bool failFastOnFirstSegment,
         bool usePipelinedBodyRequests,
         CancellationToken cancellationToken,
-        string? fileName
+        string? fileName,
+        long? readBudget
     )
     {
         _segmentIds = segmentIds;
@@ -87,6 +93,7 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
         _expectedSegmentSize = expectedSegmentSize;
         _failFastOnFirstSegment = failFastOnFirstSegment;
         _fileName = string.IsNullOrEmpty(fileName) ? "unknown" : fileName;
+        _readBudget = readBudget ?? NzbWebDAV.WebDav.Requests.RangeContext.GetReadBudget();
         _bodyPipelineBatchSize = Math.Min(BodyPipelineBatchSize, articleBufferSize);
         _streamTasks = Channel.CreateBounded<Task<Stream>>(articleBufferSize);
         _cts = ContextualCancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -122,8 +129,12 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
 
     private async Task DownloadPipelinedSegments(CancellationToken cancellationToken)
     {
+        var segmentsEnqueued = 0;
         for (var batchStart = 0; batchStart < _segmentIds.Length;)
         {
+            if (ShouldStopPrefetch(segmentsEnqueued))
+                break;
+
             var batchCount = Math.Min(
                 _bodyPipelineBatchSize, _segmentIds.Length - batchStart);
             var segmentIds = new SegmentId[batchCount];
@@ -152,6 +163,7 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
                 {
                     await _streamTasks.Writer.WriteAsync(
                         streamTasks[responseIndex], cancellationToken);
+                    segmentsEnqueued++;
                 }
             }
             catch
@@ -172,6 +184,9 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
     {
         for (var index = 0; index < _segmentIds.Length; index++)
         {
+            if (ShouldStopPrefetch(index))
+                break;
+
             var segmentId = _segmentIds.Span[index];
             await _streamTasks.Writer.WaitToWriteAsync(cancellationToken);
             var connection = await _usenetClient.AcquireExclusiveConnectionAsync(
@@ -188,6 +203,17 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
                 throw;
             }
         }
+    }
+
+    /// <summary>
+    /// Stop enqueueing once estimated fetched bytes cover the read budget plus
+    /// one segment of slack for yEnc size variance. Null budget = unbounded.
+    /// </summary>
+    private bool ShouldStopPrefetch(int segmentsEnqueued)
+    {
+        if (_readBudget is null || _expectedSegmentSize <= 0)
+            return false;
+        return segmentsEnqueued * _expectedSegmentSize >= _readBudget.Value + _expectedSegmentSize;
     }
 
     private async Task<Stream> DownloadSegment(

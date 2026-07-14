@@ -12,6 +12,7 @@ internal sealed class FakeNntpClient(
 {
     public int BatchRequestCount { get; private set; }
     public int BodyRequestCount { get; private set; }
+    public HashSet<string> RequestedSegmentIds { get; } = new(StringComparer.Ordinal);
 
     public override Task ConnectAsync(
         string host, int port, bool useSsl, CancellationToken cancellationToken) =>
@@ -54,6 +55,7 @@ internal sealed class FakeNntpClient(
     {
         cancellationToken.ThrowIfCancellationRequested();
         BodyRequestCount++;
+        RequestedSegmentIds.Add(segmentId.ToString());
         try
         {
             var response = CreateBodyResponse(segmentId);

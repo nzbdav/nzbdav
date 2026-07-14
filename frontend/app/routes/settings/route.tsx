@@ -32,7 +32,7 @@ const defaultConfig = {
     "api.ensure-importable-video": "true",
     "api.ensure-article-existence-categories": "",
     "api.ignore-history-limit": "true",
-    "api.download-file-blocklist": "*.nfo, *.par2, *.sfv, *sample.mkv",
+    "api.download-file-blocklist": "*.nfo, *.par2, *.sfv, *sample.mkv, *unpack.mkv, *.unpack.mp4",
     "api.duplicate-nzb-behavior": "increment",
     "api.import-strategy": "symlinks",
     "api.completed-downloads-dir": "",

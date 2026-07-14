@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using NzbWebDAV.Database;
@@ -17,35 +18,12 @@ public class DavCleanupService : BackgroundService
             {
                 await using var dbContext = new DavDatabaseContext();
 
-                // Get the first item from the queue
-                var cleanupItem = await dbContext.DavCleanupItems
-                    .FirstOrDefaultAsync(stoppingToken)
-                    .ConfigureAwait(false);
-
                 // If no items in queue, wait 10 seconds before checking again
-                if (cleanupItem == null)
+                if (!await ProcessNextItemAsync(dbContext, stoppingToken).ConfigureAwait(false))
                 {
                     await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken).ConfigureAwait(false);
                     continue;
                 }
-
-                // Collect children to delete for vfs/forget
-                var deletedItems = await dbContext.Items
-                    .Where(x => x.ParentId == cleanupItem.Id)
-                    .Select(x => new DavItem { Id = x.Id, Type = x.Type, Path = x.Path })
-                    .ToListAsync(stoppingToken);
-
-                // Delete any children
-                await dbContext.Items
-                    .Where(x => x.ParentId == cleanupItem.Id)
-                    .ExecuteDeleteAsync(stoppingToken);
-
-                // Trigger rclone vfs/forget for deleted children
-                _ = DavDatabaseContext.RcloneVfsForget(deletedItems);
-
-                // Remove the queue item from database
-                dbContext.DavCleanupItems.Remove(cleanupItem);
-                await dbContext.SaveChangesAsync(stoppingToken).ConfigureAwait(false);
 
                 // Continue immediately to next iteration to process more items
             }
@@ -63,4 +41,59 @@ public class DavCleanupService : BackgroundService
             }
         }
     }
+
+    internal static async Task<bool> ProcessNextItemAsync(
+        DavDatabaseContext dbContext,
+        CancellationToken cancellationToken = default)
+    {
+        // Preserve the stored text casing: materializing as Guid would normalize it to
+        // uppercase when bound again and miss lowercase rows in SQLite.
+        var cleanupItemId = await dbContext.Database
+            .SqlQueryRaw<string>("SELECT Id AS Value FROM DavCleanupItems LIMIT 1")
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (cleanupItemId == null)
+            return false;
+
+        // Children can use either casing: migrations can preserve lowercase ParentIds,
+        // while EF always writes Guid parameters as uppercase text.
+        var deletedItems = await dbContext.Items
+            .FromSqlRaw(
+                """
+                SELECT * FROM DavItems
+                WHERE ParentId IN (@exactParentId, @upperParentId, @lowerParentId)
+                """,
+                CreateParentIdParameters(cleanupItemId))
+            .AsNoTracking()
+            .Select(x => new DavItem { Id = x.Id, Type = x.Type, Path = x.Path })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            DELETE FROM DavItems
+            WHERE ParentId IN (@exactParentId, @upperParentId, @lowerParentId)
+            """,
+            CreateParentIdParameters(cleanupItemId),
+            cancellationToken).ConfigureAwait(false);
+
+        _ = DavDatabaseContext.RcloneVfsForget(deletedItems);
+
+        // Delete by the exact text selected above. A concurrent or repeated delete
+        // affects zero rows without raising an optimistic-concurrency exception.
+        await dbContext.Database.ExecuteSqlRawAsync(
+            "DELETE FROM DavCleanupItems WHERE Id = @cleanupItemId",
+            [new SqliteParameter("@cleanupItemId", cleanupItemId)],
+            cancellationToken).ConfigureAwait(false);
+
+        return true;
+    }
+
+    private static SqliteParameter[] CreateParentIdParameters(string cleanupItemId) =>
+    [
+        new("@exactParentId", cleanupItemId),
+        new("@upperParentId", cleanupItemId.ToUpperInvariant()),
+        new("@lowerParentId", cleanupItemId.ToLowerInvariant()),
+    ];
 }

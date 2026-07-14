@@ -105,6 +105,9 @@ public class UsenetStreamingClient : WrappingNntpClient
             onConnectionPoolChanged
         );
         var circuitBreaker = new ProviderCircuitBreaker(connectionDetails.Host);
+        // Ensure a metrics key even if startup backfill was skipped somehow.
+        if (connectionDetails.ProviderId == Guid.Empty)
+            connectionDetails.ProviderId = Guid.NewGuid();
         return new MultiConnectionNntpClient(
             connectionPool,
             connectionDetails.Type,
@@ -114,7 +117,8 @@ public class UsenetStreamingClient : WrappingNntpClient
             connectionDetails.BytesUsedOffset,
             connectionDetails.Priority,
             connectionDetails.PipeliningDepth,
-            connectionDetails.StorageGroup
+            connectionDetails.StorageGroup,
+            UsenetProviderIdentity.MetricsKey(connectionDetails)
         );
     }
 

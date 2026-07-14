@@ -20,6 +20,8 @@ namespace NzbWebDAV.Services.Metrics;
 /// rewinds. Offset is added on top so a user migrating from another client can
 /// pre-seed "I've already burned 300 GB on this account" without faking events
 /// into the metrics tables.
+///
+/// Metrics keys are stable per-account <c>ProviderId</c> strings, not NNTP hosts.
 /// </summary>
 public static class ProviderUsageHelper
 {
@@ -39,27 +41,27 @@ public static class ProviderUsageHelper
     /// summed from ProviderHourly. The caller adds <see cref="UsenetProviderConfig.ConnectionDetails.BytesUsedOffset"/>
     /// if it wants the user-facing total.
     /// </summary>
-    public static async Task<long> ReadDbBytesSinceResetAsync(string host, long resetAt)
+    public static async Task<long> ReadDbBytesSinceResetAsync(string providerKey, long resetAt)
     {
-        if (string.IsNullOrEmpty(host)) return 0;
+        if (string.IsNullOrEmpty(providerKey)) return 0;
         await using var db = new MetricsDbContext();
         // SumAsync over nothing returns 0; no need to guard for empty.
         return await db.ProviderHourly
-            .Where(x => x.Provider == host && x.Hour >= resetAt)
+            .Where(x => x.Provider == providerKey && x.Hour >= resetAt)
             .SumAsync(x => x.BytesFetched)
             .ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Raw ProviderHourly rows over the last 7 days for the supplied hosts,
-    /// grouped by host. Returning rows rather than a pre-aggregated sum lets
+    /// Raw ProviderHourly rows over the last 7 days for the supplied provider keys,
+    /// grouped by key. Returning rows rather than a pre-aggregated sum lets
     /// the caller apply each provider's own ResetAt cutoff in memory without
     /// firing N queries — the settings page polls every 10s.
     /// </summary>
     public static async Task<Dictionary<string, List<(long Hour, long Bytes)>>> ReadRecentHoursAsync(
-        IEnumerable<string> hosts)
+        IEnumerable<string> providerKeys)
     {
-        var distinct = hosts.Where(h => !string.IsNullOrEmpty(h)).Distinct().ToArray();
+        var distinct = providerKeys.Where(k => !string.IsNullOrEmpty(k)).Distinct().ToArray();
         if (distinct.Length == 0) return new Dictionary<string, List<(long, long)>>();
 
         var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -139,22 +141,27 @@ public static class ProviderUsageHelper
     /// </summary>
     public static async Task SeedTrackerAsync(ProviderBytesTracker tracker, UsenetProviderConfig config)
     {
+        await SeedTrackerAsync(tracker, config, () => new MetricsDbContext()).ConfigureAwait(false);
+    }
+
+    public static async Task SeedTrackerAsync(
+        ProviderBytesTracker tracker,
+        UsenetProviderConfig config,
+        Func<MetricsDbContext> dbFactory)
+    {
         if (config.Providers.Count == 0) return;
         try
         {
-            await using var db = new MetricsDbContext();
-            // Distinct host so we don't issue duplicate queries for the unusual
-            // case where two ConnectionDetails entries share a Host.
-            var seen = new HashSet<string>(StringComparer.Ordinal);
+            await using var db = dbFactory();
             foreach (var provider in config.Providers)
             {
-                var host = provider.Host;
-                if (string.IsNullOrEmpty(host) || !seen.Add(host)) continue;
+                if (provider.ProviderId == Guid.Empty) continue;
+                var key = UsenetProviderIdentity.MetricsKey(provider);
                 var bytes = await db.ProviderHourly
-                    .Where(x => x.Provider == host && x.Hour >= provider.BytesUsedResetAt)
+                    .Where(x => x.Provider == key && x.Hour >= provider.BytesUsedResetAt)
                     .SumAsync(x => x.BytesFetched)
                     .ConfigureAwait(false);
-                tracker.SetLifetime(host, bytes);
+                tracker.SetLifetime(key, bytes);
             }
         }
         catch (Exception ex)
@@ -170,7 +177,8 @@ public static class ProviderUsageHelper
     /// </summary>
     public static long ComputeUsage(ProviderBytesTracker tracker, UsenetProviderConfig.ConnectionDetails provider)
     {
-        var live = tracker.GetLifetime(provider.Host);
+        if (provider.ProviderId == Guid.Empty) return Math.Max(0, provider.BytesUsedOffset);
+        var live = tracker.GetLifetime(UsenetProviderIdentity.MetricsKey(provider));
         return Math.Max(0, live + provider.BytesUsedOffset);
     }
 
@@ -185,5 +193,45 @@ public static class ProviderUsageHelper
         if (!limit.HasValue || limit.Value <= 0) return false;
         var effective = (long)(limit.Value * EffectiveLimitFraction);
         return ComputeUsage(tracker, provider) >= effective;
+    }
+
+    /// <summary>
+    /// Builds a metrics-key → display-label map (nickname, else host).
+    /// Used by overview/queue/history/live-reads so Guids never render.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string?> BuildLabelsByMetricsKey(
+        IEnumerable<UsenetProviderConfig.ConnectionDetails> providers)
+    {
+        var result = new Dictionary<string, string?>(StringComparer.Ordinal);
+        foreach (var group in providers
+                     .Where(p => p.ProviderId != Guid.Empty)
+                     .GroupBy(p => UsenetProviderIdentity.MetricsKey(p), StringComparer.Ordinal))
+        {
+            var p = group.First();
+            var nick = p.Nickname?.Trim();
+            result[group.Key] = string.IsNullOrEmpty(nick) ? p.Host : nick;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Builds a metrics-key → (Host, Nickname) map for API payloads that still
+    /// expose a host field for display (queue/history/live-reads).
+    /// </summary>
+    public static IReadOnlyDictionary<string, (string Host, string? Nickname)> BuildDisplayByMetricsKey(
+        IEnumerable<UsenetProviderConfig.ConnectionDetails> providers)
+    {
+        return providers
+            .Where(p => p.ProviderId != Guid.Empty)
+            .GroupBy(p => UsenetProviderIdentity.MetricsKey(p), StringComparer.Ordinal)
+            .ToDictionary(
+                g => g.Key,
+                g =>
+                {
+                    var p = g.First();
+                    var nick = p.Nickname?.Trim();
+                    return (p.Host, string.IsNullOrEmpty(nick) ? null : nick);
+                },
+                StringComparer.Ordinal);
     }
 }

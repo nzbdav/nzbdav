@@ -13,6 +13,13 @@ public class UsenetProviderConfig
 
     public class ConnectionDetails
     {
+        /// <summary>
+        /// Stable per-account identity used as the metrics/usage key. Distinct from
+        /// <see cref="Host"/> so two accounts on the same NNTP host keep independent
+        /// bandwidth counters, caps, and scoreboard rows.
+        /// </summary>
+        public Guid ProviderId { get; set; }
+
         public required ProviderType Type { get; set; }
         public required string Host { get; set; }
         public required int Port { get; set; }
@@ -26,7 +33,7 @@ public class UsenetProviderConfig
         public int? PipeliningDepth { get; set; }
 
         // Optional user-friendly label shown in the UI in place of Host. Host is
-        // still the real NNTP target and the stable key used for metrics/logs.
+        // still the real NNTP target; ProviderId is the stable metrics/logs key.
         public string? Nickname { get; set; }
 
         /// <summary>

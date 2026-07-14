@@ -15,15 +15,15 @@ public sealed class CountingYencStream : YencStream
 {
     private readonly YencStream _inner;
     private readonly ProviderBytesTracker _tracker;
-    private readonly string _host;
+    private readonly string _providerKey;
     private long _bytes;
     private long _activeReadTicks;
 
-    public CountingYencStream(YencStream inner, ProviderBytesTracker tracker, string host) : base(Null)
+    public CountingYencStream(YencStream inner, ProviderBytesTracker tracker, string providerKey) : base(Null)
     {
         _inner = inner;
         _tracker = tracker;
-        _host = host;
+        _providerKey = providerKey;
     }
 
     public override ValueTask<UsenetYencHeader?> GetYencHeadersAsync(CancellationToken cancellationToken = default)
@@ -36,7 +36,7 @@ public sealed class CountingYencStream : YencStream
         _activeReadTicks += Stopwatch.GetTimestamp() - start;
         if (n > 0)
         {
-            _tracker.Add(_host, n);
+            _tracker.Add(_providerKey, n);
             _bytes += n;
         }
         return n;
@@ -49,7 +49,7 @@ public sealed class CountingYencStream : YencStream
             if (_bytes > 0 && _activeReadTicks > 0)
             {
                 var activeMs = _activeReadTicks * 1000.0 / Stopwatch.Frequency;
-                _tracker.RecordSegmentThroughput(_host, _bytes, activeMs);
+                _tracker.RecordSegmentThroughput(_providerKey, _bytes, activeMs);
             }
 
             _inner.Dispose();

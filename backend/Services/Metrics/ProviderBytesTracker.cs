@@ -9,77 +9,79 @@ namespace NzbWebDAV.Services.Metrics;
 /// stream is read and folds them into ProviderMinute on the next rollup tick.
 ///
 /// Two pieces of state:
-///   - _buckets keyed by (minute, host) -> bytes, drained by the rollup service
-///   - _lifetime keyed by host -> total bytes, exposed for "all-time" tiles
+///   - _buckets keyed by (minute, providerKey) -> bytes, drained by the rollup service
+///   - _lifetime keyed by providerKey -> total bytes, exposed for "all-time" tiles
+///
+/// providerKey is the stable per-account identity (<c>ProviderId</c>), not the NNTP host.
 /// </summary>
 public sealed class ProviderBytesTracker
 {
     private const long OneMinute = 60_000;
 
-    private readonly ConcurrentDictionary<(long Minute, string Host), long> _buckets = new();
+    private readonly ConcurrentDictionary<(long Minute, string ProviderKey), long> _buckets = new();
     private readonly ConcurrentDictionary<string, long> _lifetime = new();
     private long _lifetimeAll;
 
     private readonly ConcurrentDictionary<string, double> _bytesPerMs = new();
     private const double SpeedEwmaAlpha = 0.3;
 
-    public void Add(string host, long bytes)
+    public void Add(string providerKey, long bytes)
     {
-        if (bytes <= 0 || string.IsNullOrEmpty(host)) return;
+        if (bytes <= 0 || string.IsNullOrEmpty(providerKey)) return;
         var minute = NowMinute();
-        _buckets.AddOrUpdate((minute, host), bytes, (_, prev) => prev + bytes);
-        _lifetime.AddOrUpdate(host, bytes, (_, prev) => prev + bytes);
+        _buckets.AddOrUpdate((minute, providerKey), bytes, (_, prev) => prev + bytes);
+        _lifetime.AddOrUpdate(providerKey, bytes, (_, prev) => prev + bytes);
         Interlocked.Add(ref _lifetimeAll, bytes);
     }
 
     public long LifetimeAll => Interlocked.Read(ref _lifetimeAll);
 
-    public IReadOnlyDictionary<string, long> LifetimeByHost => _lifetime;
+    public IReadOnlyDictionary<string, long> LifetimeByProvider => _lifetime;
 
     /// <summary>
-    /// Overwrites the in-memory lifetime counter for a host. Used at startup to
+    /// Overwrites the in-memory lifetime counter for a provider key. Used at startup to
     /// hydrate from ProviderHourly and after a counter reset to drop back to
     /// zero. Does not touch <see cref="LifetimeAll"/> since that reflects the
     /// total bytes observed by this process; rewriting it on every config
     /// change would make the overview tile jump around for unrelated reasons.
     /// </summary>
-    public void SetLifetime(string host, long bytes)
+    public void SetLifetime(string providerKey, long bytes)
     {
-        if (string.IsNullOrEmpty(host)) return;
-        _lifetime[host] = Math.Max(0, bytes);
+        if (string.IsNullOrEmpty(providerKey)) return;
+        _lifetime[providerKey] = Math.Max(0, bytes);
     }
 
-    public long GetLifetime(string host)
+    public long GetLifetime(string providerKey)
     {
-        if (string.IsNullOrEmpty(host)) return 0;
-        return _lifetime.TryGetValue(host, out var v) ? v : 0;
+        if (string.IsNullOrEmpty(providerKey)) return 0;
+        return _lifetime.TryGetValue(providerKey, out var v) ? v : 0;
     }
 
-    public void RecordSegmentThroughput(string host, long bytes, double activeMs)
+    public void RecordSegmentThroughput(string providerKey, long bytes, double activeMs)
     {
-        if (string.IsNullOrEmpty(host) || bytes <= 0 || activeMs <= 0) return;
+        if (string.IsNullOrEmpty(providerKey) || bytes <= 0 || activeMs <= 0) return;
         var sample = bytes / activeMs;
-        _bytesPerMs.AddOrUpdate(host, sample, (_, prev) => prev + SpeedEwmaAlpha * (sample - prev));
+        _bytesPerMs.AddOrUpdate(providerKey, sample, (_, prev) => prev + SpeedEwmaAlpha * (sample - prev));
     }
 
-    public double GetBytesPerMs(string host)
+    public double GetBytesPerMs(string providerKey)
     {
-        if (string.IsNullOrEmpty(host)) return 0;
-        return _bytesPerMs.TryGetValue(host, out var v) ? v : 0;
+        if (string.IsNullOrEmpty(providerKey)) return 0;
+        return _bytesPerMs.TryGetValue(providerKey, out var v) ? v : 0;
     }
 
     /// <summary>
     /// Pop all buckets whose minute is strictly older than <paramref name="cutoffMinute"/>.
     /// Returned in stable order so callers can apply them transactionally.
     /// </summary>
-    public List<(long Minute, string Host, long Bytes)> DrainClosed(long cutoffMinute)
+    public List<(long Minute, string ProviderKey, long Bytes)> DrainClosed(long cutoffMinute)
     {
         var drained = new List<(long, string, long)>();
         foreach (var key in _buckets.Keys)
         {
             if (key.Minute >= cutoffMinute) continue;
             if (_buckets.TryRemove(key, out var bytes))
-                drained.Add((key.Minute, key.Host, bytes));
+                drained.Add((key.Minute, key.ProviderKey, bytes));
         }
         return drained;
     }

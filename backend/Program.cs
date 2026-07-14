@@ -102,6 +102,12 @@ class Program
             var configManager = new ConfigManager();
             await configManager.LoadConfig().ConfigureAwait(false);
 
+            // Assign stable ProviderIds (persisting if needed) and remap legacy
+            // host-keyed metrics rows before the streaming client is built.
+            await UsenetProviderIdentity
+                .EnsureAsync(configManager, SigtermUtil.GetCancellationToken())
+                .ConfigureAwait(false);
+
             // initialize rclone client
             RcloneClient.Initialize(configManager);
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NzbWebDAV.Config;
 using NzbWebDAV.Database;
@@ -38,6 +39,9 @@ public class UpdateConfigController(DavDatabaseClient dbClient, ConfigManager co
                 !ConfigSecretMasker.IsMaskToken(item.ConfigValue))
                 resolvedValue = PasswordUtil.Hash(resolvedValue);
 
+            if (item.ConfigName == ConfigKeys.UsenetProviders)
+                resolvedValue = NormalizeUsenetProviderIds(resolvedValue, existingValue);
+
             return new ConfigItem
             {
                 ConfigName = item.ConfigName,
@@ -68,6 +72,31 @@ public class UpdateConfigController(DavDatabaseClient dbClient, ConfigManager co
         configManager.UpdateValues(resolvedItems);
 
         return new UpdateConfigResponse { Status = true };
+    }
+
+    /// <summary>
+    /// Preserve ProviderIds across config saves even when a client omits them
+    /// (e.g. older UI that rebuilds ConnectionDetails without the field).
+    /// </summary>
+    private static string NormalizeUsenetProviderIds(string incomingJson, string? existingJson)
+    {
+        var incoming = JsonSerializer.Deserialize<UsenetProviderConfig>(incomingJson)
+                       ?? new UsenetProviderConfig();
+        UsenetProviderConfig? existing = null;
+        if (!string.IsNullOrWhiteSpace(existingJson))
+        {
+            try
+            {
+                existing = JsonSerializer.Deserialize<UsenetProviderConfig>(existingJson);
+            }
+            catch (JsonException)
+            {
+                existing = null;
+            }
+        }
+
+        UsenetProviderIdentity.NormalizeProviderIdsOnSave(incoming, existing);
+        return JsonSerializer.Serialize(incoming);
     }
 
     protected override async Task<IActionResult> HandleRequest()

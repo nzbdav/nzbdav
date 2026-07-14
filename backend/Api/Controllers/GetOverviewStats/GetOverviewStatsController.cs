@@ -54,10 +54,8 @@ public class GetOverviewStatsController(
             window == GetOverviewStatsRequest.OverviewWindow.Last30Days ||
             window == GetOverviewStatsRequest.OverviewWindow.AllTime;
 
-        var nicknamesByHost = configManager.GetUsenetProviderConfig().Providers
-            .Where(p => !string.IsNullOrWhiteSpace(p.Nickname))
-            .GroupBy(p => p.Host, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.First().Nickname, StringComparer.OrdinalIgnoreCase);
+        var labelsByMetricsKey = ProviderUsageHelper
+            .BuildLabelsByMetricsKey(configManager.GetUsenetProviderConfig().Providers);
 
         var included = new List<string>();
         var tiles = new GetOverviewStatsResponse.LiveTiles();
@@ -80,7 +78,7 @@ public class GetOverviewStatsController(
         Task<StaticSectionResult>? staticTask = null;
 
         if (wantWindow)
-            windowTask = BuildWindowSectionAsync(window, windowStart, windowMs, bucketSize, nowMs, useRollups, nicknamesByHost);
+            windowTask = BuildWindowSectionAsync(window, windowStart, windowMs, bucketSize, nowMs, useRollups, labelsByMetricsKey);
         if (wantDetail && !useRollups)
             detailTask = BuildDetailSectionAsync(windowStart);
         if (wantStatic)
@@ -188,7 +186,7 @@ public class GetOverviewStatsController(
         long bucketSize,
         long nowMs,
         bool useRollups,
-        IReadOnlyDictionary<string, string?> nicknamesByHost)
+        IReadOnlyDictionary<string, string?> labelsByMetricsKey)
     {
         await using var metricsSessions = new MetricsDbContext();
         await using var metricsHeatmap = new MetricsDbContext();
@@ -245,7 +243,7 @@ public class GetOverviewStatsController(
                 hours.Select(h => (h.Hour, h.Articles, h.Misses, h.Errors, h.BytesFetched)),
                 sessions.Select(s => (s.EndedAt, s.BytesServed)),
                 bucketSize);
-            providers = BuildProvidersFromHourly(hours, windowStart, bucketSize, nowMs, nicknamesByHost);
+            providers = BuildProvidersFromHourly(hours, windowStart, bucketSize, nowMs, labelsByMetricsKey);
             totalArticles = hours.Sum(h => h.Articles);
             totalMisses = hours.Sum(h => h.Misses);
             totalErrors = hours.Sum(h => h.Errors);
@@ -297,7 +295,7 @@ public class GetOverviewStatsController(
                 bucketSize);
             providers = BuildProvidersFromMinutes(
                 minutes.Select(m => (m.Minute, m.Provider, m.Articles, m.BytesFetched, m.Errors, m.Retries, m.SumDurationMs)),
-                windowStart, window, nicknamesByHost);
+                windowStart, window, labelsByMetricsKey);
             totalArticles = minutes.Sum(m => m.Articles);
             totalMisses = minutes.Sum(m => m.Misses);
             totalErrors = minutes.Sum(m => m.Errors);
@@ -322,7 +320,7 @@ public class GetOverviewStatsController(
             readsSaved,
             previousSaves,
             ResolveFailoverBucket(window),
-            nicknamesByHost);
+            labelsByMetricsKey);
 
         var tiles = BuildLiveTiles(liveCounts?.Articles ?? 0, liveCounts?.Errors ?? 0);
         var sessionsBlock = BuildSessionsBlock(sessionsRows.Select(s => (s.DurationMs, s.BytesServed)));
@@ -471,7 +469,7 @@ public class GetOverviewStatsController(
         long readsSaved,
         long? previousSaves,
         long chartBucketSize,
-        IReadOnlyDictionary<string, string?> nicknamesByHost)
+        IReadOnlyDictionary<string, string?> labelsByMetricsKey)
     {
         var totalsByProvider = new Dictionary<string, long>();
         var byBucket = new SortedDictionary<long, Dictionary<string, long>>();
@@ -523,7 +521,7 @@ public class GetOverviewStatsController(
                 .Select(p => new GetOverviewStatsResponse.FailoverProvider
                 {
                     Provider = p,
-                    Nickname = nicknamesByHost.GetValueOrDefault(p),
+                    Nickname = labelsByMetricsKey.GetValueOrDefault(p),
                     Saves = totalsByProvider[p],
                 })
                 .ToList(),
@@ -533,7 +531,7 @@ public class GetOverviewStatsController(
                 .Select(kv => new GetOverviewStatsResponse.FailoverFrom
                 {
                     Provider = kv.Key,
-                    Nickname = nicknamesByHost.GetValueOrDefault(kv.Key),
+                    Nickname = labelsByMetricsKey.GetValueOrDefault(kv.Key),
                     Misses = kv.Value,
                 })
                 .ToList(),
@@ -642,7 +640,7 @@ public class GetOverviewStatsController(
         IEnumerable<(long Minute, string Provider, long Articles, long BytesFetched, long Errors, long Retries, long SumDurationMs)> minutes,
         long windowStart,
         GetOverviewStatsRequest.OverviewWindow window,
-        IReadOnlyDictionary<string, string?> nicknamesByHost)
+        IReadOnlyDictionary<string, string?> labelsByMetricsKey)
     {
         var (sparkBuckets, sparkSize) = window switch
         {
@@ -671,7 +669,7 @@ public class GetOverviewStatsController(
             .Select(kv => new GetOverviewStatsResponse.ProviderRow
             {
                 Provider = kv.Key,
-                Nickname = nicknamesByHost.GetValueOrDefault(kv.Key),
+                Nickname = labelsByMetricsKey.GetValueOrDefault(kv.Key),
                 Articles = kv.Value.Articles,
                 BytesFetched = kv.Value.Bytes,
                 Errors = kv.Value.Errors,
@@ -689,7 +687,7 @@ public class GetOverviewStatsController(
         long windowStart,
         long bucketSize,
         long nowMs,
-        IReadOnlyDictionary<string, string?> nicknamesByHost)
+        IReadOnlyDictionary<string, string?> labelsByMetricsKey)
     {
         var totalSpan = nowMs - windowStart;
         var sparkSize = OneDay;
@@ -716,7 +714,7 @@ public class GetOverviewStatsController(
             .Select(kv => new GetOverviewStatsResponse.ProviderRow
             {
                 Provider = kv.Key,
-                Nickname = nicknamesByHost.GetValueOrDefault(kv.Key),
+                Nickname = labelsByMetricsKey.GetValueOrDefault(kv.Key),
                 Articles = kv.Value.Articles,
                 BytesFetched = kv.Value.Bytes,
                 Errors = kv.Value.Errors,

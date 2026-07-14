@@ -24,7 +24,8 @@ namespace NzbWebDAV.Clients.Usenet;
 /// <param name="connectionPool"></param>
 /// <param name="type"></param>
 /// <param name="circuitBreaker"></param>
-/// <param name="providerName"></param>
+/// <param name="providerName">NNTP hostname used for connection/logging.</param>
+/// <param name="metricsKey">Stable per-account metrics key (ProviderId).</param>
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class MultiConnectionNntpClient(
     ConnectionPool<INntpClient> connectionPool,
@@ -35,12 +36,18 @@ public class MultiConnectionNntpClient(
     long bytesUsedOffset = 0,
     int priority = 0,
     int? pipeliningDepth = null,
-    string storageGroup = ""
+    string storageGroup = "",
+    string? metricsKey = null
 ) : NntpClient
 {
     public ProviderType ProviderType { get; } = type;
     public int Priority { get; } = priority;
     public string Host { get; } = providerName;
+    /// <summary>
+    /// Stable per-account key for bandwidth/usage metrics. Distinct from
+    /// <see cref="Host"/> so multiple accounts on the same NNTP host do not share counters.
+    /// </summary>
+    public string MetricsKey { get; } = string.IsNullOrEmpty(metricsKey) ? providerName : metricsKey;
     public string StorageGroup { get; } = storageGroup;
 
     private static readonly ConcurrentDictionary<string, int> TimeoutCounts = new();

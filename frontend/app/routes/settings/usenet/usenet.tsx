@@ -71,6 +71,7 @@ enum ProviderType {
 }
 
 type ConnectionDetails = {
+    ProviderId?: string;
     Type: ProviderType;
     Host: string;
     Port: number;
@@ -81,7 +82,7 @@ type ConnectionDetails = {
     Priority?: number;
     PipeliningDepth?: number | null;
     // Optional user-set label. Shown in the UI in place of Host when present;
-    // Host stays the real NNTP target.
+    // Host stays the real NNTP target. ProviderId is the stable metrics key.
     Nickname?: string;
     // Optional label for providers that share upstream storage. When one reports
     // an article missing (NNTP 430), siblings with the same label are skipped
@@ -301,7 +302,11 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
         if (editingIndex !== null) {
             providers[editingIndex] = provider;
         } else {
-            providers.push({ ...provider, Priority: providers.length });
+            providers.push({
+                ...provider,
+                ProviderId: provider.ProviderId || crypto.randomUUID(),
+                Priority: providers.length,
+            });
         }
         setNewConfig({ ...config, "usenet.providers": serializeProviderConfig({ ...providerConfig, Providers: providers }) });
         handleCloseModal();
@@ -966,6 +971,7 @@ function ProviderModal({ show, provider, onClose, onSave, onApplyPipelining, def
         const trimmedNickname = nickname.trim();
         const trimmedStorageGroup = storageGroup.trim();
         onSave({
+            ProviderId: provider?.ProviderId,
             Type: type,
             Host: host,
             Port: parseInt(port, 10),

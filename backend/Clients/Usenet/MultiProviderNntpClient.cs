@@ -204,26 +204,26 @@ public class MultiProviderNntpClient(
             {
                 primaryStopwatch.Stop();
                 var reason = ClassifyException(e);
-                RecordFetch(primaryProvider.Host, reason, primaryStopwatch.ElapsedMilliseconds, 0);
-                (priorMisses ??= []).Add((primaryProvider.Host, reason));
+                RecordFetch(primaryProvider.MetricsKey, reason, primaryStopwatch.ElapsedMilliseconds, 0);
+                (priorMisses ??= []).Add((primaryProvider.MetricsKey, reason));
                 lastException = ExceptionDispatchInfo.Capture(e);
             }
 
             if (response?.ResponseType == UsenetResponseType.ArticleRetrievedBodyFollows)
             {
                 primaryStopwatch.Stop();
-                _usageTracker.RecordSuccess(primaryProvider.Host);
-                RecordFetch(primaryProvider.Host, SegmentFetch.FetchStatus.Ok,
+                _usageTracker.RecordSuccess(primaryProvider.MetricsKey);
+                RecordFetch(primaryProvider.MetricsKey, SegmentFetch.FetchStatus.Ok,
                     primaryStopwatch.ElapsedMilliseconds, 0);
-                return WrapStreamForByteCounting(response, primaryProvider.Host);
+                return WrapStreamForByteCounting(response, primaryProvider.MetricsKey);
             }
 
             if (response != null && UsenetArticleAvailability.IsDefinitiveMissing(response))
             {
                 primaryStopwatch.Stop();
-                RecordFetch(primaryProvider.Host, SegmentFetch.FetchStatus.Missing,
+                RecordFetch(primaryProvider.MetricsKey, SegmentFetch.FetchStatus.Missing,
                     primaryStopwatch.ElapsedMilliseconds, 0);
-                (priorMisses ??= []).Add((primaryProvider.Host, SegmentFetch.FetchStatus.Missing));
+                (priorMisses ??= []).Add((primaryProvider.MetricsKey, SegmentFetch.FetchStatus.Missing));
             }
 
             // Retry the primary provider once before falling back. Even a definitive miss
@@ -267,15 +267,15 @@ public class MultiProviderNntpClient(
                     var responseType = response.ResponseType;
                     if (responseType == UsenetResponseType.ArticleRetrievedBodyFollows)
                     {
-                        _usageTracker.RecordSuccess(provider.Host);
-                        RecordFetch(provider.Host, SegmentFetch.FetchStatus.Ok,
+                        _usageTracker.RecordSuccess(provider.MetricsKey);
+                        RecordFetch(provider.MetricsKey, SegmentFetch.FetchStatus.Ok,
                             stopwatch.ElapsedMilliseconds, priorMisses?.Count ?? 0);
                         if (priorMisses is { Count: > 0 })
                         {
                             _usageTracker.RecordFailoverSave();
-                            RecordFailoverMisses(priorMisses, provider.Host);
+                            RecordFailoverMisses(priorMisses, provider.MetricsKey);
                         }
-                        response = WrapStreamForByteCounting(response, provider.Host);
+                        response = WrapStreamForByteCounting(response, provider.MetricsKey);
                         fallbackCompletionOwnedByTransfer = true;
                         deferredCallback.Activate(result =>
                         {
@@ -291,9 +291,9 @@ public class MultiProviderNntpClient(
                     }
                     else
                     {
-                        RecordFetch(provider.Host, SegmentFetch.FetchStatus.Missing,
+                        RecordFetch(provider.MetricsKey, SegmentFetch.FetchStatus.Missing,
                             stopwatch.ElapsedMilliseconds, priorMisses?.Count ?? 0);
-                        (priorMisses ??= []).Add((provider.Host, SegmentFetch.FetchStatus.Missing));
+                        (priorMisses ??= []).Add((provider.MetricsKey, SegmentFetch.FetchStatus.Missing));
                         if (UsenetArticleAvailability.IsDefinitiveMissing(response) &&
                             group.Length > 0)
                         {
@@ -309,9 +309,9 @@ public class MultiProviderNntpClient(
                 {
                     stopwatch.Stop();
                     var reason = ClassifyException(e);
-                    RecordFetch(provider.Host, reason, stopwatch.ElapsedMilliseconds,
+                    RecordFetch(provider.MetricsKey, reason, stopwatch.ElapsedMilliseconds,
                         priorMisses?.Count ?? 0);
-                    (priorMisses ??= []).Add((provider.Host, reason));
+                    (priorMisses ??= []).Add((provider.MetricsKey, reason));
                     deferredCallback.Discard();
                     coordinator.CompleteAttempt();
                     lastException = ExceptionDispatchInfo.Capture(e);
@@ -464,15 +464,15 @@ public class MultiProviderNntpClient(
                 if (result.ResponseType == successResponseType)
                 {
                     if (attribution != null) attribution.Host = provider.Host;
-                    _usageTracker.RecordSuccess(provider.Host);
-                    RecordFetch(provider.Host, SegmentFetch.FetchStatus.Ok,
+                    _usageTracker.RecordSuccess(provider.MetricsKey);
+                    RecordFetch(provider.MetricsKey, SegmentFetch.FetchStatus.Ok,
                         stopwatch.ElapsedMilliseconds, attemptIndex);
                     if (attemptIndex > 0)
                     {
                         _usageTracker.RecordFailoverSave();
-                        RecordFailoverMisses(priorMisses, provider.Host);
+                        RecordFailoverMisses(priorMisses, provider.MetricsKey);
                     }
-                    result = WrapStreamForByteCounting(result, provider.Host);
+                    result = WrapStreamForByteCounting(result, provider.MetricsKey);
                     deferredCallback.Activate(onConnectionReadyAgain ?? (_ => { }));
                     return result;
                 }
@@ -480,9 +480,9 @@ public class MultiProviderNntpClient(
                 deferredCallback.Discard();
                 if (UsenetArticleAvailability.IsDefinitiveMissing(result))
                 {
-                    RecordFetch(provider.Host, SegmentFetch.FetchStatus.Missing,
+                    RecordFetch(provider.MetricsKey, SegmentFetch.FetchStatus.Missing,
                         stopwatch.ElapsedMilliseconds, attemptIndex);
-                    (priorMisses ??= []).Add((provider.Host, SegmentFetch.FetchStatus.Missing));
+                    (priorMisses ??= []).Add((provider.MetricsKey, SegmentFetch.FetchStatus.Missing));
                     lastNoArticleResult = result;
                     lastOutcomeWasException = false;
                     if (group.Length > 0) missingGroups.Add(group);
@@ -490,7 +490,7 @@ public class MultiProviderNntpClient(
                     continue;
                 }
 
-                RecordFetch(provider.Host, SegmentFetch.FetchStatus.Missing,
+                RecordFetch(provider.MetricsKey, SegmentFetch.FetchStatus.Missing,
                     stopwatch.ElapsedMilliseconds, attemptIndex);
                 InvokeCompletionCallback(
                     onConnectionReadyAgain, ArticleBodyResult.NotRetrieved);
@@ -500,8 +500,8 @@ public class MultiProviderNntpClient(
             {
                 stopwatch.Stop();
                 var reason = ClassifyException(e);
-                RecordFetch(provider.Host, reason, stopwatch.ElapsedMilliseconds, attemptIndex);
-                (priorMisses ??= []).Add((provider.Host, reason));
+                RecordFetch(provider.MetricsKey, reason, stopwatch.ElapsedMilliseconds, attemptIndex);
+                (priorMisses ??= []).Add((provider.MetricsKey, reason));
                 deferredCallback.Discard();
                 lastException = ExceptionDispatchInfo.Capture(e);
                 lastOutcomeWasException = true;
@@ -575,8 +575,8 @@ public class MultiProviderNntpClient(
                 // never a connection error.
                 if (UsenetArticleAvailability.IsDefinitiveMissing(result))
                 {
-                    RecordFetch(provider.Host, SegmentFetch.FetchStatus.Missing, stopwatch.ElapsedMilliseconds, attemptIndex);
-                    (priorMisses ??= new()).Add((provider.Host, SegmentFetch.FetchStatus.Missing));
+                    RecordFetch(provider.MetricsKey, SegmentFetch.FetchStatus.Missing, stopwatch.ElapsedMilliseconds, attemptIndex);
+                    (priorMisses ??= new()).Add((provider.MetricsKey, SegmentFetch.FetchStatus.Missing));
                     lastNoArticleResult = result;
                     lastOutcomeWasException = false;
                     if (group.Length > 0) missingGroups.Add(group);
@@ -594,18 +594,18 @@ public class MultiProviderNntpClient(
                     && result.ResponseType is UsenetResponseType.ArticleRetrievedBodyFollows
                                           or UsenetResponseType.ArticleRetrievedHeadAndBodyFollow)
                 {
-                    _usageTracker.RecordSuccess(provider.Host);
-                    RecordFetch(provider.Host, SegmentFetch.FetchStatus.Ok, stopwatch.ElapsedMilliseconds, attemptIndex);
+                    _usageTracker.RecordSuccess(provider.MetricsKey);
+                    RecordFetch(provider.MetricsKey, SegmentFetch.FetchStatus.Ok, stopwatch.ElapsedMilliseconds, attemptIndex);
                     if (attemptIndex > 0)
                     {
                         _usageTracker.RecordFailoverSave();
-                        RecordFailoverMisses(priorMisses, rescuer: provider.Host);
+                        RecordFailoverMisses(priorMisses, rescuer: provider.MetricsKey);
                     }
-                    result = WrapStreamForByteCounting(result, provider.Host);
+                    result = WrapStreamForByteCounting(result, provider.MetricsKey);
                 }
                 else
                 {
-                    RecordFetch(provider.Host, SegmentFetch.FetchStatus.Missing, stopwatch.ElapsedMilliseconds, attemptIndex);
+                    RecordFetch(provider.MetricsKey, SegmentFetch.FetchStatus.Missing, stopwatch.ElapsedMilliseconds, attemptIndex);
                 }
 
                 return result;
@@ -614,8 +614,8 @@ public class MultiProviderNntpClient(
             {
                 stopwatch.Stop();
                 var reason = ClassifyException(e);
-                RecordFetch(provider.Host, reason, stopwatch.ElapsedMilliseconds, attemptIndex);
-                (priorMisses ??= new()).Add((provider.Host, reason));
+                RecordFetch(provider.MetricsKey, reason, stopwatch.ElapsedMilliseconds, attemptIndex);
+                (priorMisses ??= new()).Add((provider.MetricsKey, reason));
                 lastException = ExceptionDispatchInfo.Capture(e);
                 lastOutcomeWasException = true;
                 attemptIndex++;
@@ -637,13 +637,13 @@ public class MultiProviderNntpClient(
         throw new Exception("There are no usenet providers configured.");
     }
 
-    private void RecordFetch(string host, SegmentFetch.FetchStatus status, long durationMs, int retries)
+    private void RecordFetch(string metricsKey, SegmentFetch.FetchStatus status, long durationMs, int retries)
     {
         if (metricsWriter == null) return;
         metricsWriter.RecordFetch(new SegmentFetch
         {
             At = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            Provider = host,
+            Provider = metricsKey,
             ReadSessionId = ReadSessionScope.Value,
             Bytes = 0, // bytes flow lazily through CountingYencStream → ProviderBytesTracker
             DurationMs = (int)Math.Min(int.MaxValue, durationMs),
@@ -670,15 +670,15 @@ public class MultiProviderNntpClient(
         }
     }
 
-    private T WrapStreamForByteCounting<T>(T result, string host) where T : UsenetResponse
+    private T WrapStreamForByteCounting<T>(T result, string metricsKey) where T : UsenetResponse
     {
         if (bytesTracker == null) return result;
         return result switch
         {
             UsenetDecodedBodyResponse b
-                => (T)(object)(b with { Stream = new CountingYencStream(b.Stream!, bytesTracker, host) }),
+                => (T)(object)(b with { Stream = new CountingYencStream(b.Stream!, bytesTracker, metricsKey) }),
             UsenetDecodedArticleResponse a
-                => (T)(object)(a with { Stream = new CountingYencStream(a.Stream!, bytesTracker, host) }),
+                => (T)(object)(a with { Stream = new CountingYencStream(a.Stream!, bytesTracker, metricsKey) }),
             _ => result,
         };
     }
@@ -729,7 +729,7 @@ public class MultiProviderNntpClient(
     private double EstimatedDeliveryScore(MultiConnectionNntpClient provider)
     {
         var inFlight = provider.ActiveConnections + provider.PendingSelections + 1;
-        var bytesPerMs = bytesTracker?.GetBytesPerMs(provider.Host) ?? 0d;
+        var bytesPerMs = bytesTracker?.GetBytesPerMs(provider.MetricsKey) ?? 0d;
         return bytesPerMs > 0 ? inFlight / bytesPerMs : inFlight;
     }
 
@@ -737,7 +737,7 @@ public class MultiProviderNntpClient(
     {
         var limit = client.ByteLimit;
         if (bytesTracker == null || !limit.HasValue || limit.Value <= 0) return false;
-        var used = bytesTracker.GetLifetime(client.Host) + client.BytesUsedOffset;
+        var used = bytesTracker.GetLifetime(client.MetricsKey) + client.BytesUsedOffset;
         // Stop at the effective cutoff (95% of cap) so in-flight fetches that
         // already passed this check can't push the actual count past the cap.
         // See ProviderUsageHelper.EffectiveLimitFraction for the rationale.
@@ -749,7 +749,7 @@ public class MultiProviderNntpClient(
     {
         var limit = client.ByteLimit;
         if (bytesTracker == null || !limit.HasValue || limit.Value <= 0) return long.MaxValue;
-        var used = bytesTracker.GetLifetime(client.Host) + client.BytesUsedOffset;
+        var used = bytesTracker.GetLifetime(client.MetricsKey) + client.BytesUsedOffset;
         return Math.Max(0, limit.Value - used);
     }
 

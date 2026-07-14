@@ -18,6 +18,7 @@ using NzbWebDAV.Queue.FileAggregators;
 using NzbWebDAV.Queue.FileProcessors;
 using NzbWebDAV.Queue.PostProcessors;
 using NzbWebDAV.Services;
+using NzbWebDAV.Services.Metrics;
 using NzbWebDAV.Utils;
 using NzbWebDAV.Websocket;
 using Serilog;
@@ -485,7 +486,10 @@ public class QueueItemProcessor(
         var mountFolder = databaseOperations != null ? await databaseOperations.Invoke().ConfigureAwait(false) : null;
         var historyItem = CreateHistoryItem(mountFolder, startTime, error);
         var providerUsage = providerUsageTracker.Snapshot(queueItem.Id);
-        var historySlot = GetHistoryResponse.HistorySlot.FromHistoryItem(historyItem, mountFolder, configManager, providerUsage);
+        var displayByMetricsKey = ProviderUsageHelper
+            .BuildDisplayByMetricsKey(configManager.GetUsenetProviderConfig().Providers);
+        var historySlot = GetHistoryResponse.HistorySlot.FromHistoryItem(
+            historyItem, mountFolder, configManager, providerUsage, displayByMetricsKey);
         dbClient.Ctx.QueueItems.Remove(queueItem);
         dbClient.Ctx.HistoryItems.Add(historyItem);
         await dbClient.Ctx.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -532,7 +536,7 @@ public class QueueItemProcessor(
         var outcome = error == null
             ? WatchdogEntry.Outcome.QueueCompleted
             : WatchdogEntry.Outcome.QueueFailed;
-        var providerHost = FormatProviders(providerUsage);
+        var providerHost = FormatProviders(providerUsage, configManager);
 
         watchdogLog.Record(new WatchdogEntry
         {
@@ -554,14 +558,21 @@ public class QueueItemProcessor(
         });
     }
 
-    private static string? FormatProviders(IReadOnlyDictionary<string, long> usage)
+    private static string? FormatProviders(
+        IReadOnlyDictionary<string, long> usage,
+        ConfigManager configManager)
     {
         if (usage.Count == 0) return null;
+        var labels = ProviderUsageHelper.BuildLabelsByMetricsKey(
+            configManager.GetUsenetProviderConfig().Providers);
+        string Label(string key) =>
+            labels.TryGetValue(key, out var label) && !string.IsNullOrEmpty(label) ? label! : key;
+
         var total = usage.Values.Sum();
-        if (total == 0) return string.Join(", ", usage.Keys);
+        if (total == 0) return string.Join(", ", usage.Keys.Select(Label));
         return string.Join(", ", usage
             .OrderByDescending(kv => kv.Value)
-            .Select(kv => $"{kv.Key} ({(int)Math.Round(100.0 * kv.Value / total)}%)"));
+            .Select(kv => $"{Label(kv.Key)} ({(int)Math.Round(100.0 * kv.Value / total)}%)"));
     }
 
     private async Task RefreshMonitoredDownloads()

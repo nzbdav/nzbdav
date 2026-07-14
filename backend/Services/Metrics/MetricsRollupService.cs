@@ -78,7 +78,7 @@ public class MetricsRollupService(ProviderBytesTracker bytesTracker) : Backgroun
         var drained = bytesTracker.DrainClosed(currentMinute);
         if (drained.Count == 0) return;
 
-        foreach (var (minute, host, bytes) in drained)
+        foreach (var (minute, providerKey, bytes) in drained)
         {
             await db.Database.ExecuteSqlRawAsync(
                 """
@@ -88,7 +88,7 @@ public class MetricsRollupService(ProviderBytesTracker bytesTracker) : Backgroun
                 ON CONFLICT(Minute, Provider) DO UPDATE SET
                     BytesFetched = ProviderMinutes.BytesFetched + excluded.BytesFetched;
                 """,
-                minute, host, bytes).ConfigureAwait(false);
+                minute, providerKey, bytes).ConfigureAwait(false);
 
             var hour = FloorTo(minute, OneHour);
             await db.Database.ExecuteSqlRawAsync(
@@ -99,7 +99,7 @@ public class MetricsRollupService(ProviderBytesTracker bytesTracker) : Backgroun
                 ON CONFLICT(Hour, Provider) DO UPDATE SET
                     BytesFetched = ProviderHourly.BytesFetched + excluded.BytesFetched;
                 """,
-                hour, host, bytes).ConfigureAwait(false);
+                hour, providerKey, bytes).ConfigureAwait(false);
 
             await db.Database.ExecuteSqlRawAsync(
                 """

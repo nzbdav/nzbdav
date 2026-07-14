@@ -4,6 +4,7 @@ using NzbWebDAV.Config;
 using NzbWebDAV.Database;
 using NzbWebDAV.Queue;
 using NzbWebDAV.Services;
+using NzbWebDAV.Services.Metrics;
 
 namespace NzbWebDAV.Api.SabControllers.GetQueue;
 
@@ -30,18 +31,15 @@ public class GetQueueController(
             .Where(x => x.Id != inProgressQueueItem?.Id)
             .ToArray();
 
-        // hosts of every configured Usenet provider — used to show idle providers
-        // alongside active ones for the in-progress download
+        // Metrics keys of every configured Usenet provider — used to show idle providers
+        // alongside active ones for the in-progress download.
         var configuredProviders = configManager.GetUsenetProviderConfig().Providers;
-        var configuredHosts = configuredProviders
-            .Select(p => p.Host)
-            .Where(h => !string.IsNullOrEmpty(h))
+        var configuredKeys = configuredProviders
+            .Where(p => p.ProviderId != Guid.Empty)
+            .Select(UsenetProviderIdentity.MetricsKey)
             .Distinct()
             .ToList();
-        var nicknamesByHost = configuredProviders
-            .Where(p => !string.IsNullOrWhiteSpace(p.Nickname))
-            .GroupBy(p => p.Host, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.First().Nickname, StringComparer.OrdinalIgnoreCase);
+        var displayByMetricsKey = ProviderUsageHelper.BuildDisplayByMetricsKey(configuredProviders);
 
         // get slots
         var slots = queueItems
@@ -53,14 +51,14 @@ public class GetQueueController(
                 var percentage = (isInProgress ? progressPercentage : 0)!.Value;
                 var status = isInProgress ? "Downloading" : "Queued";
                 var providerUsage = providerUsageTracker.Snapshot(queueItem!.Id);
-                if (isInProgress && configuredHosts.Count > 0)
+                if (isInProgress && configuredKeys.Count > 0)
                 {
                     var merged = new Dictionary<string, long>();
-                    foreach (var host in configuredHosts) merged[host] = 0;
+                    foreach (var key in configuredKeys) merged[key] = 0;
                     foreach (var kv in providerUsage) merged[kv.Key] = kv.Value;
                     providerUsage = merged;
                 }
-                return GetQueueResponse.QueueSlot.FromQueueItem(queueItem!, index, percentage, status, providerUsage, nicknamesByHost);
+                return GetQueueResponse.QueueSlot.FromQueueItem(queueItem!, index, percentage, status, providerUsage, displayByMetricsKey);
             })
             .ToList();
 

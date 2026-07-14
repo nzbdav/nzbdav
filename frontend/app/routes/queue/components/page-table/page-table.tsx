@@ -8,6 +8,7 @@ import type { ProviderUsage } from "~/clients/backend-client.server";
 
 const desktopHeaderClass = "hidden min-[900px]:table-cell w-[120px] text-center text-xs font-semibold uppercase tracking-wide";
 const desktopCellClass = "hidden min-[900px]:table-cell max-w-[200px] min-w-0 overflow-hidden whitespace-nowrap px-1 py-3 text-center align-middle";
+const providerCellClass = "hidden min-[900px]:table-cell max-w-[200px] min-w-0 overflow-hidden px-1 py-3 text-center align-middle";
 
 export type PageTableProps = {
     children?: ReactNode,
@@ -98,7 +99,7 @@ export function PageRow(props: PageRowProps) {
             <td className={desktopCellClass}>
                 {props.indexer ? <IndexerBadge indexer={props.indexer} /> : <span className="text-base-content/30 text-xs">—</span>}
             </td>
-            <td className={desktopCellClass}>
+            <td className={providerCellClass}>
                 {props.providers && props.providers.length > 0
                     ? <ProvidersBadge providers={props.providers} />
                     : <span className="text-base-content/30 text-xs">—</span>}
@@ -157,15 +158,11 @@ export function IndexerBadge({ indexer }: { indexer: string }) {
     );
 }
 
-const MAX_INLINE_PROVIDERS = 3;
-
 export function ProvidersBadge({ providers }: { providers: ProviderUsage[] }) {
     if (providers.length === 0) return null;
     const total = providers.reduce((acc, p) => acc + p.segments, 0);
-    // When usage exists, hide idle (0%) hosts from the inline badge; keep them in the tooltip.
-    const forInline = total > 0 ? providers.filter(p => p.segments > 0) : providers;
-    const visible = forInline.slice(0, MAX_INLINE_PROVIDERS);
-    const hidden = forInline.length - visible.length;
+    // When usage exists, hide idle (0%) hosts from the badge; keep them in the tooltip.
+    const visible = total > 0 ? providers.filter(p => p.segments > 0) : providers;
     const labelOf = (p: ProviderUsage) => p.nickname?.trim() || stripHost(p.host);
     const tooltip = providers
         .map(p => total > 0
@@ -173,19 +170,20 @@ export function ProvidersBadge({ providers }: { providers: ProviderUsage[] }) {
             : `${labelOf(p)} (${p.host}): idle`)
         .join("\n");
     return (
-        <span className="badge badge-dash badge-ghost badge-sm inline-flex max-w-full min-w-0 cursor-help items-baseline gap-1 overflow-hidden max-[899px]:max-w-full" title={tooltip}>
+        <span
+            className="inline-flex max-w-full min-w-0 cursor-help flex-col items-stretch gap-0.5 text-left text-xs"
+            title={tooltip}
+        >
             {visible.map((p, i) => (
-                <span key={`${p.host}-${i}`} className="inline-flex min-w-0 shrink items-baseline overflow-hidden">
-                    {i > 0 && <span className="text-base-content/20 mx-0.5 shrink-0">·</span>}
-                    <span className="truncate">{labelOf(p)}</span>
+                <span key={`${p.host}-${i}`} className="flex min-w-0 items-baseline gap-1 overflow-hidden">
+                    <span className="min-w-0 truncate">{labelOf(p)}</span>
                     {total > 0 && (
-                        <span className="text-base-content/50 ml-0.5 shrink-0 tabular-nums">
+                        <span className="shrink-0 tabular-nums text-base-content/50">
                             {Math.round((p.segments / total) * 100)}%
                         </span>
                     )}
                 </span>
             ))}
-            {hidden > 0 && <span className="text-base-content/50 ml-1 shrink-0">+{hidden}</span>}
         </span>
     );
 }

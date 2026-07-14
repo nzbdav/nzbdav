@@ -48,6 +48,11 @@ jobs:
         working-directory: frontend
         run: npm run build && npm run build:server
 
+      # Node ESM requires explicit .js extensions in emitted dist-node imports.
+      - name: Smoke-import dist-node server modules
+        working-directory: frontend
+        run: node --input-type=module -e "import('./dist-node/server/security-headers.js')"
+
       - name: Test frontend with coverage
         working-directory: frontend
         run: npm run test:coverage

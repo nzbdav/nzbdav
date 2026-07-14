@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { shouldProxyToBackend } from "./proxy-path";
+import { shouldProxyToBackend } from "./proxy-path.js";
 
 /**
  * Defensive UI response headers. Skipped on proxied WebDAV/API paths so

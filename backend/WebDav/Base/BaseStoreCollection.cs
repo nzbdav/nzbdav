@@ -28,7 +28,12 @@ public abstract class BaseStoreCollection : IStoreCollection
 
     // interface implementation
     public IPropertyManager? PropertyManager => BaseStoreCollectionPropertyManager.Instance;
-    public InfiniteDepthMode InfiniteDepthMode => InfiniteDepthMode.Allowed;
+
+    // Depth > 1 PROPFIND would recurse into child collections while the parent's
+    // streamed EF query is still open, starting a second operation on the same scoped
+    // DbContext. It also materializes the entire subtree in memory. Clamp to depth 1;
+    // WebDAV clients (rclone included) traverse one directory per request anyway.
+    public InfiniteDepthMode InfiniteDepthMode => InfiniteDepthMode.Assume1;
 
     public Task<StoreItemResult> CopyAsync
     (

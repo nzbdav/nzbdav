@@ -6,6 +6,10 @@ namespace NzbWebDAV.Par2Recovery.Packets
     {
         public const string PacketType = "PAR 2.0\0FileDesc";
 
+        private static readonly Encoding StrictUtf8 = new UTF8Encoding(
+            encoderShouldEmitUTF8Identifier: false,
+            throwOnInvalidBytes: true);
+
         public byte[] FileID { get; protected set; } = null!;
         public byte[] FileHash { get; protected set; } = null!;
         public byte[] File16kHash { get; protected set; } = null!;
@@ -33,72 +37,31 @@ namespace NzbWebDAV.Par2Recovery.Packets
             // 8	8-byte uint	Length of the file.
             FileLength = BitConverter.ToUInt64(body, 48);
 
-            // ?*4	ASCII char array	Name of the file. This array is not guaranteed to be null terminated! Subdirectories are indicated by an HTML-style '/' (a.k.a. the UNIX slash). The filename must be unique.
+            // ?*4	ASCII/UTF-8 char array	Name of the file. Not guaranteed null-terminated.
             var nameBuffer = new byte[body.Length - 56];
             Buffer.BlockCopy(body, 56, nameBuffer, 0, nameBuffer.Length);
 
-            // Use UTF8 encoding if it is either ASCII or has valid byte sequences. Otherwise, go with Windows-1252.
-            var encoding = IsUTF8(nameBuffer) ? Encoding.UTF8 : Encoding.GetEncoding(1252);
-            FileName = encoding.GetString(nameBuffer).Normalize().TrimEnd('\0');
-        }
-
-        private static bool IsUTF8(byte[] input)
-        {
-            if (input == null)
-                return false;
-            if (input.Length == 0)
-                return false;
-
-            // TODO: Check for a BOM.
-
-            for (int i = 0; i < input.Length; i++)
+            // Strip UTF-8 BOM if present.
+            var offset = 0;
+            if (nameBuffer.Length >= 3
+                && nameBuffer[0] == 0xEF
+                && nameBuffer[1] == 0xBB
+                && nameBuffer[2] == 0xBF)
             {
-                // Skip low bytes.
-                if (input[i] < 0x80)
-                    continue;
-
-                // Start of 4-byte sequence
-                if ((input[i] & 0xF8) == 0xF0)
-                {
-                    if (i + 3 >= input.Length)
-                        return false; // Invalid sequence length.
-                    if ((input[i + 1] & 0xC0) != 0x80)
-                        return false; // Invalid sequence.
-                    if ((input[i + 2] & 0xC0) != 0x80)
-                        return false; // Invalid sequence.
-                    if ((input[i + 3] & 0xC0) != 0x80)
-                        return false; // Invalid sequence.
-                    i += 3; // Valid sequence. Skip to the next character.
-                    continue;
-                }
-
-                // Start of 3-byte sequence
-                if ((input[i] & 0xF0) == 0xE0)
-                {
-                    if (i + 2 >= input.Length)
-                        return false; // Invalid sequence length.
-                    if ((input[i + 1] & 0xC0) != 0x80)
-                        return false; // Invalid sequence.
-                    if ((input[i + 2] & 0xC0) != 0x80)
-                        return false; // Invalid sequence.
-                    i += 2; // Valid sequence. Skip to the next character.
-                    continue;
-                }
-
-                // Start of 2-byte sequence
-                if ((input[i] & 0xE0) == 0xC0)
-                {
-                    if (i + 1 >= input.Length)
-                        return false; // Invalid sequence length.
-                    if ((input[i + 1] & 0xC0) != 0x80)
-                        return false; // Invalid sequence.
-                    i += 1; // Valid sequence. Skip to the next character.
-                    continue;
-                }
+                offset = 3;
             }
 
-            // Either all high bytes are valid sequences, or there are no high bytes, and US-ASCII is valid UTF-8.
-            return true;
+            string decoded;
+            try
+            {
+                decoded = StrictUtf8.GetString(nameBuffer, offset, nameBuffer.Length - offset);
+            }
+            catch (DecoderFallbackException)
+            {
+                decoded = Encoding.GetEncoding(1252).GetString(nameBuffer, offset, nameBuffer.Length - offset);
+            }
+
+            FileName = decoded.Normalize().TrimEnd('\0');
         }
 
         public override string ToString()

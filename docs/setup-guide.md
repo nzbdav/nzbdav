@@ -589,3 +589,7 @@ docker compose logs --tail=200 -f nzbdav_rclone
 ```
 
 If the Rclone mount fails, first verify that `/dev/fuse` exists on the host, the sidecar has started after NzbDav became healthy, and the WebDAV username/password in `rclone.conf` match `Settings` → `WebDAV`. If Rclone specifically rejects `--allow-other`, enable `user_allow_other` in the FUSE configuration available inside the sidecar. If **Test Conn** on `Settings` → `Rclone Server` fails, confirm the sidecar has the `--rc*` flags, the host is `http://nzbdav_rclone:5572`, and the RC user/password match.
+
+### Korean / Japanese (CJK) filenames
+
+NzbDav stores and serves WebDAV paths as UTF-8. If CJK release names appear as mojibake or are inaccessible from a Windows WebDAV mapping or rclone, check the **client** encoding settings (for example rclone `--local-encoding` / Windows system locale / UTF-8 code page). Filenames recovered from PAR2 packets are decoded as UTF-8 when valid, with a Windows-1252 fallback for legacy packers.

@@ -1,4 +1,3 @@
-import styles from "./records-block.module.css";
 import { formatBytes } from "../../utils/format";
 
 export type RecordsBlockProps = {
@@ -14,38 +13,40 @@ export function RecordsBlock({ records }: RecordsBlockProps) {
     const isEmpty = records.bestDayBytes === 0 && records.bestHourBytes === 0;
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Records</h3>
-                <div className={styles.sub}>Personal bests since you started</div>
-            </div>
-
-            {isEmpty ? (
-                <div className={styles.empty}>Records appear after some activity.</div>
-            ) : (
-                <div className={styles.grid}>
-                    <Record
-                        label="Busiest day"
-                        value={formatBytes(records.bestDayBytes)}
-                        when={records.bestDayAt ? formatDay(records.bestDayAt) : ""}
-                    />
-                    <Record
-                        label="Busiest hour"
-                        value={formatBytes(records.bestHourBytes)}
-                        when={records.bestHourAt ? formatHour(records.bestHourAt) : ""}
-                    />
+        <section className="card w-full border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+                <div>
+                    <h3 className="card-title text-base">Records</h3>
+                    <p className="text-xs text-base-content/50">Personal bests since you started</p>
                 </div>
-            )}
-        </div>
+
+                {isEmpty ? (
+                    <p className="text-sm text-base-content/50">Records appear after some activity.</p>
+                ) : (
+                    <div className="stats stats-vertical w-full border border-base-content/10 bg-base-200 shadow sm:stats-horizontal">
+                        <Stat
+                            label="Busiest day"
+                            value={formatBytes(records.bestDayBytes)}
+                            desc={records.bestDayAt ? formatDay(records.bestDayAt) : undefined}
+                        />
+                        <Stat
+                            label="Busiest hour"
+                            value={formatBytes(records.bestHourBytes)}
+                            desc={records.bestHourAt ? formatHour(records.bestHourAt) : undefined}
+                        />
+                    </div>
+                )}
+            </div>
+        </section>
     );
 }
 
-function Record({ label, value, when }: { label: string, value: string, when: string }) {
+function Stat({ label, value, desc }: { label: string, value: string, desc?: string }) {
     return (
-        <div className={styles.cell}>
-            <div className={styles.label}>{label}</div>
-            <div className={styles.value}>{value}</div>
-            {when && <div className={styles.when}>{when}</div>}
+        <div className="stat py-3">
+            <div className="stat-title text-xs">{label}</div>
+            <div className="stat-value font-mono text-xl md:text-2xl">{value}</div>
+            {desc && <div className="stat-desc">{desc}</div>}
         </div>
     );
 }

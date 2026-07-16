@@ -1,15 +1,4 @@
 declare const styles: {
-  readonly container: string;
-  readonly header: string;
-  readonly title: string;
-  readonly sub: string;
-  readonly empty: string;
-  readonly tableWrap: string;
-  readonly table: string;
-  readonly barCol: string;
-  readonly resetCol: string;
-  readonly nameCell: string;
-  readonly nameInner: string;
   readonly usageRow: string;
   readonly usageBar: string;
   readonly usageFill: string;

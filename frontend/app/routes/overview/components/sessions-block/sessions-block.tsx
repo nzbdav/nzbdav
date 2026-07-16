@@ -1,4 +1,3 @@
-import styles from "./sessions-block.module.css";
 import type { OverviewWindow } from "~/clients/backend-client.server";
 import { formatBytes, formatNumber } from "../../utils/format";
 
@@ -15,32 +14,36 @@ export type SessionsBlockProps = {
 
 export function SessionsBlock({ sessions, window }: SessionsBlockProps) {
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Read sessions</h3>
-                <div className={styles.sub}>{window === "all" ? "All time" : `Last ${window}`}</div>
-            </div>
-
-            {sessions.count === 0 ? (
-                <div className={styles.empty}>No completed read sessions yet.</div>
-            ) : (
-                <div className={styles.grid}>
-                    <Cell label="Sessions" value={formatNumber(sessions.count)} />
-                    <Cell label="Bytes served" value={formatBytes(sessions.totalBytesServed)} />
-                    <Cell label="Avg duration" value={formatDuration(sessions.avgDurationMs)} />
-                    <Cell label="Longest read" value={formatDuration(sessions.longestDurationMs)} />
-                    <Cell label="Biggest single read" value={formatBytes(sessions.biggestReadBytes)} fullWidth />
+        <section className="card w-full border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+                <div>
+                    <h3 className="card-title text-base">Read sessions</h3>
+                    <p className="text-xs text-base-content/50">
+                        {window === "all" ? "All time" : `Last ${window}`}
+                    </p>
                 </div>
-            )}
-        </div>
+
+                {sessions.count === 0 ? (
+                    <p className="text-sm text-base-content/50">No completed read sessions yet.</p>
+                ) : (
+                    <div className="stats stats-vertical w-full border border-base-content/10 bg-base-200 shadow sm:stats-horizontal sm:flex-wrap">
+                        <Stat label="Sessions" value={formatNumber(sessions.count)} />
+                        <Stat label="Bytes served" value={formatBytes(sessions.totalBytesServed)} />
+                        <Stat label="Avg duration" value={formatDuration(sessions.avgDurationMs)} />
+                        <Stat label="Longest read" value={formatDuration(sessions.longestDurationMs)} />
+                        <Stat label="Biggest single read" value={formatBytes(sessions.biggestReadBytes)} />
+                    </div>
+                )}
+            </div>
+        </section>
     );
 }
 
-function Cell({ label, value, fullWidth }: { label: string, value: string, fullWidth?: boolean }) {
+function Stat({ label, value }: { label: string, value: string }) {
     return (
-        <div className={`${styles.cell} ${fullWidth ? styles.full : ""}`}>
-            <div className={styles.label}>{label}</div>
-            <div className={styles.value}>{value}</div>
+        <div className="stat py-3">
+            <div className="stat-title text-xs">{label}</div>
+            <div className="stat-value font-mono text-xl md:text-2xl">{value}</div>
         </div>
     );
 }

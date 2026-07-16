@@ -1,23 +1,17 @@
 declare const styles: {
-  readonly container: string;
   readonly header: string;
-  readonly title: string;
-  readonly sub: string;
   readonly percentiles: string;
   readonly pctile: string;
   readonly pctileTop: string;
-  readonly ok: string;
-  readonly warn: string;
-  readonly danger: string;
   readonly pctileLabel: string;
   readonly pctileCaption: string;
   readonly pctileValue: string;
   readonly empty: string;
   readonly bars: string;
   readonly barCol: string;
-  readonly barHover: string;
   readonly barWrap: string;
   readonly bar: string;
+  readonly barHover: string;
   readonly barLabel: string;
   readonly footer: string;
   readonly axisHint: string;

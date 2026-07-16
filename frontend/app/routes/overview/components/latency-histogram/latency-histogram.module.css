@@ -1,33 +1,9 @@
-.container {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    padding: 18px 20px;
-    overflow: hidden;
-    min-width: 0;
-}
-
 .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
-    margin-bottom: 14px;
     flex-wrap: wrap;
-}
-
-.title {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-}
-
-.sub {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
 }
 
 .percentiles {
@@ -39,14 +15,8 @@
     text-align: right;
     padding: 6px 12px;
     border-radius: var(--radius-md);
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle);
     min-width: 78px;
 }
-
-.ok { }
-.warn .pctileValue { color: #d97706; }
-.danger .pctileValue { color: var(--danger-muted); }
 
 .pctileTop {
     display: flex;

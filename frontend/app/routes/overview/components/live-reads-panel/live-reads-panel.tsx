@@ -42,74 +42,85 @@ export function LiveReadsPanel() {
     if (reads.length === 0) return null;
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <div className={styles.titleWrap}>
-                    <span className={styles.livePulse} />
-                    <h3 className={styles.title}>Right now</h3>
-                    <span className={styles.count}>{reads.length} active</span>
+        <section className="card w-full min-w-0 border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+                <div className="flex items-center gap-2.5">
+                    <span className={styles.livePulse} aria-hidden="true" />
+                    <h3 className="card-title m-0 text-base">Right now</h3>
+                    <span className="badge badge-ghost badge-sm ml-auto font-mono tabular-nums">
+                        {reads.length} active
+                    </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2.5">
+                    {reads.map(r => {
+                        const meta = prevRef.current.get(r.id);
+                        const rate = meta?.rate ?? 0;
+                        // Use the latest read position (what the player is requesting
+                        // right now) — not cumulative bytes transferred — so the bar
+                        // reflects actual playback location, immune to seeks/replays.
+                        const pct = r.fileSize && r.fileSize > 0
+                            ? Math.min(100, (r.currentOffset / r.fileSize) * 100)
+                            : null;
+                        return (
+                            <div
+                                key={r.id}
+                                className="flex min-w-0 flex-[1_1_260px] flex-col gap-2 rounded-box border border-base-content/10 bg-base-200 p-3"
+                            >
+                                <div className="truncate text-sm font-medium text-base-content" title={r.path}>
+                                    {r.fileName || lastSegment(r.path)}
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn btn-ghost btn-xs self-start px-0 font-mono text-base-content/50 hover:underline"
+                                    title={`Copy session id: ${r.id}`}
+                                    onClick={() => void navigator.clipboard.writeText(r.id)}
+                                >
+                                    {shortSessionId(r.id)}
+                                </button>
+                                {pct !== null ? (
+                                    <progress
+                                        className="progress progress-success h-1 w-full"
+                                        value={pct}
+                                        max={100}
+                                    />
+                                ) : (
+                                    <div className={styles.progressIndeterminateWrap}>
+                                        <div className={styles.progressIndeterminate} />
+                                    </div>
+                                )}
+                                <div className="flex items-baseline justify-between font-mono text-xs tabular-nums">
+                                    <span className="font-medium text-base-content">
+                                        {r.fileSize
+                                            ? <>at {formatBytes(r.currentOffset)} <span className="font-normal text-base-content/50">/ {formatBytes(r.fileSize)}</span></>
+                                            : <>at {formatBytes(r.currentOffset)}</>
+                                        }
+                                    </span>
+                                    <span className="font-medium text-base-content">{formatBytes(rate)}/s</span>
+                                </div>
+                                {r.providers.length > 0 && (
+                                    <div className="flex min-w-0 flex-wrap gap-1">
+                                        {r.providers.slice(0, 6).map((p, i) => {
+                                            const label = p.nickname?.trim() || p.host;
+                                            return (
+                                                <span
+                                                    key={`${p.host}-${i}`}
+                                                    className={`badge badge-sm gap-1.5 font-mono tabular-nums ${i === 0 ? "badge-primary" : "badge-ghost"}`}
+                                                    title={`${label} (${p.host}): ${p.segments} segments`}
+                                                >
+                                                    <span className="max-w-[8rem] truncate">{label}</span>
+                                                    <span className="font-medium">{p.segments}</span>
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
-            <div className={styles.grid}>
-                {reads.map(r => {
-                    const meta = prevRef.current.get(r.id);
-                    const rate = meta?.rate ?? 0;
-                    // Use the latest read position (what the player is requesting
-                    // right now) — not cumulative bytes transferred — so the bar
-                    // reflects actual playback location, immune to seeks/replays.
-                    const pct = r.fileSize && r.fileSize > 0
-                        ? Math.min(100, (r.currentOffset / r.fileSize) * 100)
-                        : null;
-                    return (
-                        <div key={r.id} className={styles.card}>
-                            <div className={styles.fileName} title={r.path}>
-                                {r.fileName || lastSegment(r.path)}
-                            </div>
-                            <button
-                                type="button"
-                                className={styles.sessionId}
-                                title={`Copy session id: ${r.id}`}
-                                onClick={() => void navigator.clipboard.writeText(r.id)}
-                            >
-                                {shortSessionId(r.id)}
-                            </button>
-                            <div className={styles.progressWrap}>
-                                <div
-                                    className={pct !== null ? styles.progressFill : styles.progressIndeterminate}
-                                    style={pct !== null ? { width: `${pct.toFixed(1)}%` } : undefined}
-                                />
-                            </div>
-                            <div className={styles.stats}>
-                                <span className={styles.bytes}>
-                                    {r.fileSize
-                                        ? <>at {formatBytes(r.currentOffset)} <span className={styles.bytesTotal}>/ {formatBytes(r.fileSize)}</span></>
-                                        : <>at {formatBytes(r.currentOffset)}</>
-                                    }
-                                </span>
-                                <span className={styles.rate}>{formatBytes(rate)}/s</span>
-                            </div>
-                            {r.providers.length > 0 && (
-                                <div className={styles.providerStrip}>
-                                    {r.providers.slice(0, 6).map((p, i) => {
-                                        const label = p.nickname?.trim() || p.host;
-                                        return (
-                                            <span
-                                                key={`${p.host}-${i}`}
-                                                className={`${styles.providerChip} ${i === 0 ? styles.providerChipPrimary : ""}`}
-                                                title={`${label} (${p.host}): ${p.segments} segments`}
-                                            >
-                                                <span className={styles.providerChipHost}>{label}</span>
-                                                <span className={styles.providerChipCount}>{p.segments}</span>
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
+        </section>
     );
 }
 

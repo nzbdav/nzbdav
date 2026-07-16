@@ -1,8 +1,5 @@
 declare const styles: {
-  readonly container: string;
   readonly header: string;
-  readonly title: string;
-  readonly sub: string;
   readonly totals: string;
   readonly total: string;
   readonly totalDanger: string;
@@ -16,6 +13,8 @@ declare const styles: {
   readonly lineArticles: string;
   readonly lineErrors: string;
   readonly crosshair: string;
+  readonly hoverTooltip: string;
+  readonly hoverDotAnchor: string;
   readonly hoverDot: string;
   readonly hoverDotErr: string;
   readonly xAxis: string;

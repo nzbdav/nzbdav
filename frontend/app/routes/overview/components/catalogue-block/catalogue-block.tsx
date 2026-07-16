@@ -1,4 +1,3 @@
-import styles from "./catalogue-block.module.css";
 import { formatBytes, formatNumber } from "../../utils/format";
 
 export type CatalogueBlockProps = {
@@ -12,27 +11,35 @@ export type CatalogueBlockProps = {
 
 export function CatalogueBlock({ catalogue }: CatalogueBlockProps) {
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Catalogue</h3>
-                <div className={styles.sub}>Your mounted library</div>
-            </div>
+        <section className="card w-full border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+                <div>
+                    <h3 className="card-title text-base">Catalogue</h3>
+                    <p className="text-xs text-base-content/50">Your mounted library</p>
+                </div>
 
-            <div className={styles.grid}>
-                <Cell label="Files" value={formatNumber(catalogue.fileCount)} />
-                <Cell label="Total size" value={formatBytes(catalogue.totalBytes)} />
-                <Cell label="Largest file" value={formatBytes(catalogue.largestFileBytes)} />
-                <Cell label="Added 7d" value={formatNumber(catalogue.addedLast7Days)} accent={catalogue.addedLast7Days > 0 ? "good" : undefined} />
+                <div className="stats stats-vertical w-full border border-base-content/10 bg-base-200 shadow sm:stats-horizontal">
+                    <Stat label="Files" value={formatNumber(catalogue.fileCount)} />
+                    <Stat label="Total size" value={formatBytes(catalogue.totalBytes)} />
+                    <Stat label="Largest file" value={formatBytes(catalogue.largestFileBytes)} />
+                    <Stat
+                        label="Added 7d"
+                        value={formatNumber(catalogue.addedLast7Days)}
+                        accent={catalogue.addedLast7Days > 0 ? "good" : undefined}
+                    />
+                </div>
             </div>
-        </div>
+        </section>
     );
 }
 
-function Cell({ label, value, accent }: { label: string, value: string, accent?: "good" }) {
+function Stat({ label, value, accent }: { label: string, value: string, accent?: "good" }) {
     return (
-        <div className={`${styles.cell} ${accent === "good" ? styles.good : ""}`}>
-            <div className={styles.label}>{label}</div>
-            <div className={styles.value}>{value}</div>
+        <div className="stat py-3">
+            <div className="stat-title text-xs">{label}</div>
+            <div className={`stat-value font-mono text-xl md:text-2xl ${accent === "good" ? "text-success" : ""}`}>
+                {value}
+            </div>
         </div>
     );
 }

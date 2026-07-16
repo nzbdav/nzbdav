@@ -1,154 +1,3 @@
-.container {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    padding: 18px 20px;
-    overflow: hidden;
-    min-width: 0;
-}
-
-/* Lets the table scroll horizontally inside the card when the viewport is
-   narrower than the table's natural min-width, instead of overflowing. */
-.tableWrap {
-    overflow-x: auto;
-    margin: 0 -20px;
-    padding: 0 20px;
-    -webkit-overflow-scrolling: touch;
-}
-
-.header {
-    margin-bottom: 14px;
-}
-
-.title {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-}
-
-.sub {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
-}
-
-.empty {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 12px;
-    padding: 30px 0;
-}
-
-.table {
-    width: 100%;
-    min-width: 560px;
-    border-collapse: collapse;
-    font-size: 13px;
-    color: var(--text-primary);
-    table-layout: auto;
-}
-
-.table thead th {
-    text-align: left;
-    font-weight: 500;
-    color: var(--text-muted);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 6px 8px;
-    border-bottom: 1px solid var(--border-subtle);
-}
-
-.table tbody td {
-    padding: 8px;
-    border-bottom: 1px solid var(--border-subtle);
-}
-
-.table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.numCol {
-    text-align: left;
-    font-variant-numeric: tabular-nums;
-}
-
-.providerCell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    max-width: 240px;
-    min-width: 0;
-}
-
-.providerName {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    min-width: 0;
-}
-
-.dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.dotClosed {
-    background: var(--success);
-}
-
-.dotOpen {
-    background: var(--danger-muted);
-}
-
-.dotHalfOpen {
-    background: var(--warning);
-}
-
-.circuitBadge {
-    flex-shrink: 0;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    padding: 1px 6px;
-    border-radius: 999px;
-    text-transform: uppercase;
-}
-
-.badgeClosed {
-    color: var(--success);
-    background: rgba(52, 211, 153, 0.12);
-}
-
-.badgeOpen {
-    color: var(--danger-muted);
-    background: rgba(248, 113, 113, 0.12);
-}
-
-.badgeHalfOpen {
-    color: var(--warning);
-    background: rgba(251, 191, 36, 0.12);
-}
-
-.warn {
-    color: var(--danger-muted);
-}
-
-.errorRate {
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-.sparkCol {
-    width: 120px;
-    padding: 4px 8px !important;
-}
-
 .spark {
     width: 110px;
     height: 22px;
@@ -156,13 +5,13 @@
 }
 
 .sparkArea {
-    fill: rgba(52, 211, 153, 0.16);
+    fill: color-mix(in srgb, var(--color-success) 16%, transparent);
     stroke: none;
 }
 
 .sparkLine {
     fill: none;
-    stroke: var(--success);
+    stroke: var(--color-success);
     stroke-width: 1.2;
     vector-effect: non-scaling-stroke;
 }
@@ -170,7 +19,7 @@
 .sparkEmpty {
     width: 110px;
     height: 22px;
-    background: rgba(255, 255, 255, 0.02);
+    background: color-mix(in srgb, var(--color-base-content) 4%, transparent);
     border-radius: 3px;
 }
 
@@ -178,7 +27,7 @@
     position: relative;
     width: 80px;
     height: 16px;
-    background: var(--bg-surface);
+    background: var(--color-base-200);
     border-radius: 4px;
     overflow: hidden;
 }
@@ -186,7 +35,7 @@
 .shareFill {
     position: absolute;
     inset: 0;
-    background: var(--success);
+    background: var(--color-success);
     opacity: 0.25;
 }
 
@@ -197,6 +46,6 @@
     padding: 0 6px;
     line-height: 16px;
     font-size: 11px;
-    color: var(--text-primary);
+    color: var(--color-base-content);
     font-variant-numeric: tabular-nums;
 }

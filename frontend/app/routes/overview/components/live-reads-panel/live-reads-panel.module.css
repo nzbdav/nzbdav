@@ -1,186 +1,40 @@
-.container {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    padding: 18px 20px;
-    min-width: 0;
-}
-
-.header {
-    margin-bottom: 14px;
-}
-
-.titleWrap {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
 .livePulse {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--success);
-    animation: pulse 1.6s ease-in-out infinite;
+    background: var(--color-success);
+    animation: livePulse 1.6s ease-in-out infinite;
     flex-shrink: 0;
 }
 
-@keyframes pulse {
+@keyframes livePulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
 }
 
-.title {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-}
-
-.count {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-    margin-left: auto;
-}
-
-.grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.card {
-    flex: 1 1 260px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
-}
-
-.fileName {
-    font-size: 13px;
-    color: var(--text-primary);
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-}
-
-.sessionId {
-    align-self: flex-start;
-    margin: 0;
-    padding: 0;
-    border: none;
-    background: transparent;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 11px;
-    color: var(--text-muted);
-    cursor: pointer;
-    letter-spacing: 0.02em;
-}
-
-.sessionId:hover {
-    color: var(--text-primary);
-    text-decoration: underline;
-}
-
-.progressWrap {
+.progressIndeterminateWrap {
     position: relative;
     height: 4px;
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in srgb, var(--color-base-content) 8%, transparent);
     border-radius: 4px;
     overflow: hidden;
-}
-
-.progressFill {
-    height: 100%;
-    background: var(--success);
-    opacity: 0.7;
-    border-radius: 4px;
-    transition: width 600ms ease;
 }
 
 .progressIndeterminate {
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.7), transparent);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--color-success) 70%, transparent),
+        transparent
+    );
     background-size: 50% 100%;
     background-repeat: no-repeat;
-    animation: indet 1.6s linear infinite;
+    animation: liveIndet 1.6s linear infinite;
 }
 
-@keyframes indet {
+@keyframes liveIndet {
     0% { background-position: -50% 0; }
     100% { background-position: 150% 0; }
-}
-
-.stats {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    font-variant-numeric: tabular-nums;
-}
-
-.bytes {
-    font-size: 12px;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.bytesTotal {
-    color: var(--text-muted);
-    font-weight: 400;
-}
-
-.rate {
-    font-size: 12px;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.providerStrip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    min-width: 0;
-}
-
-.providerChip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.04);
-    padding: 3px 8px;
-    border-radius: 4px;
-    max-width: 100%;
-    min-width: 0;
-    font-variant-numeric: tabular-nums;
-}
-
-.providerChipPrimary {
-    background: rgba(255, 255, 255, 0.09);
-    color: var(--text-primary);
-}
-
-.providerChipHost {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-}
-
-.providerChipCount {
-    color: var(--text-primary);
-    font-weight: 500;
-    flex-shrink: 0;
 }

@@ -8,50 +8,61 @@ export type IndexerScoreboardProps = {
 
 export function IndexerScoreboard({ indexers }: IndexerScoreboardProps) {
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Indexers</h3>
-                <div className={styles.sub}>Completed vs failed downloads, last 30 days</div>
-            </div>
-
-            {indexers.length === 0 ? (
-                <div className={styles.empty}>No imports recorded yet.</div>
-            ) : (
-                <div className={styles.tableWrap}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>Indexer</th>
-                            <th className={styles.numCol}>Completed</th>
-                            <th className={styles.numCol}>Failed</th>
-                            <th className={styles.numCol}>Success</th>
-                            <th className={styles.numCol}>Bytes</th>
-                            <th className={styles.numCol}>Avg time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {indexers.map(i => (
-                            <tr key={i.name}>
-                                <td className={styles.nameCell}>
-                                    <span className={styles.nameInner} title={i.name}>{i.name}</span>
-                                </td>
-                                <td className={styles.numCol}>{formatNumber(i.completed)}</td>
-                                <td className={`${styles.numCol} ${i.failed > 0 ? styles.fail : ""}`}>{formatNumber(i.failed)}</td>
-                                <td className={styles.numCol}>
-                                    <div className={styles.successBar}>
-                                        <div className={styles.successFill} style={{ width: `${(i.successRate * 100).toFixed(1)}%` }} />
-                                        <span className={styles.successText}>{formatPercent(i.successRate * 100, 0)}</span>
-                                    </div>
-                                </td>
-                                <td className={styles.numCol}>{formatBytes(i.bytesCompleted)}</td>
-                                <td className={styles.numCol}>{formatSeconds(i.avgSeconds)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+        <section className="card w-full min-w-0 border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+                <div>
+                    <h3 className="card-title text-base">Indexers</h3>
+                    <p className="text-xs text-base-content/50">Completed vs failed downloads, last 30 days</p>
                 </div>
-            )}
-        </div>
+
+                {indexers.length === 0 ? (
+                    <p className="py-6 text-center text-xs text-base-content/50">No imports recorded yet.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="table table-sm min-w-[560px]">
+                            <thead>
+                                <tr>
+                                    <th>Indexer</th>
+                                    <th>Completed</th>
+                                    <th>Failed</th>
+                                    <th>Success</th>
+                                    <th>Bytes</th>
+                                    <th>Avg time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {indexers.map(i => (
+                                    <tr key={i.name}>
+                                        <td className="max-w-[220px] font-medium">
+                                            <span className="inline-block max-w-full truncate align-middle" title={i.name}>
+                                                {i.name}
+                                            </span>
+                                        </td>
+                                        <td className="font-mono tabular-nums">{formatNumber(i.completed)}</td>
+                                        <td className={`font-mono tabular-nums ${i.failed > 0 ? "text-error" : ""}`}>
+                                            {formatNumber(i.failed)}
+                                        </td>
+                                        <td>
+                                            <div className={styles.successBar}>
+                                                <div
+                                                    className={styles.successFill}
+                                                    style={{ width: `${(i.successRate * 100).toFixed(1)}%` }}
+                                                />
+                                                <span className={styles.successText}>
+                                                    {formatPercent(i.successRate * 100, 0)}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="font-mono tabular-nums">{formatBytes(i.bytesCompleted)}</td>
+                                        <td className="font-mono tabular-nums">{formatSeconds(i.avgSeconds)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </section>
     );
 }
 

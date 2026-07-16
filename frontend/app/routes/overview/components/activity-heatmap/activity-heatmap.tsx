@@ -58,11 +58,12 @@ export function ActivityHeatmap({ maxCell, mode, windowStartMs, windowEndMs, buc
     const peakLabel = peak ? formatBucket(peak.bucket, bucketSizeMs) : null;
 
     return (
-        <div className={styles.container}>
+        <section className="card w-full min-w-0 overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
             <div className={styles.header}>
                 <div>
-                    <h3 className={styles.title}>Activity heatmap</h3>
-                    <div className={styles.sub}>{subtitle}</div>
+                    <h3 className="card-title text-base">Activity heatmap</h3>
+                    <p className="text-xs text-base-content/50">{subtitle}</p>
                 </div>
                 {peak && peak.count > 0 && peakLabel && (
                     <div className={styles.peak}>
@@ -141,7 +142,8 @@ export function ActivityHeatmap({ maxCell, mode, windowStartMs, windowEndMs, buc
                     </div>
                 </>
             )}
-        </div>
+            </div>
+        </section>
     );
 }
 

@@ -1,4 +1,3 @@
-import styles from "./lifetime-block.module.css";
 import { formatBytes, formatNumber } from "../../utils/format";
 
 export type LifetimeBlockProps = {
@@ -16,31 +15,33 @@ export function LifetimeBlock({ lifetime }: LifetimeBlockProps) {
     const isEmpty = lifetime.bytesRead === 0 && lifetime.articles === 0;
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>All time</h3>
-                <div className={styles.sub}>{since(lifetime.firstSeenAt)}</div>
-            </div>
-
-            {isEmpty ? (
-                <div className={styles.empty}>Lifetime totals appear after your first reads.</div>
-            ) : (
-                <div className={styles.grid}>
-                    <Tile label="Read" value={formatBytes(lifetime.bytesRead)} />
-                    <Tile label="Articles" value={formatNumber(lifetime.articles)} />
-                    <Tile label="Read sessions" value={formatNumber(lifetime.readSessions)} />
-                    <Tile label="Active-reads time" value={formatHours(lifetime.readSeconds)} />
+        <section className="card w-full border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+                <div>
+                    <h3 className="card-title text-base">All time</h3>
+                    <p className="text-xs text-base-content/50">{since(lifetime.firstSeenAt)}</p>
                 </div>
-            )}
-        </div>
+
+                {isEmpty ? (
+                    <p className="text-sm text-base-content/50">Lifetime totals appear after your first reads.</p>
+                ) : (
+                    <div className="stats stats-vertical w-full border border-base-content/10 bg-base-200 shadow sm:stats-horizontal">
+                        <Stat label="Read" value={formatBytes(lifetime.bytesRead)} />
+                        <Stat label="Articles" value={formatNumber(lifetime.articles)} />
+                        <Stat label="Read sessions" value={formatNumber(lifetime.readSessions)} />
+                        <Stat label="Active-reads time" value={formatHours(lifetime.readSeconds)} />
+                    </div>
+                )}
+            </div>
+        </section>
     );
 }
 
-function Tile({ label, value }: { label: string, value: string }) {
+function Stat({ label, value }: { label: string, value: string }) {
     return (
-        <div className={styles.cell}>
-            <div className={styles.label}>{label}</div>
-            <div className={styles.value}>{value}</div>
+        <div className="stat py-3">
+            <div className="stat-title text-xs">{label}</div>
+            <div className="stat-value font-mono text-xl md:text-2xl">{value}</div>
         </div>
     );
 }

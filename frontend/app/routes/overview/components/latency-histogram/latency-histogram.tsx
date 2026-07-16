@@ -22,14 +22,15 @@ export function LatencyHistogram({ p50Ms, p95Ms, p99Ms, samples, buckets }: Late
     const empty = samples === 0;
 
     return (
-        <div className={styles.container}>
+        <section className="card w-full min-w-0 overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
             <div className={styles.header}>
                 <div>
-                    <h3 className={styles.title}>Fetch time per article</h3>
-                    <div className={styles.sub}>
+                    <h3 className="card-title text-base">Fetch time per article</h3>
+                    <p className="text-xs text-base-content/50">
                         How long each successful article takes to retrieve from a Usenet provider
                         {!empty && <> · {formatNumber(samples)} samples</>}
-                    </div>
+                    </p>
                 </div>
                 <div className={styles.percentiles}>
                     <Pctile label="p50" caption="median" ms={p50Ms} kind="ok" />
@@ -76,19 +77,24 @@ export function LatencyHistogram({ p50Ms, p95Ms, p99Ms, samples, buckets }: Late
                     </div>
                 </>
             )}
-        </div>
+            </div>
+        </section>
     );
 }
 
 function Pctile({ label, caption, ms, kind }: { label: string, caption: string, ms: number, kind: "ok" | "warn" | "danger" }) {
-    const cls = kind === "danger" ? styles.danger : kind === "warn" ? styles.warn : styles.ok;
+    const valueClass = kind === "danger"
+        ? "text-error"
+        : kind === "warn"
+            ? "text-warning"
+            : "";
     return (
-        <div className={`${styles.pctile} ${cls}`} title={`${caption} — ${ms} ms`}>
+        <div className={`${styles.pctile} border border-base-content/10 bg-base-200`} title={`${caption} — ${ms} ms`}>
             <div className={styles.pctileTop}>
                 <span className={styles.pctileLabel}>{label}</span>
                 <span className={styles.pctileCaption}>{caption}</span>
             </div>
-            <div className={styles.pctileValue}>{formatMs(ms)}</div>
+            <div className={`${styles.pctileValue} ${valueClass}`}>{formatMs(ms)}</div>
         </div>
     );
 }

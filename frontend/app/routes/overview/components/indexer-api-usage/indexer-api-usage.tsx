@@ -18,47 +18,51 @@ export function IndexerApiUsage({ rows }: IndexerApiUsageProps) {
     }, []);
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Indexer API usage</h3>
-                <div className={styles.sub}>Hits in the current reset window per indexer</div>
-            </div>
-
-            {rows.length === 0 ? (
-                <div className={styles.empty}>No enabled indexers configured.</div>
-            ) : (
-                <div className={styles.tableWrap}>
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th>Indexer</th>
-                                <th className={styles.barCol}>API hits</th>
-                                <th className={styles.barCol}>Downloads</th>
-                                <th className={styles.resetCol}>Next reset</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rows.map(r => (
-                                <tr key={r.name}>
-                                    <td className={styles.nameCell}>
-                                        <span className={styles.nameInner} title={r.name}>{r.name}</span>
-                                    </td>
-                                    <td className={styles.barCol}>
-                                        <UsageBar used={r.apiHits} limit={r.apiHitLimit} />
-                                    </td>
-                                    <td className={styles.barCol}>
-                                        <UsageBar used={r.downloadHits} limit={r.downloadHitLimit} />
-                                    </td>
-                                    <td className={styles.resetCol}>
-                                        {formatReset(r.resetAtMs, r.resetHourUtc, now)}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+        <section className="card w-full min-w-0 border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+                <div>
+                    <h3 className="card-title text-base">Indexer API usage</h3>
+                    <p className="text-xs text-base-content/50">Hits in the current reset window per indexer</p>
                 </div>
-            )}
-        </div>
+
+                {rows.length === 0 ? (
+                    <p className="py-6 text-center text-xs text-base-content/50">No enabled indexers configured.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="table table-sm min-w-[560px]">
+                            <thead>
+                                <tr>
+                                    <th>Indexer</th>
+                                    <th className="min-w-[180px]">API hits</th>
+                                    <th className="min-w-[180px]">Downloads</th>
+                                    <th>Next reset</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map(r => (
+                                    <tr key={r.name}>
+                                        <td className="max-w-[220px] font-medium">
+                                            <span className="inline-block max-w-full truncate align-middle" title={r.name}>
+                                                {r.name}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <UsageBar used={r.apiHits} limit={r.apiHitLimit} />
+                                        </td>
+                                        <td>
+                                            <UsageBar used={r.downloadHits} limit={r.downloadHitLimit} />
+                                        </td>
+                                        <td className="whitespace-nowrap font-mono text-xs tabular-nums text-base-content/50">
+                                            {formatReset(r.resetAtMs, r.resetHourUtc, now)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </section>
     );
 }
 

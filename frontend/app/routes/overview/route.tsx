@@ -1,5 +1,4 @@
 import type { Route } from "./+types/route";
-import styles from "./route.module.css";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useWebsocketTopics } from "~/utils/shared-websocket";
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from "@dnd-kit/core";
@@ -71,7 +70,7 @@ export function shouldRevalidate() {
 function Skeleton({ height = 120 }: { height?: number }) {
     return (
         <div
-            className={styles.skeleton}
+            className="skeleton w-full rounded-box"
             style={{ minHeight: height }}
             aria-hidden="true"
         />
@@ -235,7 +234,7 @@ export default function Overview(_props: Route.ComponentProps) {
                 : <Skeleton height={160} />)
             : null,
         errorsSessions: (
-            <div className={styles.twoCol}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {!isLongWindow && (
                     detailLoaded
                         ? <ErrorDonut errors={stats.errors} />
@@ -259,7 +258,7 @@ export default function Overview(_props: Route.ComponentProps) {
             ? <IndexerApiUsage rows={stats.indexerApiUsage} />
             : <Skeleton height={120} />,
         recordsCatalogue: (
-            <div className={styles.twoCol}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {staticLoaded
                     ? <RecordsBlock records={stats.records} />
                     : <Skeleton height={120} />}
@@ -288,10 +287,10 @@ export default function Overview(_props: Route.ComponentProps) {
     };
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h2 className={styles.title}>Overview</h2>
-                <div className={styles.headerActions}>
+        <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="m-0 text-xl font-semibold tracking-tight text-base-content">Overview</h2>
+                <div className="inline-flex flex-wrap items-center gap-2">
                     {editMode && (
                         <button
                             type="button"

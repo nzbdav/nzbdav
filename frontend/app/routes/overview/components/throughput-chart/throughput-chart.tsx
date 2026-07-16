@@ -32,17 +32,16 @@ export function ThroughputChart({ points, totalArticles, totalMisses, totalError
         }
         const max = Math.max(1, ...points.map(p => p.articles));
         const xStep = points.length > 1 ? VB_W / (points.length - 1) : 0;
-        const innerH = VB_H - TOP_PAD - BOT_PAD;
-        const y = (v: number) => VB_H - BOT_PAD - (v / max) * innerH;
-        const buildPath = (key: "articles" | "errors") =>
-            points.map((p, i) => `${i === 0 ? "M" : "L"}${(i * xStep).toFixed(1)},${y(p[key]).toFixed(1)}`).join(" ");
+        const y = (v: number) => VB_H - BOT_PAD - (v / max) * (VB_H - TOP_PAD - BOT_PAD);
+        const buildArticlesPath = () =>
+            points.map((p, i) => `${i === 0 ? "M" : "L"}${(i * xStep).toFixed(1)},${y(p.articles).toFixed(1)}`).join(" ");
 
         const xPct = (i: number) => points.length > 1 ? (i / (points.length - 1)) * 100 : 50;
         const yPct = (v: number) => 100 - ((v / max) * (1 - (TOP_PAD + BOT_PAD) / VB_H) * 100 + (BOT_PAD / VB_H) * 100);
 
         return {
-            articlesPath: buildPath("articles"),
-            errorsPath: buildPath("errors"),
+            articlesPath: buildArticlesPath(),
+            errorsPath: buildSparseErrorsPath(points, xStep, y),
             maxArticles: max,
             xPercent: xPct,
             yPercent: yPct,
@@ -81,13 +80,22 @@ export function ThroughputChart({ points, totalArticles, totalMisses, totalError
     const hasData = points.length > 0 && maxArticles > 0;
     const bucketLabel = window === "1h" || window === "24h" ? "min" : (window === "all" ? "day" : "hour");
     const hover = hoverIdx !== null ? points[hoverIdx] : null;
+    const tooltipPlacement = hoverIdx === null || points.length < 2
+        ? "tooltip-top"
+        : (() => {
+            const rel = hoverIdx / (points.length - 1);
+            if (rel < 0.2) return "tooltip-right";
+            if (rel > 0.8) return "tooltip-left";
+            return "tooltip-top";
+        })();
 
     return (
-        <div className={styles.container}>
+        <section className="card w-full min-w-0 overflow-visible border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 overflow-visible p-4">
             <div className={styles.header}>
                 <div>
-                    <h3 className={styles.title}>Activity</h3>
-                    <div className={styles.sub}>Articles fetched per {bucketLabel}, last {window}</div>
+                    <h3 className="card-title text-base">Activity</h3>
+                    <p className="text-xs text-base-content/50">Articles fetched per {bucketLabel}, last {window}</p>
                 </div>
                 <div className={styles.totals}>
                     <Total label="Articles" value={formatNumber(totalArticles)} />
@@ -118,19 +126,34 @@ export function ThroughputChart({ points, totalArticles, totalMisses, totalError
                                 <line x1="0" y1={(VB_H / 2).toFixed(1)} x2={VB_W} y2={(VB_H / 2).toFixed(1)} className={styles.gridline} />
                                 <line x1="0" y1={TOP_PAD.toFixed(1)} x2={VB_W} y2={TOP_PAD.toFixed(1)} className={styles.gridline} />
                                 <path d={articlesPath} className={styles.lineArticles} />
-                                {totalErrors > 0 && <path d={errorsPath} className={styles.lineErrors} />}
+                                {totalErrors > 0 && errorsPath && <path d={errorsPath} className={styles.lineErrors} />}
                             </svg>
 
                             {hover && hoverIdx !== null && (
                                 <>
                                     <div className={styles.crosshair} style={{ left: `${xPercent(hoverIdx)}%` }} />
                                     <div
-                                        className={styles.hoverDot}
+                                        className={`tooltip tooltip-open ${tooltipPlacement} ${styles.hoverTooltip}`}
                                         style={{
                                             left: `${xPercent(hoverIdx)}%`,
                                             top: `${yPercent(hover.articles)}%`,
                                         }}
-                                    />
+                                    >
+                                        <div className="tooltip-content">
+                                            <div className="space-y-0.5 text-left font-mono text-xs">
+                                                <div className="font-semibold">{formatBucketTime(hover.bucket, window)}</div>
+                                                <div>{formatNumber(hover.articles)} articles</div>
+                                                {(hover.misses ?? 0) > 0 && <div>{formatNumber(hover.misses)} misses</div>}
+                                                {hover.errors > 0 && (
+                                                    <div className="text-error">{formatNumber(hover.errors)} errors</div>
+                                                )}
+                                                {hover.bytesServed > 0 && (
+                                                    <div>{formatBytes(hover.bytesServed)} served</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className={styles.hoverDotAnchor} />
+                                    </div>
                                     {totalErrors > 0 && hover.errors > 0 && (
                                         <div
                                             className={`${styles.hoverDot} ${styles.hoverDotErr}`}
@@ -161,17 +184,7 @@ export function ThroughputChart({ points, totalArticles, totalMisses, totalError
                         <span className={styles.legendItem}><span className={`${styles.swatch} ${styles.swatchArticles}`} /> Articles</span>
                         {totalErrors > 0 && <span className={styles.legendItem}><span className={`${styles.swatch} ${styles.swatchErrors}`} /> Errors</span>}
                         <span className={styles.legendRight}>
-                            {hover && hoverIdx !== null ? (
-                                <>
-                                    <strong>{formatBucketTime(hover.bucket, window)}</strong>
-                                    &nbsp;·&nbsp;{formatNumber(hover.articles)} articles
-                                    {(hover.misses ?? 0) > 0 && <> · {formatNumber(hover.misses)} misses</>}
-                                    {hover.errors > 0 && <> · {formatNumber(hover.errors)} errors</>}
-                                    {hover.bytesServed > 0 && <> · {formatBytes(hover.bytesServed)} served</>}
-                                </>
-                            ) : (
-                                <>Peak {formatNumber(maxArticles)} / {bucketLabel} · hover for details</>
-                            )}
+                            Peak {formatNumber(maxArticles)} / {bucketLabel} · hover for details
                         </span>
                     </div>
                 </>
@@ -181,8 +194,41 @@ export function ThroughputChart({ points, totalArticles, totalMisses, totalError
                     <div className={styles.emptySub}>Articles you fetch will appear here.</div>
                 </div>
             )}
-        </div>
+            </div>
+        </section>
     );
+}
+
+/** Sparse errors path: skip y=0 so red does not cover the green baseline. */
+function buildSparseErrorsPath(
+    points: ThroughputPoint[],
+    xStep: number,
+    y: (v: number) => number,
+): string {
+    const parts: string[] = [];
+    let inSegment = false;
+    for (let i = 0; i < points.length; i++) {
+        const err = points[i].errors;
+        const x = (i * xStep).toFixed(1);
+        const yy = y(err).toFixed(1);
+        if (err > 0) {
+            if (!inSegment) {
+                parts.push(`M${x},${yy}`);
+                inSegment = true;
+                // Isolated spikes need a tiny stroke segment to be visible.
+                const nextZero = i === points.length - 1 || points[i + 1].errors === 0;
+                if (nextZero) {
+                    const x2 = (i * xStep + Math.max(xStep * 0.15, 1)).toFixed(1);
+                    parts.push(`L${x2},${yy}`);
+                }
+            } else {
+                parts.push(`L${x},${yy}`);
+            }
+        } else {
+            inSegment = false;
+        }
+    }
+    return parts.join(" ");
 }
 
 function Total({ label, value, accent }: { label: string, value: string, accent?: "danger" }) {

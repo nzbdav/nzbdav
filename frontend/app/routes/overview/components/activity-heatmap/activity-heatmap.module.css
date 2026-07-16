@@ -1,32 +1,9 @@
-.container {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    padding: 18px 20px;
-    overflow: hidden;
-}
-
 .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
-    margin-bottom: 14px;
     flex-wrap: wrap;
-}
-
-.title {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-}
-
-.sub {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
 }
 
 .peak {
@@ -128,6 +105,10 @@
 .mode_day .cellEmpty {
     aspect-ratio: auto;
     height: 32px;
+}
+
+.mode_week {
+    /* week mode uses default cell sizing */
 }
 
 .mode_month .cell,

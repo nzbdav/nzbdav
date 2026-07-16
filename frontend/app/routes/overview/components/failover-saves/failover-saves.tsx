@@ -44,10 +44,13 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
     const multiProvider = rescuedBy.length >= 2;
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Backup rescues</h3>
-                <div className={styles.sub}>When your main provider misses a piece mid-session, a backup delivers it before anything fails ({sinceLabel})</div>
+        <section className="card w-full min-w-0 border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+            <div>
+                <h3 className="card-title text-base">Backup rescues</h3>
+                <p className="text-xs text-base-content/50">
+                    When your main provider misses a piece mid-session, a backup delivers it before anything fails ({sinceLabel})
+                </p>
             </div>
 
             {hasData ? (
@@ -66,11 +69,19 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
                         </div>
                         {momentum && (
                             <div
-                                className={`${styles.momentum} ${momentum.neutral ? styles.momentumNeutral : momentum.good ? styles.momentumGood : styles.momentumBad}`}
+                                className={`badge badge-lg h-auto flex-col gap-0.5 border border-base-content/10 bg-base-200 px-3 py-2 ${
+                                    momentum.neutral
+                                        ? ""
+                                        : momentum.good
+                                            ? "text-success"
+                                            : "text-error"
+                                }`}
                                 title={`Failover load ${momentum.label} vs the previous ${window}`}>
-                                <span className={styles.momentumArrow}>{momentum.arrow}</span>
-                                <span className={styles.momentumPct}>{momentum.text}</span>
-                                <span className={styles.momentumWhen}>vs prev {window}</span>
+                                <span className="text-sm font-bold leading-none">{momentum.arrow}</span>
+                                <span className="font-mono text-sm font-bold tabular-nums leading-none">{momentum.text}</span>
+                                <span className="text-[9px] font-normal tracking-wide text-base-content/50 uppercase">
+                                    vs prev {window}
+                                </span>
                             </div>
                         )}
                     </div>
@@ -85,26 +96,26 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
                     )}
 
                     {hasContrast && (
-                        <div className={styles.cards}>
+                        <div className="mb-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                             {topHero && (
-                                <div className={styles.card}>
-                                    <div className={styles.cardKicker}>Most saves</div>
-                                    <div className={styles.cardName} title={topHero.provider}>
+                                <div className="min-w-0 rounded-box border border-base-content/10 bg-base-200 p-3">
+                                    <div className="text-[10px] font-medium tracking-wide text-base-content/50 uppercase">Most saves</div>
+                                    <div className="truncate text-sm font-semibold text-base-content" title={topHero.provider}>
                                         {topHero.nickname?.trim() || topHero.provider}
                                     </div>
-                                    <div className={`${styles.cardStat} ${styles.cardStatGood}`}>
-                                        {formatNumber(topHero.saves)} <span>saves</span>
+                                    <div className="mt-1 font-mono text-sm font-semibold tabular-nums text-success">
+                                        {formatNumber(topHero.saves)} <span className="font-normal text-base-content/50">saves</span>
                                     </div>
                                 </div>
                             )}
                             {topVillain && (
-                                <div className={styles.card}>
-                                    <div className={styles.cardKicker}>Most misses</div>
-                                    <div className={styles.cardName} title={topVillain.provider}>
+                                <div className="min-w-0 rounded-box border border-base-content/10 bg-base-200 p-3">
+                                    <div className="text-[10px] font-medium tracking-wide text-base-content/50 uppercase">Most misses</div>
+                                    <div className="truncate text-sm font-semibold text-base-content" title={topVillain.provider}>
                                         {topVillain.nickname?.trim() || topVillain.provider}
                                     </div>
-                                    <div className={`${styles.cardStat} ${styles.cardStatBad}`}>
-                                        {formatNumber(topVillain.misses)} <span>misses</span>
+                                    <div className="mt-1 font-mono text-sm font-semibold tabular-nums text-error">
+                                        {formatNumber(topVillain.misses)} <span className="font-normal text-base-content/50">misses</span>
                                     </div>
                                 </div>
                             )}
@@ -128,13 +139,13 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
                                     );
                                 })}
                             </div>
-                            <div className={styles.reasonLegend}>
+                            <div className="mt-2 flex flex-wrap gap-1.5">
                                 {reasons.map(r => {
                                     const meta = reasonMeta(r.status);
                                     return (
-                                        <span key={r.status} className={styles.reasonChip}>
-                                            <span className={`${styles.dot} ${meta.cls}`} />
-                                            {meta.label} <strong>{formatNumber(r.count)}</strong>
+                                        <span key={r.status} className="badge badge-ghost badge-sm gap-1.5">
+                                            <span className={`h-1.5 w-1.5 rounded-full ${meta.cls}`} />
+                                            {meta.label} <strong className="font-mono">{formatNumber(r.count)}</strong>
                                         </span>
                                     );
                                 })}
@@ -207,15 +218,16 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
                     )}
                 </>
             ) : (
-                <div className={styles.empty}>
+                <div className="py-6 text-center text-xs text-base-content/50">
                     No backup rescues in this window.
-                    <div className={styles.emptySub}>
+                    <div className="mt-1.5 text-base-content/40">
                         Every segment was served on the first try. When a provider misses, a backup steps in.
                         You&rsquo;ll see who failed, who covered, and why, right here.
                     </div>
                 </div>
             )}
-        </div>
+            </div>
+        </section>
     );
 }
 

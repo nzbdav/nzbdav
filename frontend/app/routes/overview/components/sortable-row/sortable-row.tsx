@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import styles from "./sortable-row.module.css";
 
 type Props = {
     id: string;
@@ -18,9 +17,9 @@ export function SortableRow({ id, editMode, children }: Props) {
     };
 
     const rowClass = [
-        styles.row,
-        editMode ? styles.rowEditing : "",
-        isDragging ? styles.rowDragging : "",
+        "relative",
+        editMode ? "rounded-box border border-dashed border-base-content/20 bg-base-200 py-2 pr-2 pl-10 transition-[border-color,background] duration-100 hover:border-primary/50" : "",
+        isDragging ? "z-[1] opacity-60" : "",
     ].filter(Boolean).join(" ");
 
     return (
@@ -28,7 +27,7 @@ export function SortableRow({ id, editMode, children }: Props) {
             {editMode && (
                 <button
                     type="button"
-                    className={styles.handle}
+                    className="btn btn-ghost btn-xs absolute top-1/2 left-2 h-8 w-6 -translate-y-1/2 cursor-grab touch-none p-0 text-base-content/50 hover:bg-base-100 hover:text-base-content active:cursor-grabbing"
                     aria-label="Drag to reorder"
                     {...attributes}
                     {...listeners}>
@@ -42,7 +41,7 @@ export function SortableRow({ id, editMode, children }: Props) {
                     </svg>
                 </button>
             )}
-            <div className={styles.rowContent}>
+            <div className="min-w-0">
                 {children}
             </div>
         </div>

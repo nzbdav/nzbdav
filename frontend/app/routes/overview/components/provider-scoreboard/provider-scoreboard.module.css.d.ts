@@ -1,25 +1,4 @@
 declare const styles: {
-  readonly container: string;
-  readonly header: string;
-  readonly title: string;
-  readonly sub: string;
-  readonly empty: string;
-  readonly tableWrap: string;
-  readonly table: string;
-  readonly numCol: string;
-  readonly providerCell: string;
-  readonly providerName: string;
-  readonly dot: string;
-  readonly dotClosed: string;
-  readonly dotOpen: string;
-  readonly dotHalfOpen: string;
-  readonly circuitBadge: string;
-  readonly badgeClosed: string;
-  readonly badgeOpen: string;
-  readonly badgeHalfOpen: string;
-  readonly warn: string;
-  readonly errorRate: string;
-  readonly sparkCol: string;
   readonly spark: string;
   readonly sparkArea: string;
   readonly sparkLine: string;

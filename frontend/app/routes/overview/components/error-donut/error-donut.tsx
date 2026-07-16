@@ -49,10 +49,11 @@ export function ErrorBreakdown({ errors }: ErrorDonutProps) {
     const allClear = missTotal === 0 && hardTotal === 0;
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Error breakdown</h3>
-                <div className={styles.sub}>Hard failures vs expected provider misses</div>
+        <section className="card w-full min-w-0 overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+            <div>
+                <h3 className="card-title text-base">Error breakdown</h3>
+                <p className="text-xs text-base-content/50">Hard failures vs expected provider misses</p>
             </div>
 
             {allClear ? (
@@ -133,7 +134,8 @@ export function ErrorBreakdown({ errors }: ErrorDonutProps) {
                     )}
                 </>
             )}
-        </div>
+            </div>
+        </section>
     );
 }
 

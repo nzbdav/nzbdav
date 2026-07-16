@@ -11,89 +11,99 @@ export function ProviderScoreboard({ providers, window }: ProviderScoreboardProp
     const total = providers.reduce((s, p) => s + p.articles, 0);
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h3 className={styles.title}>Providers</h3>
-                <div className={styles.sub}>Per-provider fetches, {window === "all" ? "all time" : `last ${window}`}</div>
-            </div>
-
-            {providers.length === 0 ? (
-                <div className={styles.empty}>No providers configured.</div>
-            ) : (
-                <div className={styles.tableWrap}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>Provider</th>
-                            <th className={styles.sparkCol}>Activity</th>
-                            <th className={styles.numCol}>Articles</th>
-                            <th className={styles.numCol}>Read</th>
-                            <th className={styles.numCol}>Share</th>
-                            <th className={styles.numCol}>Errors</th>
-                            <th className={styles.numCol}>Retries</th>
-                            <th className={styles.numCol}>Avg ms</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {providers.map(p => {
-                            const share = total > 0 ? (p.articles / total) * 100 : 0;
-                            const circuitState = p.circuitState ?? "closed";
-                            return (
-                                <tr key={p.provider}>
-                                    <td>
-                                        <div
-                                            className={styles.providerCell}
-                                            title={buildProviderTooltip(p, circuitState)}>
-                                            <span className={`${styles.dot} ${dotClass(circuitState)}`} />
-                                            <span className={styles.providerName}>{p.nickname?.trim() || p.provider}</span>
-                                            {circuitState !== "closed" && (
-                                                <span className={`${styles.circuitBadge} ${badgeClass(circuitState)}`}>
-                                                    {circuitLabel(circuitState, p.cooldownRemainingSeconds)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className={styles.sparkCol}>
-                                        <Sparkline values={p.spark} />
-                                    </td>
-                                    <td className={styles.numCol}>{formatNumber(p.articles)}</td>
-                                    <td className={styles.numCol}>{formatBytes(p.bytesFetched)}</td>
-                                    <td className={styles.numCol}>
-                                        <div className={styles.shareBar}>
-                                            <div className={styles.shareFill} style={{ width: `${share.toFixed(1)}%` }} />
-                                            <span className={styles.shareText}>{formatPercent(share, 0)}</span>
-                                        </div>
-                                    </td>
-                                    <td className={`${styles.numCol} ${p.errorRate > 0.05 ? styles.warn : ""}`}>
-                                        {formatNumber(p.errors)}
-                                        {p.errorRate > 0 && <span className={styles.errorRate}> ({formatPercent(p.errorRate * 100, 1)})</span>}
-                                    </td>
-                                    <td className={styles.numCol}>{formatNumber(p.retries)}</td>
-                                    <td className={styles.numCol}>{p.avgDurationMs.toFixed(0)}</td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+        <section className="card w-full min-w-0 border border-base-content/10 bg-base-100 shadow-sm">
+            <div className="card-body gap-3 p-4">
+                <div>
+                    <h3 className="card-title text-base">Providers</h3>
+                    <p className="text-xs text-base-content/50">
+                        Per-provider fetches, {window === "all" ? "all time" : `last ${window}`}
+                    </p>
                 </div>
-            )}
-        </div>
+
+                {providers.length === 0 ? (
+                    <p className="py-6 text-center text-xs text-base-content/50">No providers configured.</p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="table table-sm min-w-[560px]">
+                            <thead>
+                                <tr>
+                                    <th>Provider</th>
+                                    <th className="w-[120px]">Activity</th>
+                                    <th>Articles</th>
+                                    <th>Read</th>
+                                    <th>Share</th>
+                                    <th>Errors</th>
+                                    <th>Retries</th>
+                                    <th>Avg ms</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {providers.map(p => {
+                                    const share = total > 0 ? (p.articles / total) * 100 : 0;
+                                    const circuitState = p.circuitState ?? "closed";
+                                    return (
+                                        <tr key={p.provider}>
+                                            <td>
+                                                <div
+                                                    className="flex max-w-[240px] min-w-0 items-center gap-2 font-medium"
+                                                    title={buildProviderTooltip(p, circuitState)}>
+                                                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass(circuitState)}`} />
+                                                    <span className="min-w-0 truncate">
+                                                        {p.nickname?.trim() || p.provider}
+                                                    </span>
+                                                    {circuitState !== "closed" && (
+                                                        <span className={`badge badge-sm shrink-0 ${badgeClass(circuitState)}`}>
+                                                            {circuitLabel(circuitState, p.cooldownRemainingSeconds)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <Sparkline values={p.spark} />
+                                            </td>
+                                            <td className="font-mono tabular-nums">{formatNumber(p.articles)}</td>
+                                            <td className="font-mono tabular-nums">{formatBytes(p.bytesFetched)}</td>
+                                            <td>
+                                                <div className={styles.shareBar}>
+                                                    <div className={styles.shareFill} style={{ width: `${share.toFixed(1)}%` }} />
+                                                    <span className={styles.shareText}>{formatPercent(share, 0)}</span>
+                                                </div>
+                                            </td>
+                                            <td className={`font-mono tabular-nums ${p.errorRate > 0.05 ? "text-error" : ""}`}>
+                                                {formatNumber(p.errors)}
+                                                {p.errorRate > 0 && (
+                                                    <span className="text-xs text-base-content/50">
+                                                        {" "}({formatPercent(p.errorRate * 100, 1)})
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="font-mono tabular-nums">{formatNumber(p.retries)}</td>
+                                            <td className="font-mono tabular-nums">{p.avgDurationMs.toFixed(0)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </section>
     );
 }
 
 function dotClass(state: ProviderCircuitState) {
     switch (state) {
-        case "open": return styles.dotOpen;
-        case "halfOpen": return styles.dotHalfOpen;
-        default: return styles.dotClosed;
+        case "open": return "bg-error";
+        case "halfOpen": return "bg-warning";
+        default: return "bg-success";
     }
 }
 
 function badgeClass(state: ProviderCircuitState) {
     switch (state) {
-        case "open": return styles.badgeOpen;
-        case "halfOpen": return styles.badgeHalfOpen;
-        default: return styles.badgeClosed;
+        case "open": return "badge-error";
+        case "halfOpen": return "badge-warning";
+        default: return "badge-success";
     }
 }
 

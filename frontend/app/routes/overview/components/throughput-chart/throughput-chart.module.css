@@ -1,58 +1,7 @@
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.totals {
-    display: flex;
-    gap: 18px;
-}
-
-.total {
-    text-align: right;
-}
-
-.totalDanger .totalValue {
-    color: var(--danger-muted);
-}
-
-.totalLabel {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.totalValue {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-}
-
 .plot {
     display: flex;
     gap: 10px;
     min-width: 0;
-}
-
-.yAxis {
-    width: 36px;
-    height: 160px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-end;
-    color: var(--text-muted);
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-    user-select: none;
-    flex-shrink: 0;
 }
 
 .chartArea {
@@ -71,20 +20,20 @@
 }
 
 .gridline {
-    stroke: rgba(255, 255, 255, 0.05);
+    stroke: color-mix(in srgb, var(--color-base-content) 5%, transparent);
     stroke-width: 1;
     vector-effect: non-scaling-stroke;
 }
 
 .lineArticles {
-    stroke: var(--success);
+    stroke: var(--color-success);
     stroke-width: 1.5;
     fill: none;
     vector-effect: non-scaling-stroke;
 }
 
 .lineErrors {
-    stroke: var(--danger-muted);
+    stroke: var(--color-error);
     stroke-width: 1.5;
     fill: none;
     vector-effect: non-scaling-stroke;
@@ -95,7 +44,7 @@
     top: 0;
     bottom: 0;
     width: 1px;
-    background: rgba(255, 255, 255, 0.25);
+    background: color-mix(in srgb, var(--color-base-content) 25%, transparent);
     pointer-events: none;
     transform: translateX(-0.5px);
 }
@@ -121,80 +70,12 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--success);
+    background: var(--color-success);
     transform: translate(-50%, -50%);
     pointer-events: none;
-    box-shadow: 0 0 0 2px var(--bg-elevated);
+    box-shadow: 0 0 0 2px var(--color-base-100);
 }
 
 .hoverDotErr {
-    background: var(--danger-muted);
-}
-
-.xAxis {
-    position: relative;
-    height: 16px;
-    margin-top: 6px;
-    margin-left: 46px;
-    color: var(--text-muted);
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-    user-select: none;
-}
-
-.xTick {
-    position: absolute;
-    top: 0;
-    transform: translateX(-50%);
-    white-space: nowrap;
-}
-
-.legend {
-    display: flex;
-    gap: 14px;
-    align-items: center;
-    margin-top: 8px;
-    font-size: 11px;
-    color: var(--text-muted);
-    flex-wrap: wrap;
-}
-
-.legendItem {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.legendRight {
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
-    color: var(--text-muted);
-}
-
-.legendRight strong {
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.swatch {
-    width: 10px;
-    height: 2px;
-    display: inline-block;
-}
-
-.swatchArticles { background: var(--success); }
-.swatchErrors { background: var(--danger-muted); }
-
-.empty {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 13px;
-    padding: 50px 0 60px;
-}
-
-.emptySub {
-    font-size: 11px;
-    color: var(--text-faint, var(--text-muted));
-    margin-top: 6px;
-    opacity: 0.7;
+    background: var(--color-error);
 }

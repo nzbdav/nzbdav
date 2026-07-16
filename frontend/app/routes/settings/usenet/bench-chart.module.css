@@ -1,0 +1,57 @@
+.bench-chart {
+    margin-top: 16px;
+}
+
+.bench-chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 150px;
+}
+
+.bench-chart-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.bench-chart-val {
+    font-size: 10.5px;
+    color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.bench-chart-bar {
+    width: 100%;
+    max-width: 32px;
+    border-radius: 4px 4px 0 0;
+    background: color-mix(in oklab, var(--color-base-content) 25%, transparent);
+    transition: height 250ms ease, background-color 120ms ease;
+}
+
+.bench-chart-label {
+    font-size: 11px;
+    color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+    font-variant-numeric: tabular-nums;
+}
+
+.bench-chart-col-rec .bench-chart-bar {
+    background: var(--color-base-content);
+}
+
+.bench-chart-col-rec .bench-chart-val,
+.bench-chart-col-rec .bench-chart-label {
+    color: var(--color-base-content);
+    font-weight: 600;
+}
+
+.bench-chart-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+}

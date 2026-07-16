@@ -28,9 +28,9 @@ export function MultiCheckboxInput({ options, value, onChange }: MultiCheckboxIn
     }
 
     return (
-        <div className="mt-3 grid grid-cols-1 gap-2 rounded border border-slate-700/70 bg-slate-800/30 p-3 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-2 rounded border border-base-content/10 bg-base-200/30 p-3 sm:grid-cols-2">
             {options.map(option => (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-300">
+                <label key={option} className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                         id={`multi-checkbox-${option}`}
                         checked={selectedOptions.includes(option)}

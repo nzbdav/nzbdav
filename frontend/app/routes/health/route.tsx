@@ -120,7 +120,7 @@ export default function Health({ loaderData }: Route.ComponentProps) {
     useWebsocketTopics(topicSubscriptions, onWebsocketMessage);
 
     return (
-        <div className="flex min-h-full min-w-full flex-col gap-8 px-4 py-4 text-sm text-slate-300 md:px-8">
+        <div className="flex min-h-full min-w-full flex-col gap-8 px-4 py-4 text-sm text-base-content/80 md:px-8">
             <HealthStats stats={historyStats} />
             {isEnabled && uncheckedCount > 20 &&
                 <Alert className="flex gap-3 p-3" variant="warning">

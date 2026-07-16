@@ -1,13 +1,4 @@
 declare const styles: {
-  readonly hero: string;
-  readonly heroNum: string;
-  readonly heroText: string;
-  readonly heroLabel: string;
-  readonly heroSub: string;
-  readonly reads: string;
-  readonly readsMuted: string;
-  readonly reasons: string;
-  readonly sectionHead: string;
   readonly reasonBar: string;
   readonly reasonSeg: string;
   readonly rMissing: string;
@@ -16,21 +7,9 @@ declare const styles: {
   readonly rNetwork: string;
   readonly rCorrupt: string;
   readonly rOther: string;
-  readonly rankHead: string;
-  readonly bars: string;
-  readonly row: string;
-  readonly name: string;
-  readonly barTrack: string;
   readonly barFill: string;
   readonly barFillBad: string;
-  readonly count: string;
-  readonly share: string;
-  readonly solo: string;
-  readonly trend: string;
-  readonly trendHead: string;
-  readonly trendReadout: string;
   readonly trendPlot: string;
-  readonly trendYAxis: string;
   readonly trendArea: string;
   readonly trendSvg: string;
   readonly trendGrid: string;
@@ -38,8 +17,5 @@ declare const styles: {
   readonly trendLine: string;
   readonly trendCrosshair: string;
   readonly trendDot: string;
-  readonly trendXAxis: string;
-  readonly trendXTick: string;
-  readonly footnote: string;
 };
 export = styles;

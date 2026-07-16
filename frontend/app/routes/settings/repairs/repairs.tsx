@@ -29,7 +29,7 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
     return (
         <SettingsPage>
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="enable-repairs-checkbox"
                     aria-describedby="enable-repairs-help"
@@ -44,9 +44,9 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="healthcheck-concurrency-input">Health Check Concurrency</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="healthcheck-concurrency-input">Health Check Concurrency</label>
                 <Input
-                    className={`w-full ${!isPositiveInteger(config["repair.healthcheck-concurrency"] || "50") ? "border-red-500" : ""}`}
+                    className={`w-full ${!isPositiveInteger(config["repair.healthcheck-concurrency"] || "50") ? "input-error" : ""}`}
                     type="text"
                     id="healthcheck-concurrency-input"
                     aria-describedby="healthcheck-concurrency-help"
@@ -61,9 +61,9 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="auto-remove-after-failures-input">Auto-Remove After Streaming Failures</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="auto-remove-after-failures-input">Auto-Remove After Streaming Failures</label>
                 <Input
-                    className={`w-full ${!isNonNegativeInteger(autoRemoveAfter || "0") ? "border-red-500" : ""}`}
+                    className={`w-full ${!isNonNegativeInteger(autoRemoveAfter || "0") ? "input-error" : ""}`}
                     type="text"
                     id="auto-remove-after-failures-input"
                     aria-describedby="auto-remove-after-failures-help"
@@ -77,7 +77,7 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
                 </p>
             </div>
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="auto-remove-unlinked-only-checkbox"
                     aria-describedby="auto-remove-unlinked-only-help"
@@ -94,7 +94,7 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="library-dir-input">Library Directory</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="library-dir-input">Library Directory</label>
                 <Input
                     className={'w-full'}
                     type="text"

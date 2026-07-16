@@ -60,28 +60,28 @@ export function ActivityHeatmap({ maxCell, mode, windowStartMs, windowEndMs, buc
     return (
         <section className="card w-full min-w-0 overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
             <div className="card-body gap-3 p-4">
-            <div className={styles.header}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <h3 className="card-title text-base">Activity heatmap</h3>
                     <p className="text-xs text-base-content/50">{subtitle}</p>
                 </div>
                 {peak && peak.count > 0 && peakLabel && (
-                    <div className={styles.peak}>
-                        <span className={styles.peakLabel}>Peak</span>
-                        <span className={styles.peakValue}>{peakLabel}</span>
-                        <span className={styles.peakCount}>{formatNumber(peak.count)} articles</span>
+                    <div className="flex flex-col items-end gap-px text-right">
+                        <span className="text-[10px] font-medium tracking-wide text-base-content/50 uppercase">Peak</span>
+                        <span className="text-sm font-semibold tracking-tight text-base-content tabular-nums">{peakLabel}</span>
+                        <span className="text-[11px] text-base-content/50 tabular-nums">{formatNumber(peak.count)} articles</span>
                     </div>
                 )}
             </div>
 
             {empty ? (
-                <div className={styles.empty}>{emptyMessage}</div>
+                <div className="py-10 text-center text-xs text-base-content/50">{emptyMessage}</div>
             ) : (
                 <>
-                    <div className={`${styles.grid} ${styles[`mode_${mode}`]}`}>
+                    <div className={styles.grid} data-mode={mode}>
                         {grid.rows.map((row, r) => (
                             <div key={r} className={styles.row}>
-                                <div className={styles.dayLabel} title={row.title}>{row.label}</div>
+                                <div className="w-[30px] shrink-0 text-right text-[11px] font-medium text-base-content/50 select-none" title={row.title}>{row.label}</div>
                                 <div
                                     className={styles.cellRow}
                                     style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))` }}>
@@ -104,10 +104,10 @@ export function ActivityHeatmap({ maxCell, mode, windowStartMs, windowEndMs, buc
                             </div>
                         ))}
                         {grid.columnLabels && grid.columnLabels.length > 0 && (
-                            <div className={styles.axisRow}>
-                                <div className={styles.dayLabel} aria-hidden />
+                            <div className="mt-1 flex w-full min-w-0 items-center gap-2">
+                                <div className="w-[30px] shrink-0" aria-hidden />
                                 <div
-                                    className={styles.axisGrid}
+                                    className={`${styles.axisGrid} text-[10px] text-base-content/50 tabular-nums select-none`}
                                     style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))` }}>
                                     {grid.columnLabels.map((c, i) => (
                                         <span key={i} className={styles.axisTick} style={{ gridColumnStart: c.index + 1 }}>
@@ -119,8 +119,8 @@ export function ActivityHeatmap({ maxCell, mode, windowStartMs, windowEndMs, buc
                         )}
                     </div>
 
-                    <div className={styles.footer}>
-                        <div className={styles.tooltip}>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
+                        <div className="text-[11px] text-base-content/50 tabular-nums">
                             {hover ? (
                                 <>
                                     {formatBucket(hover.bucket, bucketSizeMs)} &mdash;{" "}
@@ -130,13 +130,13 @@ export function ActivityHeatmap({ maxCell, mode, windowStartMs, windowEndMs, buc
                                 <>Hover a cell for details</>
                             )}
                         </div>
-                        <div className={styles.scale}>
+                        <div className="flex items-center gap-1 text-[10px] text-base-content/50">
                             <span>Less</span>
-                            <div className={styles.scaleSwatch} style={{ backgroundColor: cellColor(0) }} />
-                            <div className={styles.scaleSwatch} style={{ backgroundColor: cellColor(0.25) }} />
-                            <div className={styles.scaleSwatch} style={{ backgroundColor: cellColor(0.5) }} />
-                            <div className={styles.scaleSwatch} style={{ backgroundColor: cellColor(0.75) }} />
-                            <div className={styles.scaleSwatch} style={{ backgroundColor: cellColor(1) }} />
+                            <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: cellColor(0) }} />
+                            <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: cellColor(0.25) }} />
+                            <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: cellColor(0.5) }} />
+                            <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: cellColor(0.75) }} />
+                            <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: cellColor(1) }} />
                             <span>More</span>
                         </div>
                     </div>
@@ -314,8 +314,8 @@ function emptyMessageFor(mode: HeatmapMode): string {
 }
 
 function cellColor(intensity: number): string {
-    if (intensity <= 0) return "rgba(255,255,255,0.04)";
+    if (intensity <= 0) return "color-mix(in srgb, var(--color-base-content) 4%, transparent)";
     const eased = Math.pow(Math.min(1, intensity), 0.6);
     const alpha = 0.15 + eased * 0.75;
-    return `rgba(52, 211, 153, ${alpha.toFixed(3)})`;
+    return `color-mix(in srgb, var(--color-success) ${(alpha * 100).toFixed(0)}%, transparent)`;
 }

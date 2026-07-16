@@ -44,10 +44,10 @@ export function ConfirmModal(props: ConfirmModalProps) {
                 </Button>
             </>}
         >
-            <div className="space-y-3 text-xs text-slate-300">
+            <div className="space-y-3 text-xs text-base-content/80">
                 <WordWrap>{props.message}</WordWrap>
                 {props.checkboxMessage && (
-                    <label className="flex items-center gap-2 text-sm text-slate-300">
+                    <label className="flex items-center gap-2 text-sm text-base-content/80">
                         <Checkbox
                             id="modal-checkbox"
                             checked={isCheckboxChecked}

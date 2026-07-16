@@ -8,7 +8,6 @@ import {
     useRef,
     useState,
 } from "react";
-import styles from "./route.module.css";
 import { backendClient, type LogEntry, type LogLevel } from "~/clients/backend-client.server";
 import { useLogsWebsocket, type ConnectionStatus } from "./controllers/websocket-controller";
 import { Alert, Badge, Icon } from "~/components/ui";
@@ -390,7 +389,7 @@ export default function Logs({ loaderData }: Route.ComponentProps) {
                 </div>
             </div>
 
-            <div className={`card relative flex min-h-0 flex-1 flex-col overflow-hidden border border-base-content/10 bg-base-100 shadow-sm ${styles.listWrap}`}>
+            <div className="card relative flex min-h-0 flex-1 flex-col overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
                 {entries.length === 0 ? (
                     <div className="card-body items-center justify-center gap-1 py-16 text-center text-base-content/50">
                         <div className="text-sm text-base-content/70">No log entries to show.</div>
@@ -401,7 +400,11 @@ export default function Logs({ loaderData }: Route.ComponentProps) {
                         </div>
                     </div>
                 ) : (
-                    <div ref={listRef} className={styles.list} onScroll={handleScroll}>
+                    <div
+                        ref={listRef}
+                        className="yes-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto py-1 font-mono text-xs leading-normal"
+                        onScroll={handleScroll}
+                    >
                         {entries.map(entry => (
                             <LogRow
                                 key={entry.seq}
@@ -431,21 +434,21 @@ function LogRow({ entry, expanded, onToggle }: {
     expanded: boolean,
     onToggle: () => void,
 }) {
-    const rowClass = `${styles.row} ${levelRowClass(entry.level)}`;
+    const rowClass = `grid cursor-pointer grid-cols-[86px_64px_1fr] items-baseline gap-3 border-l-2 border-transparent px-3.5 py-0.5 transition-colors duration-75 [contain:content] hover:bg-base-content/5 max-[899px]:grid-cols-[70px_56px_1fr] max-[899px]:gap-2 max-[899px]:px-2.5 max-[899px]:py-1 ${levelRowClass(entry.level)}`;
     return (
         <div className={rowClass} onClick={onToggle} title={entry.exception ? "Click to toggle stack trace" : undefined}>
-            <span className={styles.rowTime}>{formatTime(entry.ts)}</span>
+            <span className="whitespace-nowrap tabular-nums text-base-content/40">{formatTime(entry.ts)}</span>
             <Badge className={`badge-xs uppercase tracking-wide ${levelBadgeClass(entry.level)}`}>
                 {shortLevel(entry.level)}
             </Badge>
-            <span className={styles.rowBody}>
-                <span className={styles.rowMessage}>{entry.msg}</span>
-                {entry.source && <span className={styles.rowSource}>{entry.source}</span>}
+            <span className="flex min-w-0 flex-col gap-0.5 break-words">
+                <span className="log-msg whitespace-pre-wrap break-words text-base-content">{entry.msg}</span>
+                {entry.source && <span className="text-[11px] text-base-content/40 max-[899px]:text-[10.5px]">{entry.source}</span>}
                 {entry.exception && !expanded && (
-                    <span className={styles.rowExceptionHint}>▸ click to view stack trace</span>
+                    <span className="mt-0.5 text-[10.5px] text-base-content/50">▸ click to view stack trace</span>
                 )}
                 {entry.exception && expanded && (
-                    <pre className={styles.rowException}>{entry.exception}</pre>
+                    <pre className="mt-1 mb-0.5 max-h-80 overflow-auto whitespace-pre-wrap rounded-md border border-base-content/10 bg-base-300 p-2 text-[11px] text-base-content/70">{entry.exception}</pre>
                 )}
             </span>
         </div>
@@ -494,12 +497,17 @@ function levelBadgeClass(level: LogLevel): string {
 
 function levelRowClass(level: LogLevel): string {
     switch (level) {
-        case "Verbose": return styles.rowVerbose;
-        case "Debug": return styles.rowDebug;
-        case "Information": return styles.rowInformation;
-        case "Warning": return styles.rowWarning;
-        case "Error": return styles.rowError;
-        case "Fatal": return styles.rowFatal;
+        case "Verbose":
+        case "Debug":
+            return "text-base-content/50 border-l-base-content/20 [&_.log-msg]:text-base-content/70";
+        case "Information":
+            return "text-base-content/70 border-l-info/40";
+        case "Warning":
+            return "text-warning border-l-warning bg-warning/5";
+        case "Error":
+            return "text-error border-l-error bg-error/5 [&_.log-msg]:text-error/80";
+        case "Fatal":
+            return "font-semibold text-error border-l-error bg-error/10 [&_.log-msg]:text-error/80";
     }
 }
 

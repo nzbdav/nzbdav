@@ -1,75 +1,9 @@
-.hero {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 14px;
-}
-
-.heroNum {
-    font-size: 40px;
-    font-weight: 700;
-    color: var(--text-primary);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.03em;
-    line-height: 0.95;
-    flex-shrink: 0;
-}
-
-.heroText {
-    min-width: 0;
-    flex: 1;
-}
-
-.heroLabel {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.heroSub {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 3px;
-}
-
-.heroSub strong {
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.reads {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 16px;
-}
-
-.reads strong {
-    color: var(--text-primary);
-    font-weight: 700;
-}
-
-.readsMuted {
-    color: var(--text-muted);
-}
-
-.reasons {
-    margin-bottom: 16px;
-}
-
-.sectionHead {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    margin-bottom: 6px;
-}
-
 .reasonBar {
     display: flex;
     height: 8px;
     border-radius: 4px;
     overflow: hidden;
-    background: var(--bg-surface);
+    background: var(--color-base-200);
     gap: 1px;
 }
 
@@ -78,155 +12,36 @@
     min-width: 2px;
 }
 
-.rMissing { background: #71717a; }
-.rTimeout { background: #ca8a04; }
-.rAuth { background: #0284c7; }
-.rNetwork { background: #dc2626; }
-.rCorrupt { background: #9333ea; }
-.rOther { background: #52525b; }
-
-.rankHead {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border-subtle);
-    margin-top: 4px;
-}
-
-.bars {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 8px;
-}
-
-.row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--border-subtle);
-}
-
-.row:last-child {
-    border-bottom: none;
-}
-
-.name {
-    width: 130px;
-    flex-shrink: 0;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.barTrack {
-    flex: 1;
-    min-width: 30px;
-    height: 8px;
-    background: var(--bg-surface);
-    border-radius: 4px;
-    overflow: hidden;
-}
+.rMissing { background: color-mix(in srgb, var(--color-base-content) 45%, transparent); }
+.rTimeout { background: var(--color-warning); }
+.rAuth { background: var(--color-info); }
+.rNetwork { background: var(--color-error); }
+.rCorrupt { background: var(--color-accent); }
+.rOther { background: color-mix(in srgb, var(--color-base-content) 35%, transparent); }
 
 .barFill {
     display: block;
     height: 100%;
     border-radius: 4px;
-    background: linear-gradient(to right, rgba(52, 211, 153, 0.55), var(--success));
+    background: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-success) 55%, transparent),
+        var(--color-success)
+    );
 }
 
 .barFillBad {
-    background: linear-gradient(to right, rgba(248, 113, 113, 0.5), var(--danger-muted));
-}
-
-.count {
-    width: 52px;
-    flex-shrink: 0;
-    text-align: right;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    font-variant-numeric: tabular-nums;
-}
-
-.share {
-    width: 36px;
-    flex-shrink: 0;
-    text-align: right;
-    font-size: 11px;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-.solo {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 12px 14px;
-    margin-top: 4px;
-}
-
-.solo strong {
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.trend {
-    margin-top: 14px;
-}
-
-.trendHead {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
-.trendReadout {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-    min-width: 0;
-}
-
-.trendReadout strong {
-    color: var(--text-primary);
-    font-weight: 600;
+    background: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-error) 50%, transparent),
+        var(--color-error)
+    );
 }
 
 .trendPlot {
     display: flex;
     gap: 10px;
     min-width: 0;
-}
-
-.trendYAxis {
-    width: 30px;
-    height: 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-end;
-    color: var(--text-muted);
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-    user-select: none;
-    flex-shrink: 0;
 }
 
 .trendArea {
@@ -245,18 +60,18 @@
 }
 
 .trendGrid {
-    stroke: rgba(255, 255, 255, 0.05);
+    stroke: color-mix(in srgb, var(--color-base-content) 5%, transparent);
     stroke-width: 1;
     vector-effect: non-scaling-stroke;
 }
 
 .trendFill {
-    fill: rgba(52, 211, 153, 0.1);
+    fill: color-mix(in srgb, var(--color-success) 10%, transparent);
     stroke: none;
 }
 
 .trendLine {
-    stroke: var(--success);
+    stroke: var(--color-success);
     stroke-width: 1.5;
     fill: none;
     vector-effect: non-scaling-stroke;
@@ -268,7 +83,7 @@
     top: 0;
     bottom: 0;
     width: 1px;
-    background: rgba(255, 255, 255, 0.25);
+    background: color-mix(in srgb, var(--color-base-content) 25%, transparent);
     pointer-events: none;
     transform: translateX(-0.5px);
 }
@@ -278,36 +93,8 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--success);
+    background: var(--color-success);
     transform: translate(-50%, -50%);
     pointer-events: none;
-    box-shadow: 0 0 0 2px var(--bg-elevated);
-}
-
-.trendXAxis {
-    position: relative;
-    height: 14px;
-    margin-top: 6px;
-    margin-left: 40px;
-    color: var(--text-muted);
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-    user-select: none;
-}
-
-.trendXTick {
-    position: absolute;
-    top: 0;
-    transform: translateX(-50%);
-    white-space: nowrap;
-}
-
-.footnote {
-    margin-top: 12px;
-    font-size: 11px;
-    color: var(--text-muted);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 12px;
+    box-shadow: 0 0 0 2px var(--color-base-100);
 }

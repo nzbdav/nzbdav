@@ -1,62 +1,3 @@
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.percentiles {
-    display: flex;
-    gap: 12px;
-}
-
-.pctile {
-    text-align: right;
-    padding: 6px 12px;
-    border-radius: var(--radius-md);
-    min-width: 78px;
-}
-
-.pctileTop {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    justify-content: flex-end;
-}
-
-.pctileLabel {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.pctileCaption {
-    font-size: 9px;
-    text-transform: lowercase;
-    color: var(--text-muted);
-    opacity: 0.7;
-    letter-spacing: 0.02em;
-}
-
-.pctileValue {
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    font-variant-numeric: tabular-nums;
-    margin-top: 1px;
-}
-
-.empty {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 12px;
-    padding: 40px 0;
-}
-
 .bars {
     display: grid;
     grid-auto-columns: minmax(0, 1fr);
@@ -85,7 +26,11 @@
 
 .bar {
     width: 100%;
-    background: linear-gradient(to top, var(--success), rgba(52, 211, 153, 0.5));
+    background: linear-gradient(
+        to top,
+        var(--color-success),
+        color-mix(in srgb, var(--color-success) 50%, transparent)
+    );
     border-radius: 3px 3px 0 0;
     min-height: 2px;
     transition: filter 120ms ease;
@@ -94,41 +39,4 @@
 .barCol:hover .bar,
 .barHover .bar {
     filter: brightness(1.3);
-}
-
-.barLabel {
-    font-size: 10px;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: clip;
-    max-width: 100%;
-}
-
-.footer {
-    margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.axisHint {
-    font-size: 10px;
-    color: var(--text-muted);
-    opacity: 0.7;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    white-space: nowrap;
-}
-
-.tooltip {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-    min-height: 14px;
 }

@@ -1,7 +1,6 @@
 import { redirect } from "react-router";
 import type { Route } from "./+types/route";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import styles from "./route.module.css";
 import { backendClient, type WatchdogEntry, type WatchdogOutcome } from "~/clients/backend-client.server";
 import { ConfirmModal } from "~/components/confirm-modal/confirm-modal";
 import { Alert, Badge, Icon } from "~/components/ui";
@@ -180,7 +179,7 @@ export default function Watchdog({ loaderData }: Route.ComponentProps) {
                     </div>
                 </div>
             ) : (
-                <div className={styles.clickList}>
+                <div className="flex flex-col gap-3.5">
                     {filteredGroups.map(g => <ClickCard key={g.clickId} group={g} />)}
                 </div>
             )}
@@ -206,12 +205,12 @@ function ClickCard({ group }: { group: ClickGroup }) {
     return (
         <div className="card min-w-0 border border-base-content/10 bg-base-100 shadow-sm">
             <div className="card-body gap-3 p-4 md:p-5">
-                <div className={styles.clickHeader}>
-                    <div className={styles.clickHeaderMain}>
+                <div className="flex flex-wrap items-center justify-between gap-3 max-[899px]:gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2.5 max-[899px]:basis-full">
                         <StatusPill status={status} />
-                        <div className={styles.clickTitle} title={group.requestedTitle}>{group.requestedTitle}</div>
+                        <div className="min-w-0 truncate text-[13px] font-semibold text-base-content max-[899px]:overflow-visible max-[899px]:whitespace-normal max-[899px]:break-words" title={group.requestedTitle}>{group.requestedTitle}</div>
                     </div>
-                    <div className={styles.clickHeaderMeta}>
+                    <div className="flex flex-wrap items-center gap-2">
                         <Badge className="badge-ghost badge-sm lowercase">{group.contentType}</Badge>
                         <Badge className="badge-ghost badge-sm">
                             {group.attempts.length} attempt{group.attempts.length === 1 ? "" : "s"}
@@ -235,55 +234,55 @@ function ClickCard({ group }: { group: ClickGroup }) {
                     </div>
                 )}
 
-                <div className={styles.attemptTableWrap}>
-                    <div className="overflow-x-auto">
-                        <table className={`table table-xs w-full ${styles.attemptTable}`}>
+                <div className="-mx-4 -mb-4 border-t border-base-content/10 md:-mx-5 md:-mb-5">
+                    <div className="hidden min-[900px]:block overflow-x-auto">
+                        <table className="table table-xs w-full text-xs">
                             <thead>
                                 <tr>
-                                    <th className={styles.colRank}>#</th>
-                                    <th className={styles.colCandidate}>Candidate</th>
-                                    <th className={styles.colIndexer}>Indexer</th>
-                                    <th className={styles.colProvider}>Provider</th>
-                                    <th className={styles.colSize}>Size</th>
-                                    <th className={styles.colOutcome}>Outcome</th>
-                                    <th className={styles.colReason}>Reason</th>
-                                    <th className={styles.colDuration}>Took</th>
+                                    <th className="w-8 px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap text-base-content/50 tabular-nums first:pl-4 last:pr-4 last:text-right">#</th>
+                                    <th className="max-w-60 px-2.5 py-2 text-left text-[10px] font-medium uppercase tracking-wider whitespace-nowrap text-base-content/50 first:pl-4 last:pr-4 last:text-right">Candidate</th>
+                                    <th className="max-w-[110px] px-2.5 py-2 text-left text-[10px] font-medium uppercase tracking-wider whitespace-nowrap text-base-content/50 first:pl-4 last:pr-4 last:text-right">Indexer</th>
+                                    <th className="max-w-[140px] px-2.5 py-2 text-left text-[10px] font-medium uppercase tracking-wider whitespace-nowrap text-base-content/50 first:pl-4 last:pr-4 last:text-right">Provider</th>
+                                    <th className="w-[72px] px-2.5 py-2 text-left text-[10px] font-medium uppercase tracking-wider whitespace-nowrap text-base-content/50 first:pl-4 last:pr-4 last:text-right">Size</th>
+                                    <th className="w-[120px] px-2.5 py-2 text-left text-[10px] font-medium uppercase tracking-wider whitespace-nowrap text-base-content/50 first:pl-4 last:pr-4 last:text-right">Outcome</th>
+                                    <th className="max-w-[180px] px-2.5 py-2 text-left text-[10px] font-medium uppercase tracking-wider whitespace-nowrap text-base-content/50 first:pl-4 last:pr-4 last:text-right">Reason</th>
+                                    <th className="w-16 px-2.5 py-2 text-left text-[10px] font-medium uppercase tracking-wider whitespace-nowrap text-base-content/50 first:pl-4 last:pr-4 last:text-right">Took</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {group.attempts.map((a, i) => (
                                     <tr key={i} className={a.isWinner ? "bg-success/5" : undefined}>
-                                        <td className={styles.colRank}>{a.rankIndex + 1}</td>
-                                        <td className={styles.colCandidate} title={a.candidateTitle}>{a.candidateTitle || "—"}</td>
-                                        <td className={styles.colIndexer}>{a.indexerName || "—"}</td>
-                                        <td className={styles.colProvider} title={a.providerHost ?? undefined}>{a.providerNickname?.trim() || formatProviderShort(a.providerHost)}</td>
-                                        <td className={styles.colSize}>{formatBytes(a.size)}</td>
-                                        <td className={styles.colOutcome}>
+                                        <td className="w-8 px-2.5 py-2 align-middle font-semibold tabular-nums text-base-content/50 first:pl-4">{a.rankIndex + 1}</td>
+                                        <td className="max-w-60 truncate px-2.5 py-2 align-middle text-base-content" title={a.candidateTitle}>{a.candidateTitle || "—"}</td>
+                                        <td className="max-w-[110px] truncate whitespace-nowrap px-2.5 py-2 align-middle text-base-content/70">{a.indexerName || "—"}</td>
+                                        <td className="max-w-[140px] truncate whitespace-nowrap px-2.5 py-2 align-middle text-base-content/70" title={a.providerHost ?? undefined}>{a.providerNickname?.trim() || formatProviderShort(a.providerHost)}</td>
+                                        <td className="w-[72px] whitespace-nowrap px-2.5 py-2 align-middle tabular-nums text-base-content/50">{formatBytes(a.size)}</td>
+                                        <td className="w-[120px] whitespace-nowrap px-2.5 py-2 align-middle text-base-content/70">
                                             <OutcomeBadge outcome={a.outcome} winner={a.isWinner} />
                                         </td>
-                                        <td className={styles.colReason} title={a.failReason ?? undefined}>{a.failReason ?? "—"}</td>
-                                        <td className={styles.colDuration}>{a.durationMs}ms</td>
+                                        <td className="max-w-[180px] truncate whitespace-nowrap px-2.5 py-2 align-middle text-base-content/50" title={a.failReason ?? undefined}>{a.failReason ?? "—"}</td>
+                                        <td className="w-16 whitespace-nowrap px-2.5 py-2 align-middle text-right tabular-nums text-base-content/50 last:pr-4">{a.durationMs}ms</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
 
-                    <div className={styles.attemptCards}>
+                    <div className="flex flex-col gap-2 px-3.5 pt-3 pb-4 min-[900px]:hidden">
                         {group.attempts.map((a, i) => (
                             <div key={i} className={`card card-compact border border-base-content/10 bg-base-200 ${a.isWinner ? "border-success/30 bg-success/5" : ""}`}>
                                 <div className="card-body gap-1 p-3">
-                                    <div className={styles.attemptCardTop}>
+                                    <div className="flex flex-wrap items-center gap-2">
                                         <span className="font-mono text-[11px] font-semibold tabular-nums text-base-content/50">#{a.rankIndex + 1}</span>
-                                        <span className={styles.attemptIndexer} title={a.indexerName}>{a.indexerName || "—"}</span>
+                                        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-base-content" title={a.indexerName}>{a.indexerName || "—"}</span>
                                         <OutcomeBadge outcome={a.outcome} winner={a.isWinner} />
                                     </div>
-                                    <div className={styles.attemptCardTitle} title={a.candidateTitle}>{a.candidateTitle || "—"}</div>
-                                    <div className={styles.attemptCardMeta}>
+                                    <div className="mb-1 text-xs leading-snug break-words text-base-content/70" title={a.candidateTitle}>{a.candidateTitle || "—"}</div>
+                                    <div className="flex gap-1.5 text-[11px] tabular-nums text-base-content/50">
                                         <span title={a.providerHost ?? undefined}>📡 {a.providerNickname?.trim() || formatProviderShort(a.providerHost)}</span>
-                                        <span className={styles.attemptCardMetaDot}>·</span>
+                                        <span className="text-base-content/40">·</span>
                                         <span>{formatBytes(a.size)}</span>
-                                        <span className={styles.attemptCardMetaDot}>·</span>
+                                        <span className="text-base-content/40">·</span>
                                         <span>{a.durationMs}ms</span>
                                     </div>
                                     {a.failReason && (

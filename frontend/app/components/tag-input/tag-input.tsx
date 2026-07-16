@@ -104,11 +104,11 @@ export function TagInput({
             onClick={handleContainerClick}
         >
             {tags.map((tag, index) => (
-                <span key={index} className={'inline-flex items-center gap-1 rounded-full border border-slate-600/60 bg-slate-700/40 px-2 py-0.5 text-xs text-slate-200'}>
+                <span key={index} className={'inline-flex items-center gap-1 rounded-full border border-base-content/20 bg-base-300/40 px-2 py-0.5 text-xs text-base-content'}>
                     {tag}
                     <button
                         type="button"
-                        className={'rounded text-slate-400 hover:text-red-400'}
+                        className={'rounded text-base-content/60 hover:text-error'}
                         onClick={(e) => {
                             e.stopPropagation();
                             removeTag(index);
@@ -125,7 +125,7 @@ export function TagInput({
             <input
                 ref={inputRef}
                 type="text"
-                className="min-w-24 flex-1 bg-transparent text-sm text-slate-200 outline-none placeholder:text-slate-500"
+                className="min-w-24 flex-1 bg-transparent text-sm text-base-content outline-none placeholder:text-base-content/50"
                 style={{ width: inputWidth }}
                 value={inputValue}
                 onChange={handleInputChange}

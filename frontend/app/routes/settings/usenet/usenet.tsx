@@ -1,7 +1,7 @@
-import styles from "./usenet.module.css"
+import chartStyles from "./bench-chart.module.css";
 import { type Dispatch, type SetStateAction, type ReactNode, type CSSProperties, useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Button } from "~/components/ui/button";
-import { Icon, SettingsPage } from "~/components/ui";
+import { Alert, Badge, Button, HelpText, Icon, Input, Label, Modal, Select, SettingsPage } from "~/components/ui";
+import { Checkbox } from "~/components/ui/form";
 import { subscribeWebsocketTopics, useWebsocketTopic } from "~/utils/shared-websocket";
 import { isMaskedSecret } from "~/utils/config-mask";
 import { shouldWarnCleartextCredentials } from "./cleartext-credentials";
@@ -398,7 +398,7 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
     return (
         <SettingsPage>
             <div className={'space-y-4'}>
-                <div className={'flex items-center justify-between text-lg font-semibold text-white'}>
+                <div className={'flex items-center justify-between text-lg font-semibold text-base-content'}>
                     <div>Usenet Providers</div>
                     <Button variant="primary" size="small" onClick={handleAddProvider}>
                         <Icon name="add" className="!text-[18px]" />
@@ -406,47 +406,45 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                     </Button>
                 </div>
                 {providerConfig.Providers.length === 0 ? (
-                    <p className={'rounded border border-slate-700/70 bg-slate-800/40 px-3 py-2 text-sm text-slate-400'}>
+                    <p className={'rounded border border-base-content/10 bg-base-200/40 px-3 py-2 text-sm text-base-content/60'}>
                         No Usenet providers configured.
                         Click on the "Add" button to get started.
                     </p>
                 ) : (
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={providerConfig.Providers.map(providerKey)} strategy={rectSortingStrategy}>
-                    <div className={styles["providers-grid"]}>
+                    <div className="mb-7 grid grid-cols-1 gap-4 lg:grid-cols-2">
                         {displayedProviders.map(({ provider, index }) => {
                             const isDisabled = provider.Type === ProviderType.Disabled;
                             return (
                             <SortableItem key={providerKey(provider)} id={providerKey(provider)} disabled={!cascadeEnabled}>
                             {({ setNodeRef, setActivatorNodeRef, attributes, listeners, style, isDragging }) => (
-                            <div ref={setNodeRef} style={style} className={`${styles["provider-card"]} ${isDisabled ? styles["provider-card-disabled"] : ""}`}>
-                                <div className={styles["provider-card-inner"]}>
-                                    <div className={styles["provider-header"]}>
-                                        <div className={styles["provider-header-content"]}>
-                                            <div className={styles["provider-host"]}>
+                            <div ref={setNodeRef} style={style} className={`card border border-base-content/10 bg-base-100 shadow-sm ${isDisabled ? "opacity-60" : ""}`}>
+                                <div className="card-body gap-3 p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="break-all text-[15px] font-semibold leading-snug tracking-tight text-base-content">
                                                 {cascadeEnabled && !isDisabled && (
-                                                    <span style={{ display: "inline-block", marginRight: 8, padding: "2px 8px", fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", color: "var(--text-muted)", background: "var(--bg-surface-2)", border: "1px solid var(--border-subtle)", borderRadius: 6, verticalAlign: "middle" }}>
-                                                        #{index + 1}
-                                                    </span>
+                                                    <Badge className="badge-ghost badge-sm mr-2 align-middle">#{index + 1}</Badge>
                                                 )}
                                                 {provider.Nickname?.trim() || provider.Host}
-                                                {isDisabled && <span className={styles["provider-disabled-badge"]}>Disabled</span>}
+                                                {isDisabled && <Badge className="badge-ghost badge-sm ml-2 align-middle">Disabled</Badge>}
                                             </div>
                                             {provider.Nickname?.trim() && (
-                                                <div className={styles["provider-host-secondary"]}>
+                                                <div className="mb-0.5 break-all text-xs text-base-content/60">
                                                     {provider.Host}
                                                 </div>
                                             )}
-                                            <div className={styles["provider-port"]}>
+                                            <div className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">
                                                 Port {provider.Port}
                                             </div>
                                         </div>
-                                        <div className={styles["provider-header-actions"]}>
+                                        <div className="flex shrink-0 gap-1">
                                             {cascadeEnabled && (
                                                 <button
                                                     type="button"
                                                     ref={setActivatorNodeRef}
-                                                    className={styles["header-action-button"]}
+                                                    className="btn btn-ghost btn-sm btn-square"
                                                     style={{ cursor: isDragging ? "grabbing" : "grab", touchAction: "none" }}
                                                     title="Drag to reorder"
                                                     aria-label="Drag to reorder"
@@ -461,7 +459,8 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                                 </button>
                                             )}
                                             <button
-                                                className={`${styles["header-action-button"]} ${styles["toggle"]} ${isDisabled ? styles["toggle-off"] : styles["toggle-on"]}`}
+                                                type="button"
+                                                className={`btn btn-ghost btn-sm btn-square ${isDisabled ? "text-base-content/40" : "text-success"}`}
                                                 onClick={() => handleToggleProvider(index)}
                                                 title={isDisabled ? "Enable Provider" : "Disable Provider"}
                                                 aria-pressed={!isDisabled}
@@ -473,7 +472,7 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                             </button>
                                             <button
                                                 type="button"
-                                                className={styles["header-action-button"]}
+                                                className="btn btn-ghost btn-sm btn-square"
                                                 onClick={() => handleEditProvider(index)}
                                                 title="Edit Provider"
                                             >
@@ -481,7 +480,7 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                             </button>
                                             <button
                                                 type="button"
-                                                className={`${styles["header-action-button"]} ${styles["delete"]}`}
+                                                className="btn btn-ghost btn-sm btn-square hover:text-error"
                                                 onClick={() => handleDeleteProvider(index)}
                                                 title="Delete Provider"
                                             >
@@ -490,28 +489,28 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                         </div>
                                     </div>
 
-                                    <div className={'mt-4 border-t border-slate-700/70 pt-3'}>
+                                    <div className={'mt-4 border-t border-base-content/10 pt-3'}>
                                         <div className={'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
 
                                             <div className={'relative flex min-w-0 items-center gap-2'}>
-                                                <div className={'text-blue-400'}>
+                                                <div className={'text-primary'}>
                                                     <Icon name="person" className="!text-[18px]" />
                                                 </div>
                                                 <div className={'flex min-w-0 flex-col'}>
-                                                    <span className={'text-[11px] uppercase tracking-wide text-slate-500'}>Username</span>
-                                                    <span className={'truncate text-sm text-slate-200'}>{provider.User}</span>
+                                                    <span className={'text-[11px] uppercase tracking-wide text-base-content/50'}>Username</span>
+                                                    <span className={'truncate text-sm text-base-content'}>{provider.User}</span>
                                                 </div>
                                             </div>
 
-                                            <div className={styles["provider-detail-item"]}>
-                                                <div className={styles["provider-detail-icon"]}>
+                                            <div className="flex items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                                                <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                                                     </svg>
                                                 </div>
-                                                <div className={styles["provider-detail-content"]}>
-                                                    <span className={styles["provider-detail-label"]}>Connections</span>
-                                                    <span className={styles["provider-detail-value"]}>
+                                                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                                    <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Connections</span>
+                                                    <span className="break-all text-sm font-medium text-base-content">
                                                         {connections[index]
                                                             ? `${connections[index].live} / ${provider.MaxConnections} max`
                                                             : `${provider.MaxConnections} max`}
@@ -520,24 +519,24 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                             </div>
 
                                             <div className={'relative flex min-w-0 items-center gap-2'}>
-                                                <div className={'text-blue-400'}>
+                                                <div className={'text-primary'}>
                                                     <Icon name={provider.UseSsl ? "lock" : "lock_open"} className="!text-[18px]" />
                                                 </div>
                                                 <div className={'flex min-w-0 flex-col'}>
-                                                    <span className={'text-[11px] uppercase tracking-wide text-slate-500'}>Security</span>
-                                                    <span className={'truncate text-sm text-slate-200'}>
+                                                    <span className={'text-[11px] uppercase tracking-wide text-base-content/50'}>Security</span>
+                                                    <span className={'truncate text-sm text-base-content'}>
                                                         {provider.UseSsl ? "SSL Enabled" : "No SSL"}
                                                     </span>
                                                 </div>
                                             </div>
 
                                             <div className={'relative flex min-w-0 items-center gap-2'}>
-                                                <div className={'text-blue-400'}>
+                                                <div className={'text-primary'}>
                                                     <Icon name="account_tree" className="!text-[18px]" />
                                                 </div>
-                                                <div className={styles["provider-detail-content"]}>
-                                                    <span className={styles["provider-detail-label"]}>Behavior</span>
-                                                    <span className={styles["provider-detail-value"]}>
+                                                <div className="flex min-w-0 flex-col">
+                                                    <span className="text-[11px] uppercase tracking-wide text-base-content/50">Behavior</span>
+                                                    <span className="truncate text-sm text-base-content">
                                                         {PROVIDER_TYPE_LABELS[provider.Type]}
                                                     </span>
                                                 </div>
@@ -545,12 +544,12 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
 
                                             {provider.StorageGroup?.trim() && (
                                                 <div className={'relative flex min-w-0 items-center gap-2'}>
-                                                    <div className={'text-blue-400'}>
+                                                    <div className={'text-primary'}>
                                                         <Icon name="storage" className="!text-[18px]" />
                                                     </div>
                                                     <div className={'flex min-w-0 flex-col'}>
-                                                        <span className={'text-[11px] uppercase tracking-wide text-slate-500'}>Storage group</span>
-                                                        <span className={'truncate text-sm text-slate-200'}>{provider.StorageGroup.trim()}</span>
+                                                        <span className={'text-[11px] uppercase tracking-wide text-base-content/50'}>Storage group</span>
+                                                        <span className={'truncate text-sm text-base-content'}>{provider.StorageGroup.trim()}</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -575,16 +574,14 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                 )}
             </div>
 
-            <div className={styles.section}>
-                <div className={styles.sectionHeader}>
-                    <div>Cascade (Optional)</div>
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="text-base font-semibold text-base-content">Cascade (Optional)</div>
                 </div>
-                <div className={styles["form-group"]} style={{ marginTop: 12 }}>
-                    <div className={styles["form-checkbox-wrapper"]}>
-                        <input
-                            type="checkbox"
+                <div className="mt-3 flex flex-col gap-1.5">
+                    <label htmlFor="cascade-enabled" className="flex items-center gap-2">
+                        <Checkbox
                             id="cascade-enabled"
-                            className={styles["form-checkbox"]}
                             checked={cascadeEnabled}
                             onChange={(e) => {
                                 const enabling = e.target.checked;
@@ -599,67 +596,56 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                 });
                             }}
                         />
-                        <label htmlFor="cascade-enabled" className={styles["form-checkbox-label"]}>
-                            Enable cascade routing
-                        </label>
-                    </div>
-                    <div className={styles["form-hint"]}>
+                        <span className="text-sm text-base-content/80">Enable cascade routing</span>
+                    </label>
+                    <HelpText>
                         Sets the order your providers are used. Drag the cards to arrange them. While this is off, all
                         providers are used together.
-                    </div>
+                    </HelpText>
                 </div>
             </div>
 
-            <div className={styles.section}>
-                <div className={styles.sectionHeader}>
-                    <div>NNTP Pipelining</div>
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="text-base font-semibold text-base-content">NNTP Pipelining</div>
                 </div>
-                <div
-                    role="note"
-                    className="mt-3 rounded border border-amber-600/50 bg-amber-500/10 px-3 py-2 text-xs text-amber-200"
-                >
+                <Alert variant="warning" className="mt-3 text-xs">
                     Run the <strong>speed test</strong> on a provider (edit → Auto-tune connections) before
                     enabling this. It measures whether pipelining helps on your network — when it does,
                     queue imports can be substantially faster.
-                </div>
-                <div className={styles["form-group"]} style={{ marginTop: 12 }}>
-                    <div className={styles["form-checkbox-wrapper"]}>
-                        <input
-                            type="checkbox"
+                </Alert>
+                <div className="mt-3 flex flex-col gap-1.5">
+                    <label htmlFor="pipelining-enabled" className="flex items-center gap-2">
+                        <Checkbox
                             id="pipelining-enabled"
-                            className={styles["form-checkbox"]}
                             checked={config["usenet.pipelining.enabled"] === "true"}
                             onChange={(e) => setNewConfig({
                                 ...config,
                                 "usenet.pipelining.enabled": e.target.checked ? "true" : "false",
                             })}
                         />
-                        <label htmlFor="pipelining-enabled" className={styles["form-checkbox-label"]}>
-                            Enable NNTP pipelining
-                        </label>
-                    </div>
-                    <div className={styles["form-hint"]}>
+                        <span className="text-sm text-base-content/80">Enable NNTP pipelining</span>
+                    </label>
+                    <HelpText>
                         Batch BODY requests on a single connection during queue imports and benchmarks.
                         WebDAV streaming uses the separate <strong>Pipelined article downloads</strong> toggle
                         under WebDAV settings.
-                    </div>
+                    </HelpText>
                 </div>
-                <div className={styles["form-group"]} style={{ marginTop: 12 }}>
-                    <label htmlFor="pipelining-depth" className={styles["form-label"]}>
-                        Default pipeline depth
-                    </label>
-                    <input
+                <div className="mt-3 flex flex-col gap-1.5">
+                    <Label htmlFor="pipelining-depth">Default pipeline depth</Label>
+                    <Input
                         type="text"
                         id="pipelining-depth"
-                        className={`${styles["form-input"]} ${config["usenet.pipelining.depth"] !== undefined && config["usenet.pipelining.depth"] !== "" && !isPositiveInteger(config["usenet.pipelining.depth"]) ? styles.error : ""}`}
+                        className={`w-full ${config["usenet.pipelining.depth"] !== undefined && config["usenet.pipelining.depth"] !== "" && !isPositiveInteger(config["usenet.pipelining.depth"]) ? "input-error" : ""}`}
                         placeholder="8"
                         value={config["usenet.pipelining.depth"] ?? ""}
                         onChange={(e) => setNewConfig({ ...config, "usenet.pipelining.depth": e.target.value })}
                     />
-                    <div className={styles["form-hint"]}>
+                    <HelpText>
                         Requests kept in flight per connection (1–64). 8 is a good default. Each
                         provider can override this in its own settings.
-                    </div>
+                    </HelpText>
                 </div>
             </div>
 
@@ -696,20 +682,23 @@ function UsageRow({ provider, usage, onReset }: UsageRowProps) {
     const showAnything = hasLimit || used > 0 || usage !== undefined;
     if (!showAnything) return null;
 
+    const valueToneClass = tone === "danger" ? "text-error" : tone === "warn" ? "text-warning" : "text-base-content";
+    const barToneClass = tone === "danger" ? "bg-error" : tone === "warn" ? "bg-warning" : tone === "ok" ? "bg-success" : "bg-base-content/40";
+
     return (
-        <div className={styles["usage-row"]}>
-            <div className={styles["usage-header"]}>
-                <span className={styles["usage-label"]}>
+        <div className="mt-3 flex flex-col gap-2 rounded-md border border-base-content/10 bg-base-200/40 p-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+                <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-base-content/50">
                     {hasLimit ? "Data Cap" : "Data Used"}
                 </span>
-                <span className={styles[`usage-value-${tone}`]}>
+                <span className={`flex-1 text-xs font-semibold tabular-nums ${valueToneClass}`}>
                     {hasLimit
                         ? `${formatBytes(used)} / ${formatBytes(limit as number)}  ·  ${pct.toFixed(1)}%`
                         : formatBytes(used)}
                 </span>
                 <button
                     type="button"
-                    className={styles["usage-reset"]}
+                    className="btn btn-ghost btn-xs"
                     onClick={onReset}
                     title="Reset the counter to zero (e.g. after buying a new block)"
                 >
@@ -717,20 +706,20 @@ function UsageRow({ provider, usage, onReset }: UsageRowProps) {
                 </button>
             </div>
             {hasLimit && (
-                <div className={styles["usage-bar-track"]}>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-base-300">
                     <div
-                        className={`${styles["usage-bar-fill"]} ${styles[`usage-bar-${tone}`]}`}
+                        className={`h-full rounded-full transition-[width] duration-200 ${barToneClass}`}
                         style={{ width: `${pct}%` }}
                     />
                 </div>
             )}
             {usage && usage.daysRemaining !== null && usage.daysRemaining !== undefined && !usage.overLimit && (
-                <div className={styles["usage-hint"]}>
+                <div className="text-[11px] tabular-nums text-base-content/50">
                     {formatDaysRemaining(usage.daysRemaining)}
                 </div>
             )}
             {usage?.overLimit && (
-                <div className={styles["usage-warning"]}>
+                <div className="text-[11px] leading-snug text-error">
                     Data cap reached. This provider is paused to keep in-flight fetches from overshooting. Reset the counter or raise the cap to resume.
                 </div>
             )}
@@ -814,20 +803,6 @@ function ProviderModal({ show, provider, onClose, onSave, onApplyPipelining, def
         if (!show) benchmarkAbortRef.current?.abort();
     }, [show]);
     useEffect(() => () => benchmarkAbortRef.current?.abort(), []);
-
-    // Handle Escape key to close modal
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && show) {
-                onClose();
-            }
-        };
-
-        if (show) {
-            document.addEventListener('keydown', handleEscape);
-            return () => document.removeEventListener('keydown', handleEscape);
-        }
-    }, [show, onClose]);
 
     const handleTestConnection = useCallback(async () => {
         setIsTestingConnection(true);
@@ -983,12 +958,6 @@ function ProviderModal({ show, provider, onClose, onSave, onApplyPipelining, def
         });
     }, [type, host, port, useSsl, user, pass, maxConnections, pipeliningDepth, nickname, storageGroup, provider, isEditing, limitValue, limitUnit, initialUsedValue, initialUsedUnit, onSave]);
 
-    const handleOverlayClick = useCallback((e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
-    }, [onClose]);
-
     const isPipeliningDepthValid = pipeliningDepth.trim() === ""
         || (isPositiveInteger(pipeliningDepth) && Number(pipeliningDepth) <= 64);
 
@@ -1008,310 +977,268 @@ function ProviderModal({ show, provider, onClose, onSave, onApplyPipelining, def
 
     const canSave = isFormValid && (connectionTested || passIsMasked || type == ProviderType.Disabled);
 
-    if (!show) return null;
-
     return (
-        <div className={'fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4'} onClick={handleOverlayClick}>
-            <div className={'max-h-[90dvh] w-full max-w-xl overflow-y-auto rounded border border-slate-700 bg-slate-900 shadow-xl'}>
-                <div className={'flex items-center justify-between border-b border-slate-700 px-4 py-3'}>
-                    <h2 className={'text-lg font-semibold text-white'}>
-                        {provider ? "Edit Provider" : "Add Provider"}
-                    </h2>
-                    <button className={'rounded p-1 text-slate-300 hover:bg-white/10 hover:text-white'} onClick={onClose} aria-label="Close">
-                        <Icon name="close" className="!text-[20px]" />
-                    </button>
+        <Modal
+            open={show}
+            title={provider ? "Edit Provider" : "Add Provider"}
+            onClose={onClose}
+            className="!max-w-2xl"
+            footer={
+                <>
+                    <Button variant="outline" onClick={onClose}>
+                        Cancel
+                    </Button>
+                    {!canSave ? (
+                        <Button
+                            variant="primary"
+                            onClick={handleTestConnection}
+                            disabled={!isFormValid || isTestingConnection}
+                        >
+                            {isTestingConnection ? "Testing..." : "Test Connection"}
+                        </Button>
+                    ) : (
+                        <Button variant="primary" onClick={handleSave} disabled={!canSave}>
+                            Save Provider
+                        </Button>
+                    )}
+                </>
+            }
+        >
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <Label htmlFor="provider-nickname">Nickname (optional)</Label>
+                    <Input
+                        type="text"
+                        id="provider-nickname"
+                        className="w-full"
+                        placeholder="e.g. Main provider"
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                    />
+                    <HelpText>
+                        Friendly label shown in the UI in place of the hostname.
+                    </HelpText>
                 </div>
 
-                <div className={styles["modal-body"]}>
-                    <div className={styles["form-grid"]}>
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <label htmlFor="provider-nickname" className={styles["form-label"]}>
-                                Nickname (optional)
-                            </label>
-                            <input
-                                type="text"
-                                id="provider-nickname"
-                                className={styles["form-input"]}
-                                placeholder="e.g. Main provider"
-                                value={nickname}
-                                onChange={(e) => setNickname(e.target.value)}
-                            />
-                            <div className={styles["form-hint"]}>
-                                Friendly label shown in the UI in place of the hostname.
-                            </div>
-                        </div>
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <Label htmlFor="provider-storage-group">Storage group (optional)</Label>
+                    <Input
+                        type="text"
+                        id="provider-storage-group"
+                        className="w-full"
+                        placeholder="e.g. omicron"
+                        value={storageGroup}
+                        onChange={(e) => setStorageGroup(e.target.value)}
+                    />
+                    <HelpText>
+                        Give providers that share the same upstream storage (identical article
+                        availability) the same label. When one reports an article missing, the others
+                        with this label are skipped for that request to reduce latency. Leave blank
+                        unless you are sure they share storage and the same takedown/retention policy.
+                    </HelpText>
+                </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <label htmlFor="provider-storage-group" className={styles["form-label"]}>
-                                Storage group (optional)
-                            </label>
-                            <input
-                                type="text"
-                                id="provider-storage-group"
-                                className={styles["form-input"]}
-                                placeholder="e.g. omicron"
-                                value={storageGroup}
-                                onChange={(e) => setStorageGroup(e.target.value)}
-                            />
-                            <div className={styles["form-hint"]}>
-                                Give providers that share the same upstream storage (identical article
-                                availability) the same label. When one reports an article missing, the others
-                                with this label are skipped for that request to reduce latency. Leave blank
-                                unless you are sure they share storage and the same takedown/retention policy.
-                            </div>
-                        </div>
-
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="provider-host" className={styles["form-label"]}>
-                                Host
-                            </label>
-                            <input
-                                type="text"
-                                id="provider-host"
-                                className="input w-full"
-                                placeholder="news.provider.com"
-                                value={host}
-                                onChange={(e) => {
-                                    setHost(e.target.value);
-                                    setConnectionTested(false);
-                                }}
-                            />
-                        </div>
-
-                        <div className={'space-y-2'}>
-                            <label htmlFor="provider-port" className={'block text-sm font-medium text-slate-200'}>
-                                Port
-                            </label>
-                            <input
-                                type="text"
-                                id="provider-port"
-                                className={`input w-full ${!isPositiveInteger(port) && port !== "" ? "input-error" : ""}`}
-                                placeholder="563"
-                                value={port}
-                                onChange={(e) => {
-                                    setPort(e.target.value);
-                                    setConnectionTested(false);
-                                }}
-                            />
-                        </div>
-
-                        <div className={'space-y-2'}>
-                            <label htmlFor="provider-user" className={'block text-sm font-medium text-slate-200'}>
-                                Username
-                            </label>
-                            <input
-                                type="text"
-                                id="provider-user"
-                                className="input w-full"
-                                placeholder="username"
-                                value={user}
-                                onChange={(e) => {
-                                    setUser(e.target.value);
-                                    setConnectionTested(false);
-                                }}
-                            />
-                        </div>
-
-                        <div className={'space-y-2'}>
-                            <label htmlFor="provider-pass" className={'block text-sm font-medium text-slate-200'}>
-                                Password
-                            </label>
-                            <input
-                                type="password"
-                                id="provider-pass"
-                                className="input w-full"
-                                placeholder="password"
-                                value={pass}
-                                onChange={(e) => {
-                                    setPass(e.target.value);
-                                    setConnectionTested(false);
-                                }}
-                            />
-                        </div>
-
-                        <div className={'space-y-2'}>
-                            <label htmlFor="provider-max-connections" className={'block text-sm font-medium text-slate-200'}>
-                                Max Connections
-                            </label>
-                            <input
-                                type="text"
-                                id="provider-max-connections"
-                                className={`input w-full ${!isPositiveInteger(maxConnections) && maxConnections !== "" ? "input-error" : ""}`}
-                                placeholder="20"
-                                value={maxConnections}
-                                onChange={(e) => setMaxConnections(e.target.value)}
-                            />
-                        </div>
-
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="provider-pipelining-depth" className={styles["form-label"]}>
-                                Pipeline depth
-                            </label>
-                            <input
-                                type="text"
-                                id="provider-pipelining-depth"
-                                className={`${styles["form-input"]} ${!isPipeliningDepthValid ? styles.error : ""}`}
-                                placeholder={defaultPipeliningDepth || "8"}
-                                value={pipeliningDepth}
-                                onChange={(e) => setPipeliningDepth(e.target.value)}
-                            />
-                            <div className={styles["form-hint"]}>
-                                Requests kept in flight per connection (1–64) when NNTP pipelining is
-                                enabled. Leave blank to use the global default.
-                            </div>
-                        </div>
-
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="provider-type" className={styles["form-label"]}>
-                                Type
-                            </label>
-                            <select
-                                id="provider-type"
-                                className="select w-full"
-                                value={type}
-                                onChange={(e) => setType(parseInt(e.target.value, 10) as ProviderType)}
-                            >
-                                <option value={ProviderType.Disabled}>Disabled</option>
-                                <option value={ProviderType.Pooled}>Pool Connections</option>
-                                <option value={ProviderType.BackupOnly}>Backup Only</option>
-                            </select>
-                        </div>
-
-
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <div className={styles["form-checkbox-wrapper"]}>
-                                <input
-                                    type="checkbox"
-                                    id="provider-ssl"
-                                    className={styles["form-checkbox"]}
-                                    checked={useSsl}
-                                    onChange={(e) => {
-                                        setUseSsl(e.target.checked);
-                                        setConnectionTested(false);
-                                    }}
-                                />
-                                <label htmlFor="provider-ssl" className={'text-sm text-slate-300'}>
-                                    Use SSL
-                                </label>
-                            </div>
-                            {shouldWarnCleartextCredentials(useSsl, user) && (
-                                <div
-                                    role="alert"
-                                    className="mt-2 rounded border border-amber-600/50 bg-amber-500/10 px-3 py-2 text-xs text-amber-200"
-                                >
-                                    Credentials are sent unencrypted without SSL. Prefer port 563 with SSL enabled.
-                                </div>
-                            )}
-                        </div>
-
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <label className={styles["form-label"]}>
-                                Data Cap (optional)
-                            </label>
-                            <div className={styles["form-paired-input"]}>
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    className={styles["form-input"]}
-                                    placeholder="Leave blank for no cap"
-                                    value={limitValue}
-                                    onChange={(e) => setLimitValue(e.target.value)}
-                                />
-                                <select
-                                    className={styles["form-select"]}
-                                    value={limitUnit}
-                                    onChange={(e) => setLimitUnit(e.target.value as ByteUnitLabel)}
-                                >
-                                    {BYTE_UNITS.map(u => (
-                                        <option key={u.label} value={u.label}>{u.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className={styles["form-hint"]}>
-                                For block accounts: total bytes you've purchased. The provider auto-pauses at ~95% of this value to absorb in-flight requests, so set the cap to your full block size. The 5% headroom keeps you from overshooting.
-                            </div>
-                        </div>
-
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                                <label className={styles["form-label"]}>
-                                    Already Used (optional)
-                                </label>
-                                <div className={styles["form-paired-input"]}>
-                                    <input
-                                        type="text"
-                                        inputMode="decimal"
-                                        className={styles["form-input"]}
-                                        placeholder="0"
-                                        value={initialUsedValue}
-                                        onChange={(e) => setInitialUsedValue(e.target.value)}
-                                    />
-                                    <select
-                                        className={styles["form-select"]}
-                                        value={initialUsedUnit}
-                                        onChange={(e) => setInitialUsedUnit(e.target.value as ByteUnitLabel)}
-                                    >
-                                        {BYTE_UNITS.map(u => (
-                                            <option key={u.label} value={u.label}>{u.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className={styles["form-hint"]}>
-                                    Seed the counter when migrating a partially-used block from another client. Leave empty for a fresh block.
-                                </div>
-                            </div>
-                    </div>
-
-                    {testError && (
-                        <div role="alert" className="mt-4 rounded border border-red-600/50 bg-red-500/10 px-3 py-2 text-xs text-red-200">
-                            {testError}
-                        </div>
-                    )}
-
-                    {connectionTested && (
-                        <div role="status" className="mt-4 rounded border border-emerald-600/50 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
-                            Connection test successful!
-                        </div>
-                    )}
-
-                    <BenchmarkPanel
-                        canBenchmark={canBenchmark}
-                        isBenchmarking={isBenchmarking}
-                        intensity={intensity}
-                        setIntensity={setIntensity}
-                        pipeliningOnly={pipeliningOnly}
-                        setPipeliningOnly={setPipeliningOnly}
-                        progress={benchmarkProgress}
-                        result={benchmarkResult}
-                        error={benchmarkError}
-                        onRun={handleAutoTune}
-                        onCancel={handleCancelBenchmark}
-                        onApply={handleApplyRecommendation}
+                <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="provider-host">Host</Label>
+                    <Input
+                        type="text"
+                        id="provider-host"
+                        className="w-full"
+                        placeholder="news.provider.com"
+                        value={host}
+                        onChange={(e) => {
+                            setHost(e.target.value);
+                            setConnectionTested(false);
+                        }}
                     />
                 </div>
 
-                <div className={'flex justify-end border-t border-slate-700 px-4 py-3'}>
-                    <div className={'hidden'}></div>
-                    <div className={'flex gap-2'}>
-                        <Button variant="outline" onClick={onClose}>
-                            Cancel
-                        </Button>
-                        {!canSave ? (
-                            <Button
-                                variant="primary"
-                                onClick={handleTestConnection}
-                                disabled={!isFormValid || isTestingConnection}
-                            >
-                                {isTestingConnection ? "Testing..." : "Test Connection"}
-                            </Button>
-                        ) : (
-                            <Button variant="primary" onClick={handleSave} disabled={!canSave}>
-                                Save Provider
-                            </Button>
-                        )}
+                <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="provider-port">Port</Label>
+                    <Input
+                        type="text"
+                        id="provider-port"
+                        className={`w-full ${!isPositiveInteger(port) && port !== "" ? "input-error" : ""}`}
+                        placeholder="563"
+                        value={port}
+                        onChange={(e) => {
+                            setPort(e.target.value);
+                            setConnectionTested(false);
+                        }}
+                    />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="provider-user">Username</Label>
+                    <Input
+                        type="text"
+                        id="provider-user"
+                        className="w-full"
+                        placeholder="username"
+                        value={user}
+                        onChange={(e) => {
+                            setUser(e.target.value);
+                            setConnectionTested(false);
+                        }}
+                    />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="provider-pass">Password</Label>
+                    <Input
+                        type="password"
+                        id="provider-pass"
+                        className="w-full"
+                        placeholder="password"
+                        value={pass}
+                        onChange={(e) => {
+                            setPass(e.target.value);
+                            setConnectionTested(false);
+                        }}
+                    />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="provider-max-connections">Max Connections</Label>
+                    <Input
+                        type="text"
+                        id="provider-max-connections"
+                        className={`w-full ${!isPositiveInteger(maxConnections) && maxConnections !== "" ? "input-error" : ""}`}
+                        placeholder="20"
+                        value={maxConnections}
+                        onChange={(e) => setMaxConnections(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="provider-pipelining-depth">Pipeline depth</Label>
+                    <Input
+                        type="text"
+                        id="provider-pipelining-depth"
+                        className={`w-full ${!isPipeliningDepthValid ? "input-error" : ""}`}
+                        placeholder={defaultPipeliningDepth || "8"}
+                        value={pipeliningDepth}
+                        onChange={(e) => setPipeliningDepth(e.target.value)}
+                    />
+                    <HelpText>
+                        Requests kept in flight per connection (1–64) when NNTP pipelining is
+                        enabled. Leave blank to use the global default.
+                    </HelpText>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="provider-type">Type</Label>
+                    <Select
+                        id="provider-type"
+                        className="w-full"
+                        value={type}
+                        onChange={(e) => setType(parseInt(e.target.value, 10) as ProviderType)}
+                    >
+                        <option value={ProviderType.Disabled}>Disabled</option>
+                        <option value={ProviderType.Pooled}>Pool Connections</option>
+                        <option value={ProviderType.BackupOnly}>Backup Only</option>
+                    </Select>
+                </div>
+
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label htmlFor="provider-ssl" className="flex items-center gap-2">
+                        <Checkbox
+                            id="provider-ssl"
+                            checked={useSsl}
+                            onChange={(e) => {
+                                setUseSsl(e.target.checked);
+                                setConnectionTested(false);
+                            }}
+                        />
+                        <span className="text-sm text-base-content/80">Use SSL</span>
+                    </label>
+                    {shouldWarnCleartextCredentials(useSsl, user) && (
+                        <Alert variant="warning" className="text-xs">
+                            Credentials are sent unencrypted without SSL. Prefer port 563 with SSL enabled.
+                        </Alert>
+                    )}
+                </div>
+
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <Label>Data Cap (optional)</Label>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_100px]">
+                        <Input
+                            type="text"
+                            inputMode="decimal"
+                            className="w-full"
+                            placeholder="Leave blank for no cap"
+                            value={limitValue}
+                            onChange={(e) => setLimitValue(e.target.value)}
+                        />
+                        <Select
+                            className="w-full"
+                            value={limitUnit}
+                            onChange={(e) => setLimitUnit(e.target.value as ByteUnitLabel)}
+                        >
+                            {BYTE_UNITS.map(u => (
+                                <option key={u.label} value={u.label}>{u.label}</option>
+                            ))}
+                        </Select>
                     </div>
+                    <HelpText>
+                        For block accounts: total bytes you've purchased. The provider auto-pauses at ~95% of this value to absorb in-flight requests, so set the cap to your full block size. The 5% headroom keeps you from overshooting.
+                    </HelpText>
+                </div>
+
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <Label>Already Used (optional)</Label>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_100px]">
+                        <Input
+                            type="text"
+                            inputMode="decimal"
+                            className="w-full"
+                            placeholder="0"
+                            value={initialUsedValue}
+                            onChange={(e) => setInitialUsedValue(e.target.value)}
+                        />
+                        <Select
+                            className="w-full"
+                            value={initialUsedUnit}
+                            onChange={(e) => setInitialUsedUnit(e.target.value as ByteUnitLabel)}
+                        >
+                            {BYTE_UNITS.map(u => (
+                                <option key={u.label} value={u.label}>{u.label}</option>
+                            ))}
+                        </Select>
+                    </div>
+                    <HelpText>
+                        Seed the counter when migrating a partially-used block from another client. Leave empty for a fresh block.
+                    </HelpText>
                 </div>
             </div>
-        </div>
+
+            {testError && (
+                <Alert variant="danger" className="mt-4 text-xs">
+                    {testError}
+                </Alert>
+            )}
+
+            {connectionTested && (
+                <Alert variant="success" className="mt-4 text-xs">
+                    Connection test successful!
+                </Alert>
+            )}
+
+            <BenchmarkPanel
+                canBenchmark={canBenchmark}
+                isBenchmarking={isBenchmarking}
+                intensity={intensity}
+                setIntensity={setIntensity}
+                pipeliningOnly={pipeliningOnly}
+                setPipeliningOnly={setPipeliningOnly}
+                progress={benchmarkProgress}
+                result={benchmarkResult}
+                error={benchmarkError}
+                onRun={handleAutoTune}
+                onCancel={handleCancelBenchmark}
+                onApply={handleApplyRecommendation}
+            />
+        </Modal>
     );
 }
 
@@ -1350,18 +1277,18 @@ function BenchmarkPanel(props: BenchmarkPanelProps) {
     const canApply = !!result && result.throughputTested && (recommended != null || (result.pipeliningOnly && !!pipe));
 
     return (
-        <div className={styles["bench-panel"]}>
-            <div className={styles["bench-head"]}>
-                <div className={styles["bench-heading"]}>
-                    <div className={styles["bench-title"]}>Auto-tune connections</div>
-                    <div className={styles["form-hint"]} style={{ marginTop: 0 }}>
+        <div className="mt-4 rounded-lg border border-base-content/10 bg-base-200/40 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-[180px] flex-1">
+                    <div className="text-sm font-semibold text-base-content">Auto-tune connections</div>
+                    <HelpText className="mt-0">
                         {pipeliningOnly
                             ? "Keeps your Max Connections and just measures the best NNTP pipelining depth at that count."
                             : "Runs a real speed & latency test, then recommends the best connection count and pipelining settings."}
-                    </div>
+                    </HelpText>
                 </div>
-                <div className={styles["bench-controls"]}>
-                    <div className={styles["bench-intensity"]} role="group" aria-label="Test intensity">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap gap-2" role="group" aria-label="Test intensity">
                         <Button
                             variant={intensity === "quick" ? "primary" : "secondary"}
                             onClick={() => setIntensity("quick")}
@@ -1388,41 +1315,37 @@ function BenchmarkPanel(props: BenchmarkPanelProps) {
                 </div>
             </div>
 
-            <div className={styles["form-checkbox-wrapper"]} style={{ marginTop: 12 }}>
-                <input
-                    type="checkbox"
+            <label htmlFor="bench-pipe-only" className="mt-3 flex items-center gap-2">
+                <Checkbox
                     id="bench-pipe-only"
-                            className={styles["form-checkbox"]}
                     checked={pipeliningOnly}
                     disabled={isBenchmarking}
                     onChange={(e) => setPipeliningOnly(e.target.checked)}
                 />
-                <label htmlFor="bench-pipe-only" className={styles["form-checkbox-label"]}>
-                    Only tune pipelining (keep my Max Connections)
-                </label>
-            </div>
+                <span className="text-sm text-base-content/80">Only tune pipelining (keep my Max Connections)</span>
+            </label>
 
-            <div className={styles["form-hint"]}>
+            <HelpText>
                 {pipeliningOnly
                     ? "Won't change your connection count — it tests pipelining depth at the Max Connections you've set. Run it idle for the cleanest read."
                     : (intensity === "quick"
                         ? "Quick downloads roughly 100 MB of real data — light on metered / block accounts."
                         : "Thorough downloads roughly 400 MB for steadier numbers on fast connections.")}
-            </div>
+            </HelpText>
 
             {error && (
-                <div className={`${styles.alert} ${styles["alert-danger"]}`} style={{ marginTop: 12 }}>{error}</div>
+                <Alert variant="danger" className="mt-3 text-xs">{error}</Alert>
             )}
 
             {isBenchmarking && progress && (
-                <div className={styles["bench-progress"]}>
-                    <div className={styles["bench-progress-head"]}>
+                <div className="mt-3.5">
+                    <div className="mb-1.5 flex justify-between gap-2.5 text-xs text-base-content/80">
                         <span>{progress.status}</span>
                         <span>{formatBytes(progress.dataUsedBytes)} used</span>
                     </div>
-                    <div className={styles["usage-bar-track"]}>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-base-300">
                         <div
-                            className={`${styles["usage-bar-fill"]} ${styles["bench-progress-fill"]}`}
+                            className="h-full rounded-full bg-base-content transition-[width] duration-200"
                             style={{ width: `${Math.max(2, Math.min(100, progress.percent))}%` }}
                         />
                     </div>
@@ -1439,94 +1362,94 @@ function BenchmarkPanel(props: BenchmarkPanelProps) {
                         pipe ? (
                             <>
                                 <DepthChart pipe={pipe} />
-                                <div className={styles["bench-stats"]}>
-                                    <div className={styles["bench-stat"]}>
-                                        <span className={styles["bench-stat-label"]}>Pipelining</span>
-                                        <span className={`${styles["bench-stat-value"]} ${styles["bench-stat-strong"]}`}>
+                                <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(116px,1fr))] gap-2">
+                                    <div className="flex flex-col gap-0.5 rounded-md border border-base-content/10 bg-base-300 px-2.5 py-2">
+                                        <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Pipelining</span>
+                                        <span className="text-xl font-bold tabular-nums text-base-content">
                                             {pipe.recommendEnabled ? `Depth ${pipe.recommendedDepth}` : "Off"}
                                         </span>
-                                        <span className={styles["bench-stat-sub"]}>
+                                        <span className="text-[11px] tabular-nums text-base-content/80">
                                             {pipe.recommendEnabled ? `≈ +${pipeGainPct}% vs off` : "no real gain"}
                                         </span>
                                     </div>
                                     {result.latency && (
-                                        <div className={styles["bench-stat"]}>
-                                            <span className={styles["bench-stat-label"]}>Latency</span>
-                                            <span className={styles["bench-stat-value"]}>{result.latency.avgMs} ms</span>
-                                            <span className={styles["bench-stat-sub"]}>{result.latency.minMs} ms min</span>
+                                        <div className="flex flex-col gap-0.5 rounded-md border border-base-content/10 bg-base-300 px-2.5 py-2">
+                                            <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Latency</span>
+                                            <span className="text-sm font-semibold tabular-nums text-base-content">{result.latency.avgMs} ms</span>
+                                            <span className="text-[11px] tabular-nums text-base-content/80">{result.latency.minMs} ms min</span>
                                         </div>
                                     )}
-                                    <div className={styles["bench-stat"]}>
-                                        <span className={styles["bench-stat-label"]}>Tested at</span>
-                                        <span className={styles["bench-stat-value"]}>{pipe.testedAtConnections}</span>
-                                        <span className={styles["bench-stat-sub"]}>connections</span>
+                                    <div className="flex flex-col gap-0.5 rounded-md border border-base-content/10 bg-base-300 px-2.5 py-2">
+                                        <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Tested at</span>
+                                        <span className="text-sm font-semibold tabular-nums text-base-content">{pipe.testedAtConnections}</span>
+                                        <span className="text-[11px] tabular-nums text-base-content/80">connections</span>
                                     </div>
-                                    <div className={styles["bench-stat"]}>
-                                        <span className={styles["bench-stat-label"]}>Data used</span>
-                                        <span className={styles["bench-stat-value"]}>{formatBytes(result.dataUsedBytes)}</span>
+                                    <div className="flex flex-col gap-0.5 rounded-md border border-base-content/10 bg-base-300 px-2.5 py-2">
+                                        <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Data used</span>
+                                        <span className="text-sm font-semibold tabular-nums text-base-content">{formatBytes(result.dataUsedBytes)}</span>
                                     </div>
                                 </div>
-                                <div className={styles["bench-pipe"]}>
+                                <div className="mt-3 text-sm leading-relaxed text-base-content/80">
                                     {pipe.recommendEnabled
-                                        ? <>Turn on <strong>NNTP pipelining</strong> at depth <strong>{pipe.recommendedDepth}</strong> — measurably faster at your {pipe.testedAtConnections} connections.</>
+                                        ? <>Turn on <strong className="font-semibold text-base-content">NNTP pipelining</strong> at depth <strong className="font-semibold text-base-content">{pipe.recommendedDepth}</strong> — measurably faster at your {pipe.testedAtConnections} connections.</>
                                         : <>NNTP pipelining didn’t help at your {pipe.testedAtConnections} connections — leave it off.</>}
                                 </div>
                             </>
                         ) : (
-                            <div className={styles["bench-note"]}>
+                            <div className="mt-3.5 text-sm leading-relaxed text-base-content/80">
                                 Couldn’t measure pipelining{result.latency ? ` (latency ${result.latency.avgMs} ms)` : ""}. Try again when idle.
                             </div>
                         )
                     ) : result.throughputTested && recommended ? (
-                        <div className={styles["bench-stats"]}>
-                            <div className={styles["bench-stat"]}>
-                                <span className={styles["bench-stat-label"]}>Recommended</span>
-                                <span className={`${styles["bench-stat-value"]} ${styles["bench-stat-strong"]}`}>{recommended}</span>
-                                <span className={styles["bench-stat-sub"]}>
+                        <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(116px,1fr))] gap-2">
+                            <div className="flex flex-col gap-0.5 rounded-md border border-base-content/10 bg-base-300 px-2.5 py-2">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Recommended</span>
+                                <span className="text-xl font-bold tabular-nums text-base-content">{recommended}</span>
+                                <span className="text-[11px] tabular-nums text-base-content/80">
                                     connection{recommended === 1 ? "" : "s"}{bestSpeed != null ? ` · ≈ ${bestSpeed.toFixed(1)} MB/s` : ""}
                                 </span>
                             </div>
                             {result.latency && (
-                                <div className={styles["bench-stat"]}>
-                                    <span className={styles["bench-stat-label"]}>Latency</span>
-                                    <span className={styles["bench-stat-value"]}>{result.latency.avgMs} ms</span>
-                                    <span className={styles["bench-stat-sub"]}>{result.latency.minMs} ms min</span>
+                                <div className="flex flex-col gap-0.5 rounded-md border border-base-content/10 bg-base-300 px-2.5 py-2">
+                                    <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Latency</span>
+                                    <span className="text-sm font-semibold tabular-nums text-base-content">{result.latency.avgMs} ms</span>
+                                    <span className="text-[11px] tabular-nums text-base-content/80">{result.latency.minMs} ms min</span>
                                 </div>
                             )}
                             {result.providerConnectionCap != null && (
-                                <div className={styles["bench-stat"]}>
-                                    <span className={styles["bench-stat-label"]}>Provider cap</span>
-                                    <span className={styles["bench-stat-value"]}>{result.providerConnectionCap}</span>
-                                    <span className={styles["bench-stat-sub"]}>max at once</span>
+                                <div className="flex flex-col gap-0.5 rounded-md border border-base-content/10 bg-base-300 px-2.5 py-2">
+                                    <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Provider cap</span>
+                                    <span className="text-sm font-semibold tabular-nums text-base-content">{result.providerConnectionCap}</span>
+                                    <span className="text-[11px] tabular-nums text-base-content/80">max at once</span>
                                 </div>
                             )}
-                            <div className={styles["bench-stat"]}>
-                                <span className={styles["bench-stat-label"]}>Data used</span>
-                                <span className={styles["bench-stat-value"]}>{formatBytes(result.dataUsedBytes)}</span>
+                            <div className="flex flex-col gap-0.5 rounded-md border border-base-content/10 bg-base-300 px-2.5 py-2">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Data used</span>
+                                <span className="text-sm font-semibold tabular-nums text-base-content">{formatBytes(result.dataUsedBytes)}</span>
                             </div>
                         </div>
                     ) : (
-                        <div className={styles["bench-note"]}>
+                        <div className="mt-3.5 text-sm leading-relaxed text-base-content/80">
                             Latency measured{result.latency ? ` — ${result.latency.avgMs} ms avg` : ""}. Download something first to get a connection recommendation.
                         </div>
                     )}
 
                     {!result.pipeliningOnly && pipe && (
-                        <div className={styles["bench-pipe"]}>
+                        <div className="mt-3 text-sm leading-relaxed text-base-content/80">
                             {pipe.recommendEnabled
-                                ? <>Turn on <strong>NNTP pipelining</strong> at depth <strong>{pipe.recommendedDepth}</strong> — measurably faster on this connection.</>
+                                ? <>Turn on <strong className="font-semibold text-base-content">NNTP pipelining</strong> at depth <strong className="font-semibold text-base-content">{pipe.recommendedDepth}</strong> — measurably faster on this connection.</>
                                 : <>NNTP pipelining didn’t help here — leave it off.</>}
                         </div>
                     )}
 
                     {result.warnings.length > 0 && (
-                        <ul className={styles["bench-warnings"]}>
+                        <ul className="mt-3 list-disc pl-4 text-[11px] leading-relaxed text-base-content/50">
                             {result.warnings.map((w, i) => <li key={i}>{w}</li>)}
                         </ul>
                     )}
 
                     {canApply && (
-                        <div className={styles["bench-actions"]}>
+                        <div className="mt-3.5">
                             <Button variant={applied ? "secondary" : "primary"} onClick={() => { onApply(); setApplied(true); }}>
                                 {applied ? "Applied ✓ — review & save" : (result.pipeliningOnly ? "Apply pipelining" : "Apply recommendation")}
                             </Button>
@@ -1541,29 +1464,29 @@ function BenchmarkPanel(props: BenchmarkPanelProps) {
 function SweepChart({ points, recommended }: { points: BenchmarkSweepPoint[]; recommended: number | null }) {
     const max = Math.max(...points.map(p => p.mbPerSec), 0.0001);
     return (
-        <div className={styles["bench-chart"]}>
-            <div className={styles["bench-chart-bars"]}>
+        <div className={chartStyles["bench-chart"]}>
+            <div className={chartStyles["bench-chart-bars"]}>
                 {points.map((p, i) => {
                     const isRec = recommended != null && p.connections === recommended;
                     const height = Math.max(4, Math.round((p.mbPerSec / max) * 104));
                     return (
-                        <div key={i} className={`${styles["bench-chart-col"]} ${isRec ? styles["bench-chart-col-rec"] : ""}`}>
-                            <span className={styles["bench-chart-val"]}>
+                        <div key={i} className={`${chartStyles["bench-chart-col"]} ${isRec ? chartStyles["bench-chart-col-rec"] : ""}`}>
+                            <span className={chartStyles["bench-chart-val"]}>
                                 {p.mbPerSec >= 10 ? p.mbPerSec.toFixed(0) : p.mbPerSec.toFixed(1)}
                             </span>
                             <div
-                                className={styles["bench-chart-bar"]}
+                                className={chartStyles["bench-chart-bar"]}
                                 style={{ height: `${height}px` }}
                                 title={`${p.connections} connections → ${p.mbPerSec.toFixed(1)} MB/s`}
                             />
-                            <span className={styles["bench-chart-label"]}>{p.connections}</span>
+                            <span className={chartStyles["bench-chart-label"]}>{p.connections}</span>
                         </div>
                     );
                 })}
             </div>
-            <div className={styles["bench-chart-foot"]}>
-                <span className={styles["form-hint"]} style={{ margin: 0 }}>MB/s by connection count</span>
-                {recommended != null && <span className={styles["form-hint"]} style={{ margin: 0 }}>recommended: {recommended}</span>}
+            <div className={chartStyles["bench-chart-foot"]}>
+                <span className="text-[11px] text-base-content/45">MB/s by connection count</span>
+                {recommended != null && <span className="text-[11px] text-base-content/45">recommended: {recommended}</span>}
             </div>
         </div>
     );
@@ -1580,28 +1503,28 @@ function DepthChart({ pipe }: { pipe: BenchmarkPipelining }) {
     ];
     const max = Math.max(...points.map(p => p.mbPerSec), 0.0001);
     return (
-        <div className={styles["bench-chart"]}>
-            <div className={styles["bench-chart-bars"]}>
+        <div className={chartStyles["bench-chart"]}>
+            <div className={chartStyles["bench-chart-bars"]}>
                 {points.map((p, i) => {
                     const height = Math.max(4, Math.round((p.mbPerSec / max) * 104));
                     return (
-                        <div key={i} className={`${styles["bench-chart-col"]} ${p.rec ? styles["bench-chart-col-rec"] : ""}`}>
-                            <span className={styles["bench-chart-val"]}>
+                        <div key={i} className={`${chartStyles["bench-chart-col"]} ${p.rec ? chartStyles["bench-chart-col-rec"] : ""}`}>
+                            <span className={chartStyles["bench-chart-val"]}>
                                 {p.mbPerSec >= 10 ? p.mbPerSec.toFixed(0) : p.mbPerSec.toFixed(1)}
                             </span>
                             <div
-                                className={styles["bench-chart-bar"]}
+                                className={chartStyles["bench-chart-bar"]}
                                 style={{ height: `${height}px` }}
                                 title={`${p.label} → ${p.mbPerSec.toFixed(1)} MB/s`}
                             />
-                            <span className={styles["bench-chart-label"]}>{p.label}</span>
+                            <span className={chartStyles["bench-chart-label"]}>{p.label}</span>
                         </div>
                     );
                 })}
             </div>
-            <div className={styles["bench-chart-foot"]}>
-                <span className={styles["form-hint"]} style={{ margin: 0 }}>MB/s by pipeline depth</span>
-                <span className={styles["form-hint"]} style={{ margin: 0 }}>
+            <div className={chartStyles["bench-chart-foot"]}>
+                <span className="text-[11px] text-base-content/45">MB/s by pipeline depth</span>
+                <span className="text-[11px] text-base-content/45">
                     {pipe.recommendEnabled ? `best: depth ${pipe.recommendedDepth}` : "best: off"}
                 </span>
             </div>

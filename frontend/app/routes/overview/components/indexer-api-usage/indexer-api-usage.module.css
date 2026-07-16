@@ -1,43 +1,3 @@
-.usageRow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.usageBar {
-    position: relative;
-    flex: 1;
-    height: 8px;
-    background: var(--color-base-200);
-    border-radius: 4px;
-    overflow: hidden;
-    min-width: 80px;
-}
-
-.usageFill,
-.usageFillNear,
-.usageFillOver {
-    position: absolute;
-    inset: 0 auto 0 0;
-    border-radius: 4px;
-    transition: width 200ms ease;
-}
-
-.usageFill {
-    background: var(--color-success);
-    opacity: 0.55;
-}
-
-.usageFillNear {
-    background: var(--color-warning);
-    opacity: 0.7;
-}
-
-.usageFillOver {
-    background: var(--color-error);
-    opacity: 0.8;
-}
-
 .usageFillInfinite {
     position: absolute;
     inset: 0;
@@ -53,15 +13,4 @@
     );
     background-size: 14px 14px;
     opacity: 0.35;
-}
-
-.usageText {
-    font-size: 12px;
-    color: var(--color-base-content);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-}
-
-.usageMuted {
-    color: color-mix(in srgb, var(--color-base-content) 50%, transparent);
 }

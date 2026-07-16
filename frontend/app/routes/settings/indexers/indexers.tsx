@@ -1,6 +1,18 @@
-import styles from "./indexers.module.css";
 import { type Dispatch, type SetStateAction, useState, useCallback, useEffect, useMemo } from "react";
-import { Button, Icon, Spinner, Textarea } from "~/components/ui";
+import {
+    Alert,
+    Badge,
+    Button,
+    Checkbox,
+    HelpText,
+    Icon,
+    Input,
+    Label,
+    Modal,
+    Select,
+    Spinner,
+    Textarea,
+} from "~/components/ui";
 import { isMaskedSecret } from "~/utils/config-mask";
 
 type IndexersSettingsProps = {
@@ -315,193 +327,193 @@ export function IndexersSettings({ config, setNewConfig, savedConfig }: Indexers
         : "";
 
     return (
-        <div className={styles.container}>
-            <div className={styles.section}>
-                <div className={styles.sectionHeader}>
+        <div className="mb-6 flex w-full flex-col gap-6">
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
                     <div>
-                        <div>Defaults</div>
-                        <div className={styles["section-description"]}>
+                        <div className="text-base font-semibold text-base-content">Defaults</div>
+                        <HelpText className="mt-1 text-xs">
                             Global settings used by indexers when no per-indexer override is set.
-                        </div>
+                        </HelpText>
                     </div>
                 </div>
-                <div className={styles["form-grid"]}>
-                    <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                        <label htmlFor="indexers-default-proxy" className={styles["form-label"]}>HTTP(S) Proxy URL</label>
-                        <input
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label htmlFor="indexers-default-proxy">HTTP(S) Proxy URL</Label>
+                        <Input
                             type="text"
                             id="indexers-default-proxy"
-                            className={`${styles["form-input"]} ${!proxyValid ? styles.error : ""}`}
+                            className={`w-full ${!proxyValid ? "input-error" : ""}`}
                             placeholder="http://proxy:8888"
                             value={proxyUrl}
                             onChange={e => handleProxyChange(e.target.value)}
                         />
                     </div>
-                    <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                        <label htmlFor="indexers-default-search-user-agent" className={styles["form-label"]}>
-                            Default Search User-Agent <span className={styles["label-hint"]}>(sent when searching indexers; per-indexer override below)</span>
-                        </label>
-                        <input
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label htmlFor="indexers-default-search-user-agent">
+                            Default Search User-Agent <span className="text-[11px] font-normal text-base-content/45">(sent when searching indexers; per-indexer override below)</span>
+                        </Label>
+                        <Input
                             type="text"
                             id="indexers-default-search-user-agent"
-                            className={styles["form-input"]}
+                            className="w-full"
                             placeholder="nzbdav/<version>"
                             value={defaultSearchUserAgent}
                             onChange={e => handleSearchUserAgentChange(e.target.value)}
                         />
-                        <div className={styles["section-description"]}>
+                        <HelpText>
                             Sent on indexer search and caps queries. Leave blank to use the default.
-                        </div>
+                        </HelpText>
                     </div>
-                    <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                        <label htmlFor="indexers-default-retrieve-user-agent" className={styles["form-label"]}>
-                            Default Retrieve User-Agent <span className={styles["label-hint"]}>(sent when retrieving the .nzb; per-indexer override below)</span>
-                        </label>
-                        <input
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label htmlFor="indexers-default-retrieve-user-agent">
+                            Default Retrieve User-Agent <span className="text-[11px] font-normal text-base-content/45">(sent when retrieving the .nzb; per-indexer override below)</span>
+                        </Label>
+                        <Input
                             type="text"
                             id="indexers-default-retrieve-user-agent"
-                            className={styles["form-input"]}
+                            className="w-full"
                             placeholder="nzbdav/<version>"
                             value={defaultRetrieveUserAgent}
                             onChange={e => handleRetrieveUserAgentChange(e.target.value)}
                         />
-                        <div className={styles["section-description"]}>
+                        <HelpText>
                             Sent when retrieving the .nzb file. Leave blank to use the default.
-                        </div>
+                        </HelpText>
                     </div>
-                    <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                        <label htmlFor="indexers-default-timeout" className={styles["form-label"]}>
-                            Request timeout (seconds) <span className={styles["label-hint"]}>(leave blank for {DEFAULT_TIMEOUT_SECONDS}s default)</span>
-                        </label>
-                        <input
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label htmlFor="indexers-default-timeout">
+                            Request timeout (seconds) <span className="text-[11px] font-normal text-base-content/45">(leave blank for {DEFAULT_TIMEOUT_SECONDS}s default)</span>
+                        </Label>
+                        <Input
                             type="text"
                             id="indexers-default-timeout"
-                            className={`${styles["form-input"]} ${!isTimeoutValid(globalTimeoutRaw) ? styles.error : ""}`}
+                            className={`w-full ${!isTimeoutValid(globalTimeoutRaw) ? "input-error" : ""}`}
                             placeholder={DEFAULT_TIMEOUT_SECONDS.toString()}
                             value={globalTimeoutRaw}
                             onChange={e => handleTimeoutChange(e.target.value)}
                         />
                     </div>
-                    <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                        <label htmlFor="indexers-default-search-limit" className={styles["form-label"]}>
-                            Search results per indexer <span className={styles["label-hint"]}>(blank = {DEFAULT_SEARCH_RESULT_LIMIT}; higher pages the indexer for more results, using more API calls)</span>
-                        </label>
-                        <input
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label htmlFor="indexers-default-search-limit">
+                            Search results per indexer <span className="text-[11px] font-normal text-base-content/45">(blank = {DEFAULT_SEARCH_RESULT_LIMIT}; higher pages the indexer for more results, using more API calls)</span>
+                        </Label>
+                        <Input
                             type="text"
                             id="indexers-default-search-limit"
-                            className={`${styles["form-input"]} ${!isTimeoutValid(globalSearchLimitRaw) ? styles.error : ""}`}
+                            className={`w-full ${!isTimeoutValid(globalSearchLimitRaw) ? "input-error" : ""}`}
                             placeholder={DEFAULT_SEARCH_RESULT_LIMIT.toString()}
                             value={globalSearchLimitRaw}
                             onChange={e => handleSearchLimitChange(e.target.value)}
                         />
                     </div>
 
-                    <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                        <label htmlFor="indexers-exclude-patterns" className={styles["form-label"]}>
-                            Exclude result patterns <span className={styles["label-hint"]}>(applies to every indexer)</span>
-                        </label>
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label htmlFor="indexers-exclude-patterns">
+                            Exclude result patterns <span className="text-[11px] font-normal text-base-content/45">(applies to every indexer)</span>
+                        </Label>
                         <Textarea
                             id="indexers-exclude-patterns"
                             rows={6}
                             spellCheck={false}
-                            className={`${styles["form-input"]} ${styles["pattern-input"]} ${patternIssues.length > 0 ? styles.error : ""}`}
+                            className={`w-full font-mono text-xs ${patternIssues.length > 0 ? "input-error" : ""}`}
                             placeholder={"# one regex per line\n# lines starting with # are comments"}
                             value={excludePatterns}
                             onChange={e => handleExcludePatternsChange(e.target.value)} />
                         {patternIssues.length > 0 && (
-                            <div className={styles["pattern-errors"]}>
+                            <div className="flex flex-col gap-1 rounded-md border border-error/35 bg-error/10 p-2.5 text-xs">
                                 {patternIssues.map((iss, i) => (
-                                    <div key={i} className={styles["pattern-error"]}>
-                                        <span className={styles["pattern-error-line"]}>Line {iss.line}</span>
-                                        <code className={styles["pattern-error-pattern"]}>{iss.pattern}</code>
-                                        <span className={styles["pattern-error-message"]}>— {iss.error}</span>
+                                    <div key={i} className="flex flex-wrap items-baseline gap-1.5 text-base-content">
+                                        <span className="shrink-0 font-semibold text-error">Line {iss.line}</span>
+                                        <code className="rounded bg-error/10 px-1.5 py-0.5 font-mono text-error">{iss.pattern}</code>
+                                        <span className="text-base-content/60">— {iss.error}</span>
                                     </div>
                                 ))}
                             </div>
                         )}
-                        <p className={styles["pattern-hint"]}>
+                        <HelpText>
                             One JavaScript-style regex per line. Search results whose title matches any pattern
                             are dropped before being returned. Case-insensitive by default — use <code>(?-i:Foo)</code> for
                             case-sensitive. Lines starting with <code>#</code> are comments. Use this to skip
                             releases your setup can't handle, whatever the reason.
-                        </p>
+                        </HelpText>
                     </div>
 
-                    <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                        <label htmlFor="indexers-exclude-sync-urls" className={styles["form-label"]}>
-                            Synced exclude URLs <span className={styles["label-hint"]}>(auto-updating; one URL per line)</span>
-                        </label>
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                        <Label htmlFor="indexers-exclude-sync-urls">
+                            Synced exclude URLs <span className="text-[11px] font-normal text-base-content/45">(auto-updating; one URL per line)</span>
+                        </Label>
                         <Textarea
                             id="indexers-exclude-sync-urls"
                             rows={3}
                             spellCheck={false}
-                            className={`${styles["form-input"]} ${styles["pattern-input"]} ${syncUrlIssues.length > 0 ? styles.error : ""}`}
+                            className={`w-full font-mono text-xs ${syncUrlIssues.length > 0 ? "input-error" : ""}`}
                             placeholder={"# one URL per line\nhttps://raw.githubusercontent.com/.../excluded-regex.json"}
                             value={excludeSyncUrls}
                             onChange={e => handleSyncUrlsChange(e.target.value)} />
                         {syncUrlIssues.length > 0 && (
-                            <div className={styles["pattern-errors"]}>
+                            <div className="flex flex-col gap-1 rounded-md border border-error/35 bg-error/10 p-2.5 text-xs">
                                 {syncUrlIssues.map((iss, i) => (
-                                    <div key={i} className={styles["pattern-error"]}>
-                                        <span className={styles["pattern-error-line"]}>Line {iss.line}</span>
-                                        <code className={styles["pattern-error-pattern"]}>{iss.value}</code>
-                                        <span className={styles["pattern-error-message"]}>— {iss.error}</span>
+                                    <div key={i} className="flex flex-wrap items-baseline gap-1.5 text-base-content">
+                                        <span className="shrink-0 font-semibold text-error">Line {iss.line}</span>
+                                        <code className="rounded bg-error/10 px-1.5 py-0.5 font-mono text-error">{iss.value}</code>
+                                        <span className="text-base-content/60">— {iss.error}</span>
                                     </div>
                                 ))}
                             </div>
                         )}
-                        <div className={styles["sync-controls"]}>
-                            <label htmlFor="indexers-exclude-sync-refresh" className={styles["sync-refresh-label"]}>
+                        <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
+                            <Label htmlFor="indexers-exclude-sync-refresh" className="text-sm font-normal text-base-content/80">
                                 Refresh every
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 type="text"
                                 inputMode="numeric"
                                 id="indexers-exclude-sync-refresh"
-                                className={`${styles["form-input"]} ${styles["sync-refresh-input"]} ${!isRefreshValid(excludeSyncRefresh) ? styles.error : ""}`}
+                                className={`w-[90px] ${!isRefreshValid(excludeSyncRefresh) ? "input-error" : ""}`}
                                 placeholder="720"
                                 value={excludeSyncRefresh}
                                 onChange={e => handleSyncRefreshChange(e.target.value)} />
-                            <span className={styles["label-hint"]}>minutes</span>
+                            <span className="text-[11px] text-base-content/45">minutes</span>
                             <Button variant="primary" size="small" onClick={handleSyncNow} disabled={isSyncing}>
                                 <Icon name={isSyncing ? "progress_activity" : "sync"} className={`!text-[18px] ${isSyncing ? "animate-spin" : ""}`} />
                                 {isSyncing ? "Syncing…" : "Sync now"}
                             </Button>
                         </div>
                         {syncStatus.length > 0 && (
-                            <div className={styles["sync-status"]}>
+                            <div className="mt-2.5 flex flex-col gap-1">
                                 {syncStatus.map((s, i) => (
-                                    <div key={i} className={styles["sync-status-row"]}>
+                                    <div key={i} className="overflow-wrap-anywhere text-[13px] leading-snug">
                                         {s.error
-                                            ? <span className={styles["sync-status-bad"]}>✗ {syncHostLabel(s.url)} — {s.error}</span>
-                                            : <span className={styles["sync-status-ok"]}>✓ {syncHostLabel(s.url)} — {s.count} pattern{s.count === 1 ? "" : "s"}{s.lastChecked ? ` · synced ${syncRelativeTime(s.lastChecked)}` : ""}</span>}
+                                            ? <span className="text-error">✗ {syncHostLabel(s.url)} — {s.error}</span>
+                                            : <span className="text-success">✓ {syncHostLabel(s.url)} — {s.count} pattern{s.count === 1 ? "" : "s"}{s.lastChecked ? ` · synced ${syncRelativeTime(s.lastChecked)}` : ""}</span>}
                                     </div>
                                 ))}
                             </div>
                         )}
-                        <p className={styles["pattern-hint"]}>
+                        <HelpText>
                             Point at one or more JSON lists of regex patterns (e.g. TRaSH-derived exclude URLs).
                             Accepts <code>{`{ "values": ["…"] }`}</code> or <code>{`[{ "pattern": "…" }]`}</code>.
                             Synced patterns are fetched on the interval above and take precedence; your manual
                             patterns above are merged in after, with exact duplicates removed. If a URL can't be
                             reached, the last good copy keeps working. Save your changes first, then use <strong>Sync now</strong>.
-                        </p>
+                        </HelpText>
                     </div>
                 </div>
             </div>
 
-            <div className={styles.section}>
-                <div className={styles.sectionHeader}>
-                    <div>Indexers</div>
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="text-base font-semibold text-base-content">Indexers</div>
                     <Button size="xsmall" onClick={handleAdd}>Add</Button>
                 </div>
 
                 {indexerConfig.Indexers.length === 0 ? (
-                    <p className={styles.alertMessage}>
+                    <p className="rounded border border-base-content/10 bg-base-200/40 px-5 py-5 text-sm italic text-base-content/60">
                         No indexers configured. Add a Newznab-compatible indexer (or aggregator) to enable search.
                     </p>
                 ) : (
-                    <div className={styles["indexers-grid"]}>
+                    <div className="mb-7 grid grid-cols-1 gap-4 lg:grid-cols-2">
                         {indexerConfig.Indexers.map((indexer, index) => (
                             <IndexerCard
                                 key={index}
@@ -571,19 +583,20 @@ function IndexerCard({ indexer, onEdit, onToggle, onDelete }: IndexerCardProps) 
     })();
 
     return (
-        <div className={`${styles["indexer-card"]} ${isDisabled ? styles["indexer-card-disabled"] : ""}`}>
-            <div className={styles["indexer-card-inner"]}>
-                <div className={styles["indexer-header"]}>
-                    <div className={styles["indexer-header-content"]}>
-                        <div className={styles["indexer-name"]}>
+        <div className={`card border border-base-content/10 bg-base-100 shadow-sm ${isDisabled ? "opacity-60" : ""}`}>
+            <div className="card-body gap-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                        <div className="break-all text-[15px] font-semibold leading-snug tracking-tight text-base-content">
                             {indexer.Name || "(unnamed)"}
-                            {isDisabled && <span className={styles["indexer-disabled-badge"]}>Disabled</span>}
+                            {isDisabled && <Badge className="badge-ghost badge-sm ml-2 align-middle">Disabled</Badge>}
                         </div>
-                        <div className={styles["indexer-host"]}>{host}</div>
+                        <div className="break-all text-[10px] font-medium uppercase tracking-wide text-base-content/50">{host}</div>
                     </div>
-                    <div className={styles["indexer-header-actions"]}>
+                    <div className="flex shrink-0 gap-1">
                         <button
-                            className={`${styles["header-action-button"]} ${styles["toggle"]} ${isDisabled ? styles["toggle-off"] : styles["toggle-on"]}`}
+                            type="button"
+                            className={`btn btn-ghost btn-sm btn-square ${isDisabled ? "text-base-content/40" : "text-success"}`}
                             onClick={onToggle}
                             title={isDisabled ? "Enable Indexer" : "Disable Indexer"}
                             aria-pressed={!isDisabled}
@@ -594,7 +607,8 @@ function IndexerCard({ indexer, onEdit, onToggle, onDelete }: IndexerCardProps) 
                             </svg>
                         </button>
                         <button
-                            className={styles["header-action-button"]}
+                            type="button"
+                            className="btn btn-ghost btn-sm btn-square"
                             onClick={onEdit}
                             title="Edit Indexer"
                         >
@@ -604,7 +618,8 @@ function IndexerCard({ indexer, onEdit, onToggle, onDelete }: IndexerCardProps) 
                             </svg>
                         </button>
                         <button
-                            className={`${styles["header-action-button"]} ${styles["delete"]}`}
+                            type="button"
+                            className="btn btn-ghost btn-sm btn-square hover:text-error"
                             onClick={onDelete}
                             title="Delete Indexer"
                         >
@@ -616,119 +631,119 @@ function IndexerCard({ indexer, onEdit, onToggle, onDelete }: IndexerCardProps) 
                     </div>
                 </div>
 
-                <div className={styles["indexer-details"]}>
-                    <div className={styles["indexer-detail-row"]}>
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                <div className="flex flex-col gap-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <circle cx="12" cy="12" r="10" />
                                     <line x1="2" y1="12" x2="22" y2="12" />
                                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Host</span>
-                                <span className={styles["indexer-detail-value"]} title={indexer.Url}>{host}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Host</span>
+                                <span className="truncate text-sm font-medium text-base-content" title={indexer.Url}>{host}</span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <circle cx="12" cy="12" r="10" />
                                     <polyline points="12 6 12 12 16 14" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Rate limit</span>
-                                <span className={styles["indexer-detail-value"]}>{rateLimit}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Rate limit</span>
+                                <span className="truncate text-sm font-medium text-base-content">{rateLimit}</span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M9 12l2 2 4-4" />
                                     <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Strict matching</span>
-                                <span className={styles["indexer-detail-value"]}>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Strict matching</span>
+                                <span className="truncate text-sm font-medium text-base-content">
                                     {indexer.EnableStrictMatching ? "Enabled" : "Disabled"}
                                 </span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <circle cx="11" cy="11" r="8" />
                                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Search UA</span>
-                                <span className={styles["indexer-detail-value"]} title={indexer.SearchUserAgent ?? indexer.UserAgent ?? ""}>{searchUserAgent}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Search UA</span>
+                                <span className="truncate text-sm font-medium text-base-content" title={indexer.SearchUserAgent ?? indexer.UserAgent ?? ""}>{searchUserAgent}</span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                                     <polyline points="7 10 12 15 17 10" />
                                     <line x1="12" y1="15" x2="12" y2="3" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Retrieve UA</span>
-                                <span className={styles["indexer-detail-value"]} title={indexer.RetrieveUserAgent ?? indexer.UserAgent ?? ""}>{retrieveUserAgent}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Retrieve UA</span>
+                                <span className="truncate text-sm font-medium text-base-content" title={indexer.RetrieveUserAgent ?? indexer.UserAgent ?? ""}>{retrieveUserAgent}</span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Result filtering</span>
-                                <span className={styles["indexer-detail-value"]}>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Result filtering</span>
+                                <span className="truncate text-sm font-medium text-base-content">
                                     {indexer.Filter?.Enabled ? "Enabled" : "Disabled"}
                                 </span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <rect x="2" y="6" width="20" height="12" rx="2" />
                                     <path d="M6 12h.01M10 12h.01M14 12h.01M18 12h.01" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Proxy</span>
-                                <span className={styles["indexer-detail-value"]} title={indexer.ProxyUrl ?? ""}>{proxy}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Proxy</span>
+                                <span className="truncate text-sm font-medium text-base-content" title={indexer.ProxyUrl ?? ""}>{proxy}</span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <circle cx="12" cy="12" r="10" />
                                     <polyline points="12 6 12 12 16 14" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Timeout</span>
-                                <span className={styles["indexer-detail-value"]}>{timeout}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Timeout</span>
+                                <span className="truncate text-sm font-medium text-base-content">{timeout}</span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <line x1="8" y1="6" x2="21" y2="6" />
                                     <line x1="8" y1="12" x2="21" y2="12" />
@@ -738,47 +753,47 @@ function IndexerCard({ indexer, onEdit, onToggle, onDelete }: IndexerCardProps) 
                                     <line x1="3" y1="18" x2="3.01" y2="18" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Result limit</span>
-                                <span className={styles["indexer-detail-value"]}>{resultLimit}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Result limit</span>
+                                <span className="truncate text-sm font-medium text-base-content">{resultLimit}</span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M3 12h4l3-9 4 18 3-9h4" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>API limit</span>
-                                <span className={styles["indexer-detail-value"]}>{apiLimit}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">API limit</span>
+                                <span className="truncate text-sm font-medium text-base-content">{apiLimit}</span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                                     <polyline points="7 10 12 15 17 10" />
                                     <line x1="12" y1="15" x2="12" y2="3" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Download limit</span>
-                                <span className={styles["indexer-detail-value"]}>{downloadLimit}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Download limit</span>
+                                <span className="truncate text-sm font-medium text-base-content">{downloadLimit}</span>
                             </div>
                         </div>
 
-                        <div className={styles["indexer-detail-item"]}>
-                            <div className={styles["indexer-detail-icon"]}>
+                        <div className="flex min-w-0 items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M7 7h.01M7 3h5a2 2 0 0 1 1.41.59l7 7a2 2 0 0 1 0 2.82l-7 7a2 2 0 0 1-2.82 0l-7-7A2 2 0 0 1 3 12V7a4 4 0 0 1 4-4z" />
                                 </svg>
                             </div>
-                            <div className={styles["indexer-detail-content"]}>
-                                <span className={styles["indexer-detail-label"]}>Categories</span>
-                                <span className={styles["indexer-detail-value"]} title={categoriesSummary}>{categoriesSummary}</span>
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Categories</span>
+                                <span className="truncate text-sm font-medium text-base-content" title={categoriesSummary}>{categoriesSummary}</span>
                             </div>
                         </div>
                     </div>
@@ -874,16 +889,6 @@ function IndexerModal({ show, indexer, onClose, onSave }: IndexerModalProps) {
 
     useEffect(() => { setTestState('idle'); }, [url, apiKey, searchUserAgent, proxyUrl, timeoutSeconds]);
 
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && show) onClose();
-        };
-        if (show) {
-            document.addEventListener('keydown', handleEscape);
-            return () => document.removeEventListener('keydown', handleEscape);
-        }
-    }, [show, onClose]);
-
     const handleTest = useCallback(async () => {
         if (!url.trim() || !apiKey.trim() || apiKeyIsMasked) return;
         setTestState('testing');
@@ -956,10 +961,6 @@ function IndexerModal({ show, indexer, onClose, onSave }: IndexerModalProps) {
         filterEnabled, filterSkipPassworded, filterMinGrabs, filterGrabsGraceHours,
         filterMaxAgeDaysWithoutGrabs, filterPreferDownloaded, onSave]);
 
-    const handleOverlayClick = useCallback((e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) onClose();
-    }, [onClose]);
-
     const isUrlValid = (() => {
         if (!url.trim()) return false;
         try { new URL(url); return true; } catch { return false; }
@@ -990,224 +991,233 @@ function IndexerModal({ show, indexer, onClose, onSave }: IndexerModalProps) {
         && isHitLimitValid && isSearchResultLimitValid && isDownloadLimitValid && isHitResetValid
         && isExtraMovieCategoriesValid && isExtraTvCategoriesValid;
 
-    if (!show) return null;
-
     return (
-        <div className={styles["modal-overlay"]} onClick={handleOverlayClick}>
-            <section
-                className={styles["modal-container"]}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="indexer-modal-title"
-            >
-                <div className={styles["modal-header"]}>
-                    <h2 id="indexer-modal-title" className={styles["modal-title"]}>
-                        {indexer ? "Edit Indexer" : "Add Indexer"}
-                    </h2>
-                    <button className={styles["modal-close"]} onClick={onClose} aria-label="Close">×</button>
-                </div>
-
-                <div className={styles["modal-body"]}>
-                    <div className={styles["form-grid"]}>
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="indexer-name" className={styles["form-label"]}>Name</label>
-                            <input
+        <Modal
+            open={show}
+            title={indexer ? "Edit Indexer" : "Add Indexer"}
+            onClose={onClose}
+            className="!max-w-2xl"
+            footer={
+                <>
+                    <Button
+                        variant={testState === 'success' ? 'success' : testState === 'error' ? 'danger' : 'secondary'}
+                        onClick={handleTest}
+                        disabled={!isUrlValid || !apiKey.trim() || apiKeyIsMasked || testState === 'testing'}
+                        title={apiKeyIsMasked ? "Enter a new API key to test this connection" : undefined}
+                    >
+                        {testState === 'testing'
+                            ? <Spinner size="sm" />
+                            : testState === 'success'
+                                ? '✓ Tested'
+                                : testState === 'error'
+                                    ? '✗ Failed'
+                                    : 'Test Connection'}
+                    </Button>
+                    <Button variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={!isFormValid}>
+                        {indexer ? "Save Indexer" : "Add Indexer"}
+                    </Button>
+                </>
+            }
+        >
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="indexer-name">Name</Label>
+                            <Input
                                 type="text"
                                 id="indexer-name"
-                                className={styles["form-input"]}
+                                className="w-full"
                                 placeholder="e.g. My Indexer"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                             />
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <label htmlFor="indexer-url" className={styles["form-label"]}>URL</label>
-                            <input
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <Label htmlFor="indexer-url">URL</Label>
+                            <Input
                                 type="text"
                                 id="indexer-url"
-                                className={`${styles["form-input"]} ${!isUrlValid && url !== "" ? styles.error : ""}`}
+                                className={`w-full ${!isUrlValid && url !== "" ? "input-error" : ""}`}
                                 placeholder="https://api.example.com"
                                 value={url}
                                 onChange={e => setUrl(e.target.value)}
                             />
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <label htmlFor="indexer-apikey" className={styles["form-label"]}>API Key</label>
-                            <input
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <Label htmlFor="indexer-apikey">API Key</Label>
+                            <Input
                                 type="password"
                                 id="indexer-apikey"
-                                className={styles["form-input"]}
+                                className="w-full"
                                 value={apiKey}
                                 onChange={e => setApiKey(e.target.value)}
                             />
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <label htmlFor="indexer-search-ua" className={styles["form-label"]}>
-                                Search User-Agent <span className={styles["label-hint"]}>(optional; overrides the global Search default)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <Label htmlFor="indexer-search-ua">
+                                Search User-Agent <span className="text-[11px] font-normal text-base-content/45">(optional; overrides the global Search default)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-search-ua"
-                                className={styles["form-input"]}
+                                className="w-full"
                                 placeholder="Leave blank to use global default"
                                 value={searchUserAgent}
                                 onChange={e => setSearchUserAgent(e.target.value)}
                             />
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <label htmlFor="indexer-retrieve-ua" className={styles["form-label"]}>
-                                Retrieve User-Agent <span className={styles["label-hint"]}>(optional; overrides the global Retrieve default)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <Label htmlFor="indexer-retrieve-ua">
+                                Retrieve User-Agent <span className="text-[11px] font-normal text-base-content/45">(optional; overrides the global Retrieve default)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-retrieve-ua"
-                                className={styles["form-input"]}
+                                className="w-full"
                                 placeholder="Leave blank to use global default"
                                 value={retrieveUserAgent}
                                 onChange={e => setRetrieveUserAgent(e.target.value)}
                             />
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <label htmlFor="indexer-proxy" className={styles["form-label"]}>
-                                HTTP(S) Proxy URL <span className={styles["label-hint"]}>(optional; overrides the global default)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <Label htmlFor="indexer-proxy">
+                                HTTP(S) Proxy URL <span className="text-[11px] font-normal text-base-content/45">(optional; overrides the global default)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-proxy"
-                                className={`${styles["form-input"]} ${!isProxyValid && proxyUrl !== "" ? styles.error : ""}`}
+                                className={`w-full ${!isProxyValid && proxyUrl !== "" ? "input-error" : ""}`}
                                 placeholder="Leave blank to use global default"
                                 value={proxyUrl}
                                 onChange={e => setProxyUrl(e.target.value)}
                             />
                         </div>
 
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="indexer-rpm" className={styles["form-label"]}>
-                                Max requests / minute <span className={styles["label-hint"]}>(0 = unlimited)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="indexer-rpm">
+                                Max requests / minute <span className="text-[11px] font-normal text-base-content/45">(0 = unlimited)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-rpm"
-                                className={`${styles["form-input"]} ${!isRpmValid && maxRpm !== "" ? styles.error : ""}`}
+                                className={`w-full ${!isRpmValid && maxRpm !== "" ? "input-error" : ""}`}
                                 placeholder="0"
                                 value={maxRpm}
                                 onChange={e => setMaxRpm(e.target.value)}
                             />
                         </div>
 
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="indexer-timeout" className={styles["form-label"]}>
-                                Request timeout (seconds) <span className={styles["label-hint"]}>(blank = use global default)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="indexer-timeout">
+                                Request timeout (seconds) <span className="text-[11px] font-normal text-base-content/45">(blank = use global default)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-timeout"
-                                className={`${styles["form-input"]} ${!isTimeoutFieldValid && timeoutSeconds !== "" ? styles.error : ""}`}
+                                className={`w-full ${!isTimeoutFieldValid && timeoutSeconds !== "" ? "input-error" : ""}`}
                                 placeholder="Use global default"
                                 value={timeoutSeconds}
                                 onChange={e => setTimeoutSeconds(e.target.value.replace(/[^0-9]/g, ""))}
                             />
                         </div>
 
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="indexer-search-limit" className={styles["form-label"]}>
-                                Search result limit <span className={styles["label-hint"]}>(blank = use global default)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="indexer-search-limit">
+                                Search result limit <span className="text-[11px] font-normal text-base-content/45">(blank = use global default)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-search-limit"
-                                className={`${styles["form-input"]} ${!isSearchResultLimitValid ? styles.error : ""}`}
+                                className={`w-full ${!isSearchResultLimitValid ? "input-error" : ""}`}
                                 placeholder="Use global default"
                                 value={searchResultLimit}
                                 onChange={e => setSearchResultLimit(e.target.value.replace(/[^0-9]/g, ""))}
                             />
                         </div>
 
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="indexer-hit-limit" className={styles["form-label"]}>
-                                API hit limit <span className={styles["label-hint"]}>(blank or 0 = unlimited)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="indexer-hit-limit">
+                                API hit limit <span className="text-[11px] font-normal text-base-content/45">(blank or 0 = unlimited)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-hit-limit"
-                                className={`${styles["form-input"]} ${!isHitLimitValid ? styles.error : ""}`}
+                                className={`w-full ${!isHitLimitValid ? "input-error" : ""}`}
                                 placeholder="Unlimited"
                                 value={hitLimit}
                                 onChange={e => setHitLimit(e.target.value.replace(/[^0-9]/g, ""))}
                             />
                         </div>
 
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="indexer-download-limit" className={styles["form-label"]}>
-                                Download limit <span className={styles["label-hint"]}>(blank or 0 = unlimited)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="indexer-download-limit">
+                                Download limit <span className="text-[11px] font-normal text-base-content/45">(blank or 0 = unlimited)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-download-limit"
-                                className={`${styles["form-input"]} ${!isDownloadLimitValid ? styles.error : ""}`}
+                                className={`w-full ${!isDownloadLimitValid ? "input-error" : ""}`}
                                 placeholder="Unlimited"
                                 value={downloadLimit}
                                 onChange={e => setDownloadLimit(e.target.value.replace(/[^0-9]/g, ""))}
                             />
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <label htmlFor="indexer-hit-reset-time" className={styles["form-label"]}>
-                                Hit reset time <span className={styles["label-hint"]}>(UTC hour 0-23; blank = rolling 24h window)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <Label htmlFor="indexer-hit-reset-time">
+                                Hit reset time <span className="text-[11px] font-normal text-base-content/45">(UTC hour 0-23; blank = rolling 24h window)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-hit-reset-time"
-                                className={`${styles["form-input"]} ${!isHitResetValid ? styles.error : ""}`}
+                                className={`w-full ${!isHitResetValid ? "input-error" : ""}`}
                                 placeholder="Rolling 24h"
                                 value={hitResetTime}
                                 onChange={e => setHitResetTime(e.target.value.replace(/[^0-9]/g, ""))}
                             />
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <div className={styles["form-checkbox-wrapper"]}>
-                                <input
-                                    type="checkbox"
-                                    id="indexer-enabled"
-                                    className={`${styles["form-checkbox"]} toggle-switch`}
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                                                        id="indexer-enabled"
+                                    className="checkbox"
                                     checked={enabled}
                                     onChange={e => setEnabled(e.target.checked)}
                                 />
-                                <label htmlFor="indexer-enabled" className={styles["form-checkbox-label"]}>
+                                <Label htmlFor="indexer-enabled" className="text-sm font-normal text-base-content/80">
                                     Enabled
-                                </label>
+                                </Label>
                             </div>
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <div className={styles["form-checkbox-wrapper"]}>
-                                <input
-                                    type="checkbox"
-                                    id="indexer-strict"
-                                    className={`${styles["form-checkbox"]} toggle-switch`}
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                                                        id="indexer-strict"
+                                    className="checkbox"
                                     checked={strict}
                                     onChange={e => setStrict(e.target.checked)}
                                 />
-                                <label htmlFor="indexer-strict" className={styles["form-checkbox-label"]}>
-                                    Strict matching <span className={styles["label-hint"]}>(drop results whose title doesn't match the request)</span>
-                                </label>
+                                <Label htmlFor="indexer-strict" className="text-sm font-normal text-base-content/80">
+                                    Strict matching <span className="text-[11px] font-normal text-base-content/45">(drop results whose title doesn't match the request)</span>
+                                </Label>
                             </div>
                         </div>
 
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="indexer-extra-movie-cats" className={styles["form-label"]}>
-                                Extra movie categories <span className={styles["label-hint"]}>(comma-separated; appended to the default 2000/2070)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="indexer-extra-movie-cats">
+                                Extra movie categories <span className="text-[11px] font-normal text-base-content/45">(comma-separated; appended to the default 2000/2070)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-extra-movie-cats"
-                                className={`${styles["form-input"]} ${!isExtraMovieCategoriesValid ? styles.error : ""}`}
+                                className={`w-full ${!isExtraMovieCategoriesValid ? "input-error" : ""}`}
                                 placeholder="e.g. 2100,2200"
                                 value={extraMovieCategories}
                                 onChange={e => setExtraMovieCategories(e.target.value)}
@@ -1215,14 +1225,14 @@ function IndexerModal({ show, indexer, onClose, onSave }: IndexerModalProps) {
                             />
                         </div>
 
-                        <div className={styles["form-group"]}>
-                            <label htmlFor="indexer-extra-tv-cats" className={styles["form-label"]}>
-                                Extra TV categories <span className={styles["label-hint"]}>(comma-separated; appended to the default 5000/5070)</span>
-                            </label>
-                            <input
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="indexer-extra-tv-cats">
+                                Extra TV categories <span className="text-[11px] font-normal text-base-content/45">(comma-separated; appended to the default 5000/5070)</span>
+                            </Label>
+                            <Input
                                 type="text"
                                 id="indexer-extra-tv-cats"
-                                className={`${styles["form-input"]} ${!isExtraTvCategoriesValid ? styles.error : ""}`}
+                                className={`w-full ${!isExtraTvCategoriesValid ? "input-error" : ""}`}
                                 placeholder="e.g. 5100,5200"
                                 value={extraTvCategories}
                                 onChange={e => setExtraTvCategories(e.target.value)}
@@ -1230,38 +1240,36 @@ function IndexerModal({ show, indexer, onClose, onSave }: IndexerModalProps) {
                             />
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <div className={styles["form-checkbox-wrapper"]}>
-                                <input
-                                    type="checkbox"
-                                    id="indexer-ignore-category-filter"
-                                    className={`${styles["form-checkbox"]} toggle-switch`}
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                                                        id="indexer-ignore-category-filter"
+                                    className="checkbox"
                                     checked={ignoreCategoryFilter}
                                     onChange={e => setIgnoreCategoryFilter(e.target.checked)}
                                 />
-                                <label htmlFor="indexer-ignore-category-filter" className={styles["form-checkbox-label"]}>
-                                    Ignore category filter <span className={styles["label-hint"]}>(send no <code>cat=</code> param at all — escape hatch for indexers with fully custom category schemas)</span>
-                                </label>
+                                <Label htmlFor="indexer-ignore-category-filter" className="text-sm font-normal text-base-content/80">
+                                    Ignore category filter <span className="text-[11px] font-normal text-base-content/45">(send no <code>cat=</code> param at all — escape hatch for indexers with fully custom category schemas)</span>
+                                </Label>
                             </div>
                         </div>
 
-                        <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                            <div className={styles["form-checkbox-wrapper"]}>
-                                <input
-                                    type="checkbox"
-                                    id="indexer-filter-enabled"
-                                    className={`${styles["form-checkbox"]} toggle-switch`}
+                        <div className="flex flex-col gap-1.5 sm:col-span-2">
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                                                        id="indexer-filter-enabled"
+                                    className="checkbox"
                                     checked={filterEnabled}
                                     onChange={e => setFilterEnabled(e.target.checked)}
                                 />
-                                <label htmlFor="indexer-filter-enabled" className={styles["form-checkbox-label"]}>
-                                    Result filtering <span className={styles["label-hint"]}>(uses indexer-supplied metadata to filter and rank this indexer's results; recommended defaults applied when enabled)</span>
-                                </label>
+                                <Label htmlFor="indexer-filter-enabled" className="text-sm font-normal text-base-content/80">
+                                    Result filtering <span className="text-[11px] font-normal text-base-content/45">(uses indexer-supplied metadata to filter and rank this indexer's results; recommended defaults applied when enabled)</span>
+                                </Label>
                             </div>
                         </div>
 
                         {filterEnabled && (
-                            <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
+                            <div className="flex flex-col gap-1.5 sm:col-span-2">
                                 <button
                                     type="button"
                                     onClick={() => setFilterAdvancedOpen(o => !o)}
@@ -1283,79 +1291,77 @@ function IndexerModal({ show, indexer, onClose, onSave }: IndexerModalProps) {
 
                         {filterEnabled && filterAdvancedOpen && (
                             <>
-                                <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                                    <div className={styles["form-checkbox-wrapper"]}>
-                                        <input
-                                            type="checkbox"
-                                            id="indexer-filter-pw"
-                                            className={`${styles["form-checkbox"]} toggle-switch`}
+                                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                                                                        id="indexer-filter-pw"
+                                            className="checkbox"
                                             checked={filterSkipPassworded}
                                             onChange={e => setFilterSkipPassworded(e.target.checked)}
                                         />
-                                        <label htmlFor="indexer-filter-pw" className={styles["form-checkbox-label"]}>
-                                            Skip password-protected releases <span className={styles["label-hint"]}>(items the indexer flags as containing a passworded archive)</span>
-                                        </label>
+                                        <Label htmlFor="indexer-filter-pw" className="text-sm font-normal text-base-content/80">
+                                            Skip password-protected releases <span className="text-[11px] font-normal text-base-content/45">(items the indexer flags as containing a passworded archive)</span>
+                                        </Label>
                                     </div>
                                 </div>
 
-                                <div className={styles["form-group"]}>
-                                    <label htmlFor="indexer-filter-mingrabs" className={styles["form-label"]}>
-                                        Minimum download count <span className={styles["label-hint"]}>(0 = no minimum)</span>
-                                    </label>
-                                    <input
+                                <div className="flex flex-col gap-1.5">
+                                    <Label htmlFor="indexer-filter-mingrabs">
+                                        Minimum download count <span className="text-[11px] font-normal text-base-content/45">(0 = no minimum)</span>
+                                    </Label>
+                                    <Input
                                         type="text"
                                         id="indexer-filter-mingrabs"
-                                        className={styles["form-input"]}
+                                        className="w-full"
                                         placeholder={OPTIMISED_DEFAULTS.MinGrabs.toString()}
                                         value={filterMinGrabs}
                                         onChange={e => setFilterMinGrabs(e.target.value.replace(/[^0-9]/g, ""))}
                                     />
                                 </div>
 
-                                <div className={styles["form-group"]}>
-                                    <label htmlFor="indexer-filter-grace" className={styles["form-label"]}>
-                                        Grace period for new releases <span className={styles["label-hint"]}>(hours; 0 = no grace)</span>
-                                    </label>
-                                    <input
+                                <div className="flex flex-col gap-1.5">
+                                    <Label htmlFor="indexer-filter-grace">
+                                        Grace period for new releases <span className="text-[11px] font-normal text-base-content/45">(hours; 0 = no grace)</span>
+                                    </Label>
+                                    <Input
                                         type="text"
                                         id="indexer-filter-grace"
-                                        className={styles["form-input"]}
+                                        className="w-full"
                                         placeholder={OPTIMISED_DEFAULTS.GrabsGraceHours.toString()}
                                         value={filterGrabsGraceHours}
                                         onChange={e => setFilterGrabsGraceHours(e.target.value.replace(/[^0-9]/g, ""))}
                                     />
                                 </div>
 
-                                <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                                    <label htmlFor="indexer-filter-maxage" className={styles["form-label"]}>
-                                        Drop releases older than this many days with zero downloads <span className={styles["label-hint"]}>(0 = disabled)</span>
-                                    </label>
-                                    <input
+                                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                                    <Label htmlFor="indexer-filter-maxage">
+                                        Drop releases older than this many days with zero downloads <span className="text-[11px] font-normal text-base-content/45">(0 = disabled)</span>
+                                    </Label>
+                                    <Input
                                         type="text"
                                         id="indexer-filter-maxage"
-                                        className={styles["form-input"]}
+                                        className="w-full"
                                         placeholder={OPTIMISED_DEFAULTS.MaxAgeDaysWithoutGrabs.toString()}
                                         value={filterMaxAgeDaysWithoutGrabs}
                                         onChange={e => setFilterMaxAgeDaysWithoutGrabs(e.target.value.replace(/[^0-9]/g, ""))}
                                     />
                                 </div>
 
-                                <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
-                                    <div className={styles["form-checkbox-wrapper"]}>
-                                        <input
-                                            type="checkbox"
-                                            id="indexer-filter-prefer"
-                                            className={`${styles["form-checkbox"]} toggle-switch`}
+                                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                                                                        id="indexer-filter-prefer"
+                                            className="checkbox"
                                             checked={filterPreferDownloaded}
                                             onChange={e => setFilterPreferDownloaded(e.target.checked)}
                                         />
-                                        <label htmlFor="indexer-filter-prefer" className={styles["form-checkbox-label"]}>
-                                            Rank by download count <span className={styles["label-hint"]}>(sort results by number of downloads, descending; items without a download count sort below those with one)</span>
-                                        </label>
+                                        <Label htmlFor="indexer-filter-prefer" className="text-sm font-normal text-base-content/80">
+                                            Rank by download count <span className="text-[11px] font-normal text-base-content/45">(sort results by number of downloads, descending; items without a download count sort below those with one)</span>
+                                        </Label>
                                     </div>
                                 </div>
 
-                                <div className={`${styles["form-group"]} ${styles["full-width"]}`}>
+                                <div className="flex flex-col gap-1.5 sm:col-span-2">
                                     <button
                                         type="button"
                                         onClick={resetFilterToDefaults}
@@ -1377,45 +1383,18 @@ function IndexerModal({ show, indexer, onClose, onSave }: IndexerModalProps) {
                         )}
                     </div>
 
-                    {testState === 'error' && (
-                        <div className={`${styles.alert} ${styles.alertDanger} mt-4`} role="alert">
-                            Connection test failed
-                        </div>
-                    )}
+            {testState === 'error' && (
+                <Alert variant="danger" className="mt-4 text-xs">
+                    Connection test failed
+                </Alert>
+            )}
 
-                    {testState === 'success' && (
-                        <div className={`${styles.alert} ${styles.alertSuccess} mt-4`} role="status">
-                            Connection test successful!
-                        </div>
-                    )}
-                </div>
-
-                <div className={styles["modal-footer"]}>
-                    <div className={styles["modal-footer-left"]}>
-                        <Button
-                            variant={testState === 'success' ? 'success' : testState === 'error' ? 'danger' : 'secondary'}
-                            onClick={handleTest}
-                            disabled={!isUrlValid || !apiKey.trim() || apiKeyIsMasked || testState === 'testing'}
-                            title={apiKeyIsMasked ? "Enter a new API key to test this connection" : undefined}
-                        >
-                            {testState === 'testing'
-                                ? <Spinner size="sm" />
-                                : testState === 'success'
-                                    ? '✓ Tested'
-                                    : testState === 'error'
-                                        ? '✗ Failed'
-                                        : 'Test Connection'}
-                        </Button>
-                    </div>
-                    <div className={styles["modal-footer-right"]}>
-                        <Button variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button onClick={handleSave} disabled={!isFormValid}>
-                            {indexer ? "Save Indexer" : "Add Indexer"}
-                        </Button>
-                    </div>
-                </div>
-            </section>
-        </div>
+            {testState === 'success' && (
+                <Alert variant="success" className="mt-4 text-xs">
+                    Connection test successful!
+                </Alert>
+            )}
+        </Modal>
     );
 }
 

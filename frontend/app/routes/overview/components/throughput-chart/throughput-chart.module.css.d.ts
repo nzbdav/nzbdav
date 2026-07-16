@@ -1,12 +1,5 @@
 declare const styles: {
-  readonly header: string;
-  readonly totals: string;
-  readonly total: string;
-  readonly totalDanger: string;
-  readonly totalLabel: string;
-  readonly totalValue: string;
   readonly plot: string;
-  readonly yAxis: string;
   readonly chartArea: string;
   readonly svg: string;
   readonly gridline: string;
@@ -17,15 +10,5 @@ declare const styles: {
   readonly hoverDotAnchor: string;
   readonly hoverDot: string;
   readonly hoverDotErr: string;
-  readonly xAxis: string;
-  readonly xTick: string;
-  readonly legend: string;
-  readonly legendItem: string;
-  readonly legendRight: string;
-  readonly swatch: string;
-  readonly swatchArticles: string;
-  readonly swatchErrors: string;
-  readonly empty: string;
-  readonly emptySub: string;
 };
 export = styles;

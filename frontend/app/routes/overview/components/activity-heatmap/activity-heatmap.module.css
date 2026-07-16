@@ -1,48 +1,3 @@
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.peak {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1px;
-    text-align: right;
-}
-
-.peakLabel {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.peakValue {
-    font-size: 14px;
-    color: var(--text-primary);
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    font-variant-numeric: tabular-nums;
-}
-
-.peakCount {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-.empty {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 12px;
-    padding: 40px 0;
-}
-
 .grid {
     display: flex;
     flex-direction: column;
@@ -57,16 +12,6 @@
     gap: 8px;
     width: 100%;
     min-width: 0;
-}
-
-.dayLabel {
-    width: 30px;
-    flex-shrink: 0;
-    text-align: right;
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 500;
-    user-select: none;
 }
 
 .cellRow {
@@ -96,40 +41,27 @@
 
 .cell:hover {
     filter: brightness(1.4);
-    box-shadow: 0 0 0 1px var(--text-primary);
+    box-shadow: 0 0 0 1px var(--color-base-content);
     z-index: 1;
     position: relative;
 }
 
-.mode_day .cell,
-.mode_day .cellEmpty {
+.grid[data-mode="day"] .cell,
+.grid[data-mode="day"] .cellEmpty {
     aspect-ratio: auto;
     height: 32px;
 }
 
-.mode_week {
-    /* week mode uses default cell sizing */
-}
-
-.mode_month .cell,
-.mode_month .cellEmpty {
+.grid[data-mode="month"] .cell,
+.grid[data-mode="month"] .cellEmpty {
     aspect-ratio: auto;
     height: 12px;
 }
 
-.mode_year .cell,
-.mode_year .cellEmpty {
+.grid[data-mode="year"] .cell,
+.grid[data-mode="year"] .cellEmpty {
     aspect-ratio: 1 / 1;
     height: auto;
-}
-
-.axisRow {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    min-width: 0;
-    margin-top: 4px;
 }
 
 .axisGrid {
@@ -137,10 +69,6 @@
     gap: 2px;
     flex: 1 1 0;
     min-width: 0;
-    color: var(--text-muted);
-    font-size: 10px;
-    font-variant-numeric: tabular-nums;
-    user-select: none;
     position: relative;
     height: 14px;
 }
@@ -149,33 +77,4 @@
     grid-row: 1;
     text-align: left;
     white-space: nowrap;
-}
-
-.footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.tooltip {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-.scale {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 10px;
-    color: var(--text-muted);
-}
-
-.scaleSwatch {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
 }

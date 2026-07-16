@@ -18,7 +18,7 @@ export function Maintenance({ savedConfig, config, setNewConfig }: MaintenancePr
     return (
         <SettingsPage>
                 <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-300">
+                    <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                         id="db-startup-vacuum-enabled-checkbox"
                         aria-describedby="db-startup-vacuum-enabled-help"
@@ -32,7 +32,7 @@ export function Maintenance({ savedConfig, config, setNewConfig }: MaintenancePr
                 </div>
                 <hr />
                 <div className="space-y-2">
-                    <label className="block text-sm text-slate-300" htmlFor="history-retention-days">
+                    <label className="block text-sm text-base-content/80" htmlFor="history-retention-days">
                         SAB History Retention (days)
                     </label>
                     <Input
@@ -58,7 +58,7 @@ export function Maintenance({ savedConfig, config, setNewConfig }: MaintenancePr
                 </div>
                 <hr />
                 <div className="space-y-2">
-                    <label className="block text-sm text-slate-300" htmlFor="healthcheck-retention-days">
+                    <label className="block text-sm text-base-content/80" htmlFor="healthcheck-retention-days">
                         Health-Check History Retention (days)
                     </label>
                     <Input
@@ -80,7 +80,7 @@ export function Maintenance({ savedConfig, config, setNewConfig }: MaintenancePr
                 </div>
                 <hr />
                 <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-slate-300">
+                    <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                         id="remove-orphaned-schedule-enabled-checkbox"
                         aria-describedby="remove-orphaned-schedule-help"
@@ -143,51 +143,51 @@ export function Maintenance({ savedConfig, config, setNewConfig }: MaintenancePr
             <div className={'mt-6 space-y-3'}>
                 <hr />
                 <div className="space-y-3">
-                    <details className={'overflow-hidden rounded border border-slate-700/70'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">
+                    <details className={'overflow-hidden rounded border border-base-content/10'}>
+                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
                             Remove Orphaned Files
                         </summary>
-                        <div className={'border-t border-slate-700/70 p-4'}>
+                        <div className={'border-t border-base-content/10 p-4'}>
                             <RemoveUnlinkedFiles savedConfig={savedConfig} />
                         </div>
                     </details>
-                    <details className={'overflow-hidden rounded border border-slate-700/70'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">
+                    <details className={'overflow-hidden rounded border border-base-content/10'}>
+                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
                             Rename Windows-Invalid Paths
                         </summary>
-                        <div className={'border-t border-slate-700/70 p-4'}>
+                        <div className={'border-t border-base-content/10 p-4'}>
                             <RenameWindowsInvalidDavPaths savedConfig={savedConfig} />
                         </div>
                     </details>
-                    <details className={'overflow-hidden rounded border border-slate-700/70'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">
+                    <details className={'overflow-hidden rounded border border-base-content/10'}>
+                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
                             Convert Strm Files to Symlnks
                         </summary>
-                        <div className={'border-t border-slate-700/70 p-4'}>
+                        <div className={'border-t border-base-content/10 p-4'}>
                             <ConvertStrmToSymlinks savedConfig={savedConfig} />
                         </div>
                     </details>
-                    <details className={'overflow-hidden rounded border border-slate-700/70'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">
+                    <details className={'overflow-hidden rounded border border-base-content/10'}>
+                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
                             Recreate STRM Files
                         </summary>
-                        <div className={'border-t border-slate-700/70 p-4'}>
+                        <div className={'border-t border-base-content/10 p-4'}>
                             <RecreateStrmFiles savedConfig={savedConfig} />
                         </div>
                     </details>
-                    <details className={'overflow-hidden rounded border border-slate-700/70'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">
+                    <details className={'overflow-hidden rounded border border-base-content/10'}>
+                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
                             Migrate Large Database Blobs to Blobstore
                         </summary>
-                        <div className={'border-t border-slate-700/70 p-4'}>
+                        <div className={'border-t border-base-content/10 p-4'}>
                             <MigrateDatabaseFilesToBlobstore savedConfig={savedConfig} />
                         </div>
                     </details>
-                    <details className={'overflow-hidden rounded border border-slate-700/70'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-white/5">
+                    <details className={'overflow-hidden rounded border border-base-content/10'}>
+                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
                             Reset Health-Check Statistics
                         </summary>
-                        <div className={'border-t border-slate-700/70 p-4'}>
+                        <div className={'border-t border-base-content/10 p-4'}>
                             <ResetHealthCheckStats />
                         </div>
                     </details>

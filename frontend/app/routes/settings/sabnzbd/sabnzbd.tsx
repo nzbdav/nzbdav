@@ -25,7 +25,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
     return (
         <SettingsPage>
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="api-key-input">API Key</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="api-key-input">API Key</label>
                 <div className="flex w-full">
                     <Input
                         type="text"
@@ -44,9 +44,9 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="categories-input">Categories</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="categories-input">Categories</label>
                 <TagInput
-                    className={!isValidCategories(config["api.categories"]) ? `${'border-red-500 focus:border-red-500'} ${'w-full'}` : 'w-full'}
+                    className={!isValidCategories(config["api.categories"]) ? 'input-error w-full' : 'w-full'}
                     id="categories-input"
                     aria-describedby="categories-help"
                     value={config["api.categories"]}
@@ -58,7 +58,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="manual-category-input">Manual Upload Category</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="manual-category-input">Manual Upload Category</label>
                 <Input
                     className={'w-full'}
                     type="text"
@@ -73,7 +73,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="import-strategy-input">Import Strategy</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="import-strategy-input">Import Strategy</label>
                 <Select
                     className={'w-full'}
                     value={config["api.import-strategy"]}
@@ -88,8 +88,8 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             {/* <hr /> */}
             {config["api.import-strategy"] === 'symlinks' &&
-                <div className={'ml-4 space-y-2 border-l border-slate-700 pl-4'}>
-                    <label className="block text-sm font-medium text-slate-200" htmlFor="mount-dir-input">Rclone Mount Directory</label>
+                <div className={'ml-4 space-y-2 border-l border-base-content/10 pl-4'}>
+                    <label className="block text-sm font-medium text-base-content" htmlFor="mount-dir-input">Rclone Mount Directory</label>
                     <Input
                         className={'w-full'}
                         type="text"
@@ -104,8 +104,8 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
                 </div>
             }
             {config["api.import-strategy"] === 'strm' && <>
-                <div className={'ml-4 space-y-2 border-l border-slate-700 pl-4'}>
-                    <label className="block text-sm font-medium text-slate-200" htmlFor="completed-downloads-dir-input">Completed Downloads Dir</label>
+                <div className={'ml-4 space-y-2 border-l border-base-content/10 pl-4'}>
+                    <label className="block text-sm font-medium text-base-content" htmlFor="completed-downloads-dir-input">Completed Downloads Dir</label>
                     <Input
                         className={'w-full'}
                         type="text"
@@ -118,8 +118,8 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
                         This is used to tell Radarr / Sonarr where to look for completed "downloads." Make sure this path is also visible to your Radarr / Sonarr containers. The "downloads" placed in this folder will all be *.strm files that point to nzbdav for streaming.
                     </p>
                 </div>
-                <div className={'ml-4 space-y-2 border-l border-slate-700 pl-4'}>
-                    <label className="block text-sm font-medium text-slate-200" htmlFor="base-url-input">Base URL</label>
+                <div className={'ml-4 space-y-2 border-l border-base-content/10 pl-4'}>
+                    <label className="block text-sm font-medium text-base-content" htmlFor="base-url-input">Base URL</label>
                     <Input
                         className={'w-full'}
                         type="text"
@@ -135,7 +135,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </>}
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="ignored-files-input">Ignored Files</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="ignored-files-input">Ignored Files</label>
                 <TagInput
                     className={'w-full'}
                     id="ignored-files-input"
@@ -149,7 +149,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="duplicate-nzb-behavior-input">Behavior for Duplicate NZBs</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="duplicate-nzb-behavior-input">Behavior for Duplicate NZBs</label>
                 <Select
                     className={'w-full'}
                     aria-describedby="duplicate-nzb-behavior-help"
@@ -165,7 +165,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="user-agent-input">User Agent</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="user-agent-input">User Agent</label>
                 <ExpandingTextInput
                     className={'w-full'}
                     id="user-agent-input"
@@ -181,7 +181,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="ensure-importable-video-checkbox"
                     aria-describedby="ensure-importable-video-help"
@@ -195,7 +195,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="fail-missing-non-video-checkbox"
                     aria-describedby="fail-missing-non-video-help"
@@ -213,7 +213,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="ensure-article-existence-checkbox"
                     aria-describedby="ensure-article-existence-help"
@@ -233,7 +233,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="ignore-history-limit-checkbox"
                     aria-describedby="ignore-history-limit-help"
@@ -248,7 +248,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="nzb-backup-enabled-checkbox"
                     aria-describedby="nzb-backup-location-help"
@@ -270,7 +270,7 @@ export function SabnzbdSettings({ config, setNewConfig, appVersion }: SabnzbdSet
                     When enabled, a copy of each incoming NZB will be saved to this directory, organized by category.
                     The directory will be created if it doesn't already exist.
                 </p>
-                <label className="mt-4 flex items-center gap-2 text-sm text-slate-300" htmlFor="nzb-backup-retention-days-input">
+                <label className="mt-4 flex items-center gap-2 text-sm text-base-content/80" htmlFor="nzb-backup-retention-days-input">
                     <span>Keep NZB backups for (days)</span>
                 </label>
                 <Input

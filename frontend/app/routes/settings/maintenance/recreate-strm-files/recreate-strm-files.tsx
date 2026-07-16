@@ -109,7 +109,7 @@ export function RecreateStrmFiles({ savedConfig }: RecreateStrmFilesProps) {
                 <Alert className={"mb-3"} variant="danger">{error}</Alert>
             }
             <div className={"space-y-3"}>
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                         id="recreate-strm-rewrite-all"
                         checked={rewriteAll}
@@ -131,7 +131,7 @@ export function RecreateStrmFiles({ savedConfig }: RecreateStrmFilesProps) {
                         />
                         {runButtonLabel}
                     </Button>
-                    <div className={"whitespace-pre-wrap font-mono text-xs text-slate-300"}>
+                    <div className={"whitespace-pre-wrap font-mono text-xs text-base-content/80"}>
                         {progress}
                     </div>
                 </div>

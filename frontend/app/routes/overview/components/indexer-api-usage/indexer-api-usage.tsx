@@ -69,12 +69,12 @@ export function IndexerApiUsage({ rows }: IndexerApiUsageProps) {
 function UsageBar({ used, limit }: { used: number, limit: number | null | undefined }) {
     if (!limit || limit <= 0) {
         return (
-            <div className={styles.usageRow}>
-                <div className={styles.usageBar} title="No limit configured">
+            <div className="flex items-center gap-2.5">
+                <div className="relative h-2 min-w-20 flex-1 overflow-hidden rounded bg-base-200" title="No limit configured">
                     <div className={styles.usageFillInfinite} />
                 </div>
-                <span className={styles.usageText}>
-                    {formatNumber(used)}<span className={styles.usageMuted}> · unlimited</span>
+                <span className="text-xs text-base-content tabular-nums whitespace-nowrap">
+                    {formatNumber(used)}<span className="text-base-content/50"> · unlimited</span>
                 </span>
             </div>
         );
@@ -82,14 +82,18 @@ function UsageBar({ used, limit }: { used: number, limit: number | null | undefi
     const pct = Math.min(100, (used / limit) * 100);
     const near = pct >= 80 && pct < 100;
     const over = pct >= 100;
-    const fillClass = over ? styles.usageFillOver : near ? styles.usageFillNear : styles.usageFill;
+    const fillClass = over
+        ? "bg-error/80"
+        : near
+            ? "bg-warning/70"
+            : "bg-success/55";
     return (
-        <div className={styles.usageRow}>
-            <div className={styles.usageBar}>
-                <div className={fillClass} style={{ width: `${pct}%` }} />
+        <div className="flex items-center gap-2.5">
+            <div className="relative h-2 min-w-20 flex-1 overflow-hidden rounded bg-base-200">
+                <div className={`absolute inset-y-0 left-0 rounded transition-[width] duration-200 ${fillClass}`} style={{ width: `${pct}%` }} />
             </div>
-            <span className={styles.usageText}>
-                {formatNumber(used)}<span className={styles.usageMuted}> / {formatNumber(limit)}</span>
+            <span className="text-xs text-base-content tabular-nums whitespace-nowrap">
+                {formatNumber(used)}<span className="text-base-content/50"> / {formatNumber(limit)}</span>
             </span>
         </div>
     );

@@ -52,7 +52,7 @@ export function RcloneSettings({ config, setNewConfig }: RcloneSettingsProps) {
     return (
         <SettingsPage>
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="rclone-rc-enabled-checkbox"
                     aria-describedby="rclone-rc-enabled-help"
@@ -66,7 +66,7 @@ export function RcloneSettings({ config, setNewConfig }: RcloneSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="rclone-host-input">Rclone Server Host</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="rclone-host-input">Rclone Server Host</label>
                 <div className="flex w-full">
                     <Input
                         type="text"
@@ -103,7 +103,7 @@ export function RcloneSettings({ config, setNewConfig }: RcloneSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="rclone-user-input">Rclone Server User</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="rclone-user-input">Rclone Server User</label>
                 <Input
                     className={'w-full'}
                     type="text"
@@ -117,7 +117,7 @@ export function RcloneSettings({ config, setNewConfig }: RcloneSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="rclone-pass-input">Rclone Server Password</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="rclone-pass-input">Rclone Server Password</label>
                 <Input
                     className={'w-full'}
                     type="password"

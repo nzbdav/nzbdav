@@ -4,7 +4,6 @@ import { useFetcher, useSearchParams, useLocation } from "react-router";
 import { ConfirmModal } from "~/components/confirm-modal/confirm-modal";
 import { Alert, Badge, Button, Icon, NativeForm as Form } from "~/components/ui";
 import { Checkbox } from "~/components/ui/form";
-import styles from "./route.module.css";
 import { backendClient, type WatchtowerData, type WatchtowerItem, type WatchtowerSource } from "~/clients/backend-client.server";
 
 const POLL_INTERVAL_MS = 5000;
@@ -420,7 +419,7 @@ export default function Watchtower({ loaderData }: Route.ComponentProps) {
                                         </div>
                                     </div>
 
-                                    <div className={`divide-y divide-base-content/10 ${styles.catList}`}>
+                                    <div className="max-h-[340px] overflow-y-auto divide-y divide-base-content/10">
                                         {discovered.catalogs.map(cat => (
                                             <label key={cat.url} className="flex min-w-0 cursor-pointer items-center gap-2.5 py-2">
                                                 <Checkbox
@@ -845,10 +844,10 @@ function ExpanderGroup({ expander, episodes, expanded, childrenLoaded, canToggle
             </div>
             {expanded && (
                 sorted.length > 0
-                    ? <div className={styles.children}>
+                    ? <div className="ml-6 border-l-2 border-base-content/10 pl-3 animate-reveal">
                         {sorted.map(c => <ItemRow key={c.key} item={c} selected={selectedKeys.has(c.key)} onToggleSelect={onToggleSelect} />)}
                       </div>
-                    : <div className={styles.children}>
+                    : <div className="ml-6 border-l-2 border-base-content/10 pl-3 animate-reveal">
                         <p className="px-2.5 py-2 text-xs text-base-content/50">{childrenLoaded ? "No episodes yet." : "Loading episodes…"}</p>
                       </div>
             )}

@@ -1,26 +1,10 @@
 declare const styles: {
-  readonly header: string;
-  readonly peak: string;
-  readonly peakLabel: string;
-  readonly peakValue: string;
-  readonly peakCount: string;
-  readonly empty: string;
   readonly grid: string;
   readonly row: string;
-  readonly dayLabel: string;
   readonly cellRow: string;
   readonly cell: string;
   readonly cellEmpty: string;
-  readonly mode_day: string;
-  readonly mode_week: string;
-  readonly mode_month: string;
-  readonly mode_year: string;
-  readonly axisRow: string;
   readonly axisGrid: string;
   readonly axisTick: string;
-  readonly footer: string;
-  readonly tooltip: string;
-  readonly scale: string;
-  readonly scaleSwatch: string;
 };
 export = styles;

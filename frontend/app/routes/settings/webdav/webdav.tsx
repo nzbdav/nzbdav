@@ -13,9 +13,9 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
     return (
         <SettingsPage>
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="webdav-user-input">WebDAV User</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="webdav-user-input">WebDAV User</label>
                 <Input
-                    {...className(['w-full', !isValidUser(config["webdav.user"]) && 'border-red-500 focus:border-red-500'])}
+                    {...className(['w-full', !isValidUser(config["webdav.user"]) && 'input-error'])}
                     type="text"
                     id="webdav-user-input"
                     aria-describedby="webdav-user-help"
@@ -28,9 +28,9 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="max-queue-connections-input">Queue Download Connections</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="max-queue-connections-input">Queue Download Connections</label>
                 <Input
-                    {...className(['w-full', !isValidMaxQueueConnections(config["usenet.max-queue-connections"]) && 'border-red-500 focus:border-red-500'])}
+                    {...className(['w-full', !isValidMaxQueueConnections(config["usenet.max-queue-connections"]) && 'input-error'])}
                     type="text"
                     id="max-queue-connections-input"
                     aria-describedby="max-queue-connections-help"
@@ -43,7 +43,7 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="webdav-pass-input">WebDAV Password</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="webdav-pass-input">WebDAV Password</label>
                 <Input
                     className={'w-full'}
                     type="password"
@@ -57,7 +57,7 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                         id="segment-cache-enabled-checkbox"
                         aria-describedby="segment-cache-enabled-help"
@@ -69,19 +69,19 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
                     Cache decoded segments on disk so repeat reads and seeks avoid provider traffic. Takes effect after restart.
                 </p>
                 {config["usenet.segment-cache.enabled"] === "true" && (
-                    <div className="grid gap-4 border-l border-slate-700 pl-4 sm:grid-cols-2">
-                        <label className="space-y-2 text-sm text-slate-300">
+                    <div className="grid gap-4 border-l border-base-content/10 pl-4 sm:grid-cols-2">
+                        <label className="space-y-2 text-sm text-base-content/80">
                             <span>Cache path</span>
                             <Input
-                                className={`w-full ${!isValidSegmentCachePath(config["usenet.segment-cache.path"]) ? "border-red-500" : ""}`}
+                                className={`w-full ${!isValidSegmentCachePath(config["usenet.segment-cache.path"]) ? "input-error" : ""}`}
                                 value={config["usenet.segment-cache.path"]}
                                 placeholder="/config/segment-cache"
                                 onChange={e => setNewConfig({ ...config, "usenet.segment-cache.path": e.target.value })} />
                         </label>
-                        <label className="space-y-2 text-sm text-slate-300">
+                        <label className="space-y-2 text-sm text-base-content/80">
                             <span>Maximum size (GB)</span>
                             <Input
-                                className={`w-full ${!isPositiveInteger(config["usenet.segment-cache.max-gb"]) ? "border-red-500" : ""}`}
+                                className={`w-full ${!isPositiveInteger(config["usenet.segment-cache.max-gb"]) ? "input-error" : ""}`}
                                 inputMode="numeric"
                                 value={config["usenet.segment-cache.max-gb"]}
                                 onChange={e => setNewConfig({ ...config, "usenet.segment-cache.max-gb": e.target.value })} />
@@ -91,7 +91,7 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="max-download-connections-auto-checkbox">Max Download Connections</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="max-download-connections-auto-checkbox">Max Download Connections</label>
                 <Toggle
                     id="max-download-connections-auto-checkbox"
                     aria-describedby="max-download-connections-help"
@@ -100,7 +100,7 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
                     onChange={e => setNewConfig({ ...config, "usenet.max-download-connections": e.target.checked ? "0" : "15" })} />
                 {!isAutoMaxDownloadConnections(config["usenet.max-download-connections"]) && (
                     <Input
-                        {...className(['w-full', !isValidMaxDownloadConnections(config["usenet.max-download-connections"]) && 'border-red-500 focus:border-red-500'])}
+                        {...className(['w-full', !isValidMaxDownloadConnections(config["usenet.max-download-connections"]) && 'input-error'])}
                         type="text"
                         id="max-download-connections-input"
                         aria-describedby="max-download-connections-help"
@@ -130,8 +130,8 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
                     hard ceiling on the total connections actually opened.
                 </p>
                 {config["usenet.max-download-connections-per-stream"] === "true" && (
-                    <div className="space-y-2 border-l border-slate-700 pl-4">
-                        <label className="block text-sm font-medium text-slate-200" htmlFor="max-download-connections-per-stream-preset-select">Per-stream performance</label>
+                    <div className="space-y-2 border-l border-base-content/10 pl-4">
+                        <label className="block text-sm font-medium text-base-content" htmlFor="max-download-connections-per-stream-preset-select">Per-stream performance</label>
                         <Select
                             className="w-full"
                             id="max-download-connections-per-stream-preset-select"
@@ -152,17 +152,17 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="streaming-priority-input">Streaming Priority (vs Queue)</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="streaming-priority-input">Streaming Priority (vs Queue)</label>
                 <div className="flex w-full">
                     <Input
-                        className={!isValidStreamingPriority(config["usenet.streaming-priority"]) ? 'border-red-500 focus:border-red-500' : undefined}
+                        className={!isValidStreamingPriority(config["usenet.streaming-priority"]) ? 'input-error' : undefined}
                         type="text"
                         id="streaming-priority-input"
                         aria-describedby="streaming-priority-help"
                         placeholder="80"
                         value={config["usenet.streaming-priority"]}
                         onChange={e => setNewConfig({ ...config, "usenet.streaming-priority": e.target.value })} />
-                    <span className="flex items-center rounded-r border border-l-0 border-slate-600 bg-slate-800 px-2 text-sm text-slate-300">%</span>
+                    <span className="flex items-center rounded-r border border-l-0 border-base-content/20 bg-base-200 px-2 text-sm text-base-content/80">%</span>
                 </div>
                 <p className="text-[11px] leading-relaxed text-base-content/45" id="streaming-priority-help">
                     When streaming from the webdav while the queue is also active, how much bandwidth should be dedicated to streaming?
@@ -170,17 +170,17 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="streaming-segment-timeout-input">Streaming Segment Timeout</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="streaming-segment-timeout-input">Streaming Segment Timeout</label>
                 <div className="flex w-full">
                     <Input
-                        className={!isValidStreamingSegmentTimeout(config["usenet.streaming-segment-timeout-seconds"]) ? 'border-red-500 focus:border-red-500' : undefined}
+                        className={!isValidStreamingSegmentTimeout(config["usenet.streaming-segment-timeout-seconds"]) ? 'input-error' : undefined}
                         type="text"
                         id="streaming-segment-timeout-input"
                         aria-describedby="streaming-segment-timeout-help"
                         placeholder="8"
                         value={config["usenet.streaming-segment-timeout-seconds"]}
                         onChange={e => setNewConfig({ ...config, "usenet.streaming-segment-timeout-seconds": e.target.value })} />
-                    <span className="flex items-center rounded-r border border-l-0 border-slate-600 bg-slate-800 px-2 text-sm text-slate-300">sec</span>
+                    <span className="flex items-center rounded-r border border-l-0 border-base-content/20 bg-base-200 px-2 text-sm text-base-content/80">sec</span>
                 </div>
                 <p className="text-[11px] leading-relaxed text-base-content/45" id="streaming-segment-timeout-help">
                     Per-segment deadline for WebDAV playback (2–40s). Stalled connections are replaced and retried before waiting for the provider&apos;s ~40s read timeout.
@@ -188,9 +188,9 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="streaming-segment-retries-input">Streaming Segment Retries</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="streaming-segment-retries-input">Streaming Segment Retries</label>
                 <Input
-                    className={!isValidStreamingSegmentRetries(config["usenet.streaming-segment-retries"]) ? 'border-red-500 focus:border-red-500' : undefined}
+                    className={!isValidStreamingSegmentRetries(config["usenet.streaming-segment-retries"]) ? 'input-error' : undefined}
                     type="text"
                     id="streaming-segment-retries-input"
                     aria-describedby="streaming-segment-retries-help"
@@ -203,9 +203,9 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="article-buffer-size-input">Article Buffer Size</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="article-buffer-size-input">Article Buffer Size</label>
                 <Input
-                    {...className(['w-full', !isValidArticleBufferSize(config["usenet.article-buffer-size"]) && 'border-red-500 focus:border-red-500'])}
+                    {...className(['w-full', !isValidArticleBufferSize(config["usenet.article-buffer-size"]) && 'input-error'])}
                     type="text"
                     id="article-buffer-size-input"
                     aria-describedby="article-buffer-size-help"
@@ -218,9 +218,9 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="idle-connection-timeout-input">Idle connection timeout (seconds)</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="idle-connection-timeout-input">Idle connection timeout (seconds)</label>
                 <Input
-                    {...className(['w-full', !isValidIdleConnectionTimeout(config["usenet.idle-connection-timeout-seconds"]) && 'border-red-500 focus:border-red-500'])}
+                    {...className(['w-full', !isValidIdleConnectionTimeout(config["usenet.idle-connection-timeout-seconds"]) && 'input-error'])}
                     type="text"
                     id="idle-connection-timeout-input"
                     aria-describedby="idle-connection-timeout-help"
@@ -236,7 +236,7 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="pipelined-body-requests-checkbox"
                     aria-describedby="pipelined-body-requests-help"
@@ -252,7 +252,7 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="readonly-checkbox"
                     aria-describedby="readonly-help"
@@ -266,7 +266,7 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="show-hidden-files-checkbox"
                     aria-describedby="show-hidden-files-help"
@@ -280,7 +280,7 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                     id="preview-par2-files-checkbox"
                     aria-describedby="preview-par2-files-help"
@@ -294,7 +294,7 @@ export function WebdavSettings({ config, setNewConfig }: SabnzbdSettingsProps) {
             </div>
             <hr />
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                         id="windows-safe-paths-checkbox"
                         aria-describedby="windows-safe-paths-help"

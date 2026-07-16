@@ -1,4 +1,3 @@
-import styles from "./indexer-scoreboard.module.css";
 import type { IndexerRow } from "~/clients/backend-client.server";
 import { formatBytes, formatNumber, formatPercent } from "../../utils/format";
 
@@ -43,15 +42,7 @@ export function IndexerScoreboard({ indexers }: IndexerScoreboardProps) {
                                             {formatNumber(i.failed)}
                                         </td>
                                         <td>
-                                            <div className={styles.successBar}>
-                                                <div
-                                                    className={styles.successFill}
-                                                    style={{ width: `${(i.successRate * 100).toFixed(1)}%` }}
-                                                />
-                                                <span className={styles.successText}>
-                                                    {formatPercent(i.successRate * 100, 0)}
-                                                </span>
-                                            </div>
+                                            <SuccessBar rate={i.successRate} />
                                         </td>
                                         <td className="font-mono tabular-nums">{formatBytes(i.bytesCompleted)}</td>
                                         <td className="font-mono tabular-nums">{formatSeconds(i.avgSeconds)}</td>
@@ -63,6 +54,17 @@ export function IndexerScoreboard({ indexers }: IndexerScoreboardProps) {
                 )}
             </div>
         </section>
+    );
+}
+
+function SuccessBar({ rate }: { rate: number }) {
+    return (
+        <div className="relative h-4 w-20 overflow-hidden rounded bg-base-200">
+            <div className="absolute inset-0 bg-success opacity-[0.28]" style={{ width: `${(rate * 100).toFixed(1)}%` }} />
+            <span className="relative block px-1.5 text-center text-[11px] leading-4 text-base-content tabular-nums">
+                {formatPercent(rate * 100, 0)}
+            </span>
+        </div>
     );
 }
 

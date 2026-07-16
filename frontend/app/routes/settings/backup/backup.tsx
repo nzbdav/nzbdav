@@ -343,7 +343,7 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
             )}
 
             <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-base-content/80">
                     <Checkbox
                         id="backup-schedule-enabled"
                         checked={scheduleEnabled}
@@ -423,7 +423,7 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
             <hr />
 
             <div className="space-y-2">
-                <label className="block text-sm text-slate-300" htmlFor="backup-retention-count">
+                <label className="block text-sm text-base-content/80" htmlFor="backup-retention-count">
                     Retention count (non-preserved backups)
                 </label>
                 <Input
@@ -448,7 +448,7 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
             <hr />
 
             <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-white">Create backup now</h2>
+                <h2 className="text-sm font-semibold text-base-content">Create backup now</h2>
                 <Input
                     placeholder="Optional notes"
                     value={notes}
@@ -508,7 +508,7 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
 
             <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-sm font-semibold text-white">Backups</h2>
+                    <h2 className="text-sm font-semibold text-base-content">Backups</h2>
                     <Button variant="ghost" size="small" onClick={() => void refreshList()}>
                         <Icon name="refresh" className="!text-[16px]" />
                         Refresh
@@ -524,12 +524,12 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
                             return (
                                 <li
                                     key={backup.id}
-                                    className="rounded border border-slate-700/70 bg-base-200/40 p-3 space-y-3"
+                                    className="rounded border border-base-content/10 bg-base-200/40 p-3 space-y-3"
                                 >
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                         <div className="space-y-1">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <span className="font-mono text-sm text-white">{backup.id}</span>
+                                                <span className="font-mono text-sm text-base-content">{backup.id}</span>
                                                 <Badge className="badge-sm">{backup.kind}</Badge>
                                                 {backup.preserved && <Badge className="badge-sm badge-warning">preserved</Badge>}
                                             </div>
@@ -538,7 +538,7 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
                                                 {backup.appVersion ? ` · v${backup.appVersion}` : ""}
                                             </p>
                                         </div>
-                                        <label className="flex items-center gap-2 text-xs text-slate-300">
+                                        <label className="flex items-center gap-2 text-xs text-base-content/80">
                                             <Checkbox
                                                 checked={backup.preserved}
                                                 onChange={(e) =>

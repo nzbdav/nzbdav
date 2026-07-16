@@ -196,7 +196,7 @@ export function ArrsSettings({ config, setNewConfig }: ArrsSettingsProps) {
     return (
         <SettingsPage>
             <div className={'space-y-4'}>
-                <div className={'flex items-center justify-between text-lg font-semibold text-white'}>
+                <div className={'flex items-center justify-between text-lg font-semibold text-base-content'}>
                     <div>Radarr Instances</div>
                     <Button variant="primary" size="small" onClick={addRadarrInstance}>
                         <Icon name="add" className="!text-[18px]" />
@@ -220,7 +220,7 @@ export function ArrsSettings({ config, setNewConfig }: ArrsSettingsProps) {
             </div>
             <hr />
             <div className={'space-y-4'}>
-                <div className={'flex items-center justify-between text-lg font-semibold text-white'}>
+                <div className={'flex items-center justify-between text-lg font-semibold text-base-content'}>
                     <div>Sonarr Instances</div>
                     <Button variant="primary" size="small" onClick={addSonarrInstance}>
                         <Icon name="add" className="!text-[18px]" />
@@ -326,9 +326,9 @@ function InstanceForm({ instance, index, type, onUpdate, onRemove }: InstanceFor
     }, []);
 
     return (
-        <div className={'relative rounded-lg border border-slate-700/70 bg-gray-800 p-4 shadow-md'}>
+        <div className={'relative rounded-lg border border-base-content/10 bg-base-100 p-4 shadow-md'}>
             <button
-                className={'absolute right-2 top-2 rounded p-1 text-slate-400 hover:bg-white/10 hover:text-red-400'}
+                className={'absolute right-2 top-2 rounded p-1 text-base-content/60 hover:bg-base-content/10 hover:text-error'}
                 onClick={() => onRemove(index)}
                 aria-label="Remove instance"
             >
@@ -336,7 +336,7 @@ function InstanceForm({ instance, index, type, onUpdate, onRemove }: InstanceFor
             </button>
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-200">Host</label>
+                    <label className="block text-sm font-medium text-base-content">Host</label>
                     <div className="flex w-full">
                         <Input
                             type="text"
@@ -367,7 +367,7 @@ function InstanceForm({ instance, index, type, onUpdate, onRemove }: InstanceFor
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-200">API Key</label>
+                    <label className="block text-sm font-medium text-base-content">API Key</label>
                     <Input
                         type="password"
                         className={'w-full'}

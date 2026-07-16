@@ -24,7 +24,7 @@ export function LatencyHistogram({ p50Ms, p95Ms, p99Ms, samples, buckets }: Late
     return (
         <section className="card w-full min-w-0 overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
             <div className="card-body gap-3 p-4">
-            <div className={styles.header}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <h3 className="card-title text-base">Fetch time per article</h3>
                     <p className="text-xs text-base-content/50">
@@ -32,7 +32,7 @@ export function LatencyHistogram({ p50Ms, p95Ms, p99Ms, samples, buckets }: Late
                         {!empty && <> · {formatNumber(samples)} samples</>}
                     </p>
                 </div>
-                <div className={styles.percentiles}>
+                <div className="flex gap-3">
                     <Pctile label="p50" caption="median" ms={p50Ms} kind="ok" />
                     <Pctile label="p95" caption="95th" ms={p95Ms} kind={p95Ms > 1500 ? "warn" : "ok"} />
                     <Pctile label="p99" caption="99th" ms={p99Ms} kind={p99Ms > 5000 ? "danger" : p99Ms > 2000 ? "warn" : "ok"} />
@@ -40,7 +40,7 @@ export function LatencyHistogram({ p50Ms, p95Ms, p99Ms, samples, buckets }: Late
             </div>
 
             {empty ? (
-                <div className={styles.empty}>No successful fetches in this window yet.</div>
+                <div className="py-10 text-center text-xs text-base-content/50">No successful fetches in this window yet.</div>
             ) : (
                 <>
                     <div className={styles.bars}>
@@ -57,14 +57,14 @@ export function LatencyHistogram({ p50Ms, p95Ms, p99Ms, samples, buckets }: Late
                                     <div className={styles.barWrap}>
                                         <div className={styles.bar} style={{ height: `${h.toFixed(1)}%` }} />
                                     </div>
-                                    <div className={styles.barLabel}>{bucketLabel(b)}</div>
+                                    <div className="max-w-full overflow-hidden text-center text-[10px] leading-none text-base-content/50 tabular-nums">{bucketLabel(b)}</div>
                                 </div>
                             );
                         })}
                     </div>
-                    <div className={styles.footer}>
-                        <div className={styles.axisHint}>ms ← faster &nbsp;·&nbsp; slower → seconds</div>
-                        <div className={styles.tooltip}>
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-4">
+                        <div className="text-[10px] tracking-wide text-base-content/45 uppercase">ms ← faster &nbsp;·&nbsp; slower → seconds</div>
+                        <div className="min-h-3.5 text-[11px] text-base-content/50 tabular-nums">
                             {hover ? (
                                 <>
                                     {fullBucketLabel(hover)} &mdash; {formatNumber(hover.count)} {hover.count === 1 ? "fetch" : "fetches"}
@@ -89,12 +89,12 @@ function Pctile({ label, caption, ms, kind }: { label: string, caption: string, 
             ? "text-warning"
             : "";
     return (
-        <div className={`${styles.pctile} border border-base-content/10 bg-base-200`} title={`${caption} — ${ms} ms`}>
-            <div className={styles.pctileTop}>
-                <span className={styles.pctileLabel}>{label}</span>
-                <span className={styles.pctileCaption}>{caption}</span>
+        <div className="min-w-[78px] rounded-box border border-base-content/10 bg-base-200 px-3 py-1.5 text-right" title={`${caption} — ${ms} ms`}>
+            <div className="flex items-baseline justify-end gap-1.5">
+                <span className="text-[10px] font-medium tracking-wide text-base-content/50 uppercase">{label}</span>
+                <span className="text-[9px] tracking-wide text-base-content/50 lowercase">{caption}</span>
             </div>
-            <div className={`${styles.pctileValue} ${valueClass}`}>{formatMs(ms)}</div>
+            <div className={`mt-px text-[17px] leading-tight font-semibold tracking-tight tabular-nums ${valueClass}`}>{formatMs(ms)}</div>
         </div>
     );
 }

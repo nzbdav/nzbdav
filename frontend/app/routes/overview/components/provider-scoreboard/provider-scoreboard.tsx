@@ -1,4 +1,3 @@
-import styles from "./provider-scoreboard.module.css";
 import type { OverviewWindow, ProviderCircuitState, ProviderRow } from "~/clients/backend-client.server";
 import { formatBytes, formatNumber, formatPercent } from "../../utils/format";
 
@@ -64,10 +63,7 @@ export function ProviderScoreboard({ providers, window }: ProviderScoreboardProp
                                             <td className="font-mono tabular-nums">{formatNumber(p.articles)}</td>
                                             <td className="font-mono tabular-nums">{formatBytes(p.bytesFetched)}</td>
                                             <td>
-                                                <div className={styles.shareBar}>
-                                                    <div className={styles.shareFill} style={{ width: `${share.toFixed(1)}%` }} />
-                                                    <span className={styles.shareText}>{formatPercent(share, 0)}</span>
-                                                </div>
+                                                <ShareBar share={share} />
                                             </td>
                                             <td className={`font-mono tabular-nums ${p.errorRate > 0.05 ? "text-error" : ""}`}>
                                                 {formatNumber(p.errors)}
@@ -135,8 +131,19 @@ function buildProviderTooltip(p: ProviderRow, state: ProviderCircuitState) {
     return lines.join("\n");
 }
 
+function ShareBar({ share }: { share: number }) {
+    return (
+        <div className="relative h-4 w-20 overflow-hidden rounded bg-base-200">
+            <div className="absolute inset-0 bg-success opacity-25" style={{ width: `${share.toFixed(1)}%` }} />
+            <span className="relative block px-1.5 text-center text-[11px] leading-4 text-base-content tabular-nums">
+                {formatPercent(share, 0)}
+            </span>
+        </div>
+    );
+}
+
 function Sparkline({ values }: { values: number[] }) {
-    if (values.length === 0) return <div className={styles.sparkEmpty} />;
+    if (values.length === 0) return <div className="h-[22px] w-[110px] rounded-sm bg-base-content/[0.04]" />;
     const w = 110;
     const h = 22;
     const max = Math.max(1, ...values);
@@ -147,9 +154,9 @@ function Sparkline({ values }: { values: number[] }) {
         .join(" ");
     const area = `${path} L${((values.length - 1) * step).toFixed(1)},${h} L0,${h} Z`;
     return (
-        <svg viewBox={`0 0 ${w} ${h}`} className={styles.spark} preserveAspectRatio="none">
-            <path d={area} className={styles.sparkArea} />
-            <path d={path} className={styles.sparkLine} />
+        <svg viewBox={`0 0 ${w} ${h}`} className="block h-[22px] w-[110px]" preserveAspectRatio="none">
+            <path d={area} fill="color-mix(in srgb, var(--color-success) 16%, transparent)" />
+            <path d={path} fill="none" stroke="var(--color-success)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
         </svg>
     );
 }

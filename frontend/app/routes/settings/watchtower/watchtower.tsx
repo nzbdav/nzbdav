@@ -1,6 +1,5 @@
 import { type Dispatch, type SetStateAction } from "react";
-import { NativeForm as Form, SettingsIntro } from "~/components/ui";
-import styles from "./watchtower.module.css";
+import { NativeForm as Form, SettingsIntro, SettingsPage } from "~/components/ui";
 
 const GB = 1024 * 1024 * 1024;
 
@@ -38,7 +37,7 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
     const setGb = (key: string, gb: string) => { const n = Number(gb); set(key, n > 0 ? String(Math.round(n * GB)) : "0"); };
 
     return (
-        <div className={styles.container}>
+        <SettingsPage>
             <SettingsIntro>
                 Keeps the titles on your lists pre-resolved to a healthy release and re-verified
                 over time, so each is found and ready before you need it. Pointer-only and
@@ -46,22 +45,22 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                 indexer caps. Manage your lists on the <b>Watchtower</b> page; tune the engine here.
             </SettingsIntro>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Check
                     type="switch"
                     id="watchtower-enabled"
                     label="Enable Watchtower"
                     checked={enabled}
                     onChange={e => set("watchtower.enabled", String(e.target.checked))} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     When on, the background engine syncs your lists, resolves the biggest healthy
                     release for each item, and keeps it verified over time. When off, nothing runs.
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Search profile</Form.Label>
-                <Form.Select className={styles.input}
+                <Form.Select className="w-full max-w-md"
                     disabled={!enabled || profiles.length === 0}
                     value={profileToken}
                     onChange={e => set("watchtower.profile-token", e.target.value)}>
@@ -73,23 +72,23 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                         <option value={profileToken}>Unknown profile ({profileToken.slice(0, 8)}…)</option>
                     )}
                 </Form.Select>
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     {profiles.length === 0
                         ? <>No Search Profiles yet — create one under <b>Settings → Profiles</b> first.</>
                         : "Which Search Profile the resolver uses — this decides which indexers get queried. Default uses the first one."}
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Release selection</Form.Label>
-                <Form.Select className={styles.input}
+                <Form.Select className="w-full max-w-md"
                     disabled={!enabled}
                     value={config["watchtower.ranking"] ?? "watchdog"}
                     onChange={e => set("watchtower.ranking", e.target.value)}>
                     <option value="watchdog">Match the watchdog's pick</option>
                     <option value="largest">Largest healthy release</option>
                 </Form.Select>
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     <b>Match the watchdog</b> uses the same rank order as the watchdog, so the release
                     Watchtower readies is exactly the one the watchdog would select. <b>Largest</b>
                     always prefers the biggest healthy release (it may differ from what the watchdog
@@ -97,18 +96,18 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                 </p>
             </Form.Group>
 
-            <div className={styles.section}>
-                <div className={styles.sectionTitle}>Series expansion</div>
-                <div className={styles.sectionDescription}>
+            <div className="flex flex-col gap-2">
+                <div className="text-[0.95rem] font-semibold text-base-content">Series expansion</div>
+                <div className="text-[0.8125rem] leading-relaxed text-base-content/55">
                     How much of a TV show or anime is warmed when a whole series is tracked. Each series
                     is expanded into its seasons/episodes via TVmaze (TV) or Kitsu (anime), keyless, then
                     resolved and kept fresh like any other item.
                 </div>
             </div>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Series scope</Form.Label>
-                <Form.Select className={styles.input}
+                <Form.Select className="w-full max-w-md"
                     disabled={!enabled}
                     value={scope}
                     onChange={e => set("watchtower.series-scope", e.target.value)}>
@@ -118,7 +117,7 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                     <option value="recent">Most recent episodes</option>
                     <option value="off">Off — don't expand series</option>
                 </Form.Select>
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     <b>Latest season</b> warms only the newest season (default). <b>First season</b>
                     warms only season one — handy for watchlists you may start later. <b>All aired</b>
                     backfills every released season. <b>Recent</b> keeps just the last few episodes
@@ -128,19 +127,19 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
             </Form.Group>
 
             {scope === "recent" && (
-                <Form.Group className={styles.section}>
+                <Form.Group className="flex flex-col gap-2">
                     <Form.Label>Recent episode count</Form.Label>
-                    <Form.Control className={styles.input} type="number" min={1} max={100}
+                    <Form.Control className="w-full max-w-md" type="number" min={1} max={100}
                         disabled={!enabled}
                         value={config["watchtower.series-recent-count"] ?? "3"}
                         onChange={e => set("watchtower.series-recent-count", e.target.value)} />
-                    <p className={styles.hint}>How many of the most recent episodes to keep ready. Default 3.</p>
+                    <p className="m-0 text-[11px] leading-relaxed text-base-content/45">How many of the most recent episodes to keep ready. Default 3.</p>
                 </Form.Group>
             )}
 
             {(scope === "latest-season" || scope === "first-season" || scope === "all-aired") && (
                 <>
-                    <Form.Group className={styles.section}>
+                    <Form.Group className="flex flex-col gap-2">
                         <Form.Check
                             type="switch"
                             id="watchtower-season-bundles"
@@ -148,7 +147,7 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                             disabled={!enabled}
                             checked={seasonBundles}
                             onChange={e => set("watchtower.season-bundles", String(e.target.checked))} />
-                        <p className={styles.hint}>
+                        <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                             Warm one season bundle per completed season, a single release that covers the
                             whole season and plays per episode, instead of every episode. Still-airing
                             seasons always use single episodes. Default on.
@@ -156,7 +155,7 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                     </Form.Group>
 
                     {seasonBundles && (
-                        <Form.Group className={styles.section}>
+                        <Form.Group className="flex flex-col gap-2">
                             <Form.Check
                                 type="switch"
                                 id="watchtower-season-bundle-fallback"
@@ -164,7 +163,7 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                                 disabled={!enabled}
                                 checked={bundleFallback}
                                 onChange={e => set("watchtower.season-bundle-fallback", String(e.target.checked))} />
-                            <p className={styles.hint}>
+                            <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                                 When a finished season has no healthy bundle, warm its individual episodes
                                 instead so the season is still covered. The bundle is parked and stops being
                                 searched, so this will not keep hitting your indexers. Use "check now" on a
@@ -175,9 +174,9 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
 
                     {seasonBundles && bundleFallback && (
                         <>
-                            <Form.Group className={styles.section}>
+                            <Form.Group className="flex flex-col gap-2">
                                 <Form.Label>Fallback scope</Form.Label>
-                                <Form.Select className={styles.input}
+                                <Form.Select className="w-full max-w-md"
                                     disabled={!enabled}
                                     value={bundleFallbackScope}
                                     onChange={e => set("watchtower.season-bundle-fallback-scope", e.target.value)}>
@@ -185,7 +184,7 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                                     <option value="recent">Recent seasons</option>
                                     <option value="all">All seasons</option>
                                 </Form.Select>
-                                <p className={styles.hint}>
+                                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                                     Which finished seasons fall back to episodes when their bundle is missing.
                                     <b> Latest season</b> covers only the newest season, the one most likely
                                     being watched. <b>Recent seasons</b> covers the last few. <b>All seasons</b>
@@ -194,23 +193,23 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                             </Form.Group>
 
                             {bundleFallbackScope === "recent" && (
-                                <Form.Group className={styles.section}>
+                                <Form.Group className="flex flex-col gap-2">
                                     <Form.Label>Recent season count</Form.Label>
-                                    <Form.Control className={styles.input} type="number" min={1} max={100}
+                                    <Form.Control className="w-full max-w-md" type="number" min={1} max={100}
                                         disabled={!enabled}
                                         value={config["watchtower.season-bundle-fallback-recent-count"] ?? "2"}
                                         onChange={e => set("watchtower.season-bundle-fallback-recent-count", e.target.value)} />
-                                    <p className={styles.hint}>How many of the most recent seasons fall back to episodes. Default 2.</p>
+                                    <p className="m-0 text-[11px] leading-relaxed text-base-content/45">How many of the most recent seasons fall back to episodes. Default 2.</p>
                                 </Form.Group>
                             )}
 
-                            <Form.Group className={styles.section}>
+                            <Form.Group className="flex flex-col gap-2">
                                 <Form.Label>Max fallback episodes per season</Form.Label>
-                                <Form.Control className={styles.input} type="number" min={1} max={1000}
+                                <Form.Control className="w-full max-w-md" type="number" min={1} max={1000}
                                     disabled={!enabled}
                                     value={config["watchtower.season-bundle-fallback-max-episodes"] ?? "50"}
                                     onChange={e => set("watchtower.season-bundle-fallback-max-episodes", e.target.value)} />
-                                <p className={styles.hint}>
+                                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                                     Caps how many episodes are warmed when a season falls back, so a long
                                     season does not fan out too far. Default 50.
                                 </p>
@@ -218,13 +217,13 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                         </>
                     )}
 
-                    <Form.Group className={styles.section}>
+                    <Form.Group className="flex flex-col gap-2">
                         <Form.Label>Max items per series</Form.Label>
-                        <Form.Control className={styles.input} type="number" min={0} max={1000}
+                        <Form.Control className="w-full max-w-md" type="number" min={0} max={1000}
                             disabled={!enabled}
                             value={config["watchtower.series-max-episodes"] ?? "50"}
                             onChange={e => set("watchtower.series-max-episodes", e.target.value)} />
-                        <p className={styles.hint}>
+                        <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                             Hard ceiling on how many items a single series may warm: individual episodes and
                             season bundles combined, across every season. No series can expand past this on any
                             scope, so a very long title stays bounded instead of fanning out. A season bundle
@@ -233,16 +232,16 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                     </Form.Group>
 
                     {(config["watchtower.series-max-episodes"] ?? "50") !== "0" && (
-                        <Form.Group className={styles.section}>
+                        <Form.Group className="flex flex-col gap-2">
                             <Form.Label>When over the cap, keep</Form.Label>
-                            <Form.Select className={styles.input}
+                            <Form.Select className="w-full max-w-md"
                                 disabled={!enabled}
                                 value={config["watchtower.series-cap-keep"] ?? "newest"}
                                 onChange={e => set("watchtower.series-cap-keep", e.target.value)}>
                                 <option value="newest">Newest seasons &amp; episodes</option>
                                 <option value="oldest">Oldest seasons &amp; episodes</option>
                             </Form.Select>
-                            <p className={styles.hint}>
+                            <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                                 Which end of the series to keep when it hits the cap. <b>Newest</b> stays
                                 current with the latest episodes and season packs. <b>Oldest</b> starts from
                                 season one, useful when you plan to watch a series from the beginning.
@@ -252,50 +251,50 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                 </>
             )}
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Junk floor (GB)</Form.Label>
-                <Form.Control className={styles.input} type="number" min={0} step={0.1}
+                <Form.Control className="w-full max-w-md" type="number" min={0} step={0.1}
                     disabled={!enabled}
                     value={bytesToGb(config["watchtower.size-floor-bytes"])}
                     onChange={e => setGb("watchtower.size-floor-bytes", e.target.value)} />
-                <p className={styles.hint}>Ignore releases smaller than this. Default 0.5 GB.</p>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">Ignore releases smaller than this. Default 0.5 GB.</p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Bandwidth ceiling (GB)</Form.Label>
-                <Form.Control className={styles.input} type="number" min={0} step={0.5}
+                <Form.Control className="w-full max-w-md" type="number" min={0} step={0.5}
                     disabled={!enabled}
                     placeholder="empty = no ceiling"
                     value={bytesToGb(config["watchtower.size-ceiling-bytes"])}
                     onChange={e => setGb("watchtower.size-ceiling-bytes", e.target.value)} />
-                <p className={styles.hint}>Ignore releases larger than this. Empty / 0 = no ceiling.</p>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">Ignore releases larger than this. Empty / 0 = no ceiling.</p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Minimum grabs</Form.Label>
-                <Form.Control className={styles.input} type="number" min={0}
+                <Form.Control className="w-full max-w-md" type="number" min={0}
                     disabled={!enabled}
                     value={config["watchtower.min-grabs"] ?? "0"}
                     onChange={e => set("watchtower.min-grabs", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     Only consider releases with at least this many grabs (recorded downloads) on the
                     indexer. Higher = more proven releases but fewer candidates. 0 = no minimum. Default 0.
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Active warm-set cap</Form.Label>
-                <Form.Control className={styles.input} type="number" min={1} max={100000}
+                <Form.Control className="w-full max-w-md" type="number" min={1} max={100000}
                     disabled={!enabled}
                     value={config["watchtower.active-set-cap"] ?? "100"}
                     onChange={e => set("watchtower.active-set-cap", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     How many items the engine keeps actively ready. Beyond this, items are listed but
                     parked until they bubble up. This is what bounds load no matter how big your lists get. Default 100.
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Check
                     type="switch"
                     id="watchtower-auto-throughput"
@@ -303,7 +302,7 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                     disabled={!enabled}
                     checked={autoThroughput}
                     onChange={e => set("watchtower.auto-throughput", String(e.target.checked))} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     Resolve as fast as your indexers allow instead of pacing with the daily budget below.
                     Every search and grab still obeys each indexer's requests-per-minute and daily caps
                     from <b>Indexer settings</b>, and the engine pauses automatically when an indexer is
@@ -311,132 +310,132 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Daily resolve budget</Form.Label>
-                <Form.Control className={styles.input} type="number" min={0}
+                <Form.Control className="w-full max-w-md" type="number" min={0}
                     disabled={!enabled || autoThroughput}
                     value={config["watchtower.daily-resolve-budget"] ?? "60"}
                     onChange={e => set("watchtower.daily-resolve-budget", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     {autoThroughput
                         ? <>Ignored while <b>Auto throughput</b> is on — your indexer limits set the pace.</>
                         : "Soft cap on new resolves per day (0 = unlimited; your per-indexer caps always apply). Drips the backlog instead of hammering indexers. Default 60."}
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Shortlist depth</Form.Label>
-                <Form.Control className={styles.input} type="number" min={1} max={5}
+                <Form.Control className="w-full max-w-md" type="number" min={1} max={5}
                     disabled={!enabled}
                     value={config["watchtower.shortlist-depth"] ?? "2"}
                     onChange={e => set("watchtower.shortlist-depth", e.target.value)} />
-                <p className={styles.hint}>One live winner + backups kept per item, for instant failover. Default 2.</p>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">One live winner + backups kept per item, for instant failover. Default 2.</p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Grab cap per resolve</Form.Label>
-                <Form.Control className={styles.input} type="number" min={1} max={10}
+                <Form.Control className="w-full max-w-md" type="number" min={1} max={10}
                     disabled={!enabled}
                     value={config["watchtower.grab-cap-per-resolve"] ?? "3"}
                     onChange={e => set("watchtower.grab-cap-per-resolve", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     Max NZB fetches (the scarce indexer bucket) per item per pass. Keeps resolves grab-thrifty. Default 3.
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Verify sample count</Form.Label>
-                <Form.Control className={styles.input} type="number" min={1} max={20}
+                <Form.Control className="w-full max-w-md" type="number" min={1} max={20}
                     disabled={!enabled}
                     value={config["watchtower.verify-sample-count"] ?? "3"}
                     onChange={e => set("watchtower.verify-sample-count", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     How many segments are sampled to confirm a release is alive on Usenet, on both the
                     first resolve and every re-check. Higher = more thorough but slower. Default 3.
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Verify timeout (seconds)</Form.Label>
-                <Form.Control className={styles.input} type="number" min={2} max={120}
+                <Form.Control className="w-full max-w-md" type="number" min={2} max={120}
                     disabled={!enabled}
                     value={config["watchtower.verify-timeout-seconds"] ?? "10"}
                     onChange={e => set("watchtower.verify-timeout-seconds", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     Max time a single segment check may run before it's treated as a timeout and its
                     Usenet connection is released. Guards against unresponsive providers stalling the
                     engine. Default 10.
                 </p>
             </Form.Group>
 
-            <div className={styles.section}>
-                <div className={styles.sectionTitle}>Re-check &amp; retry timing</div>
-                <div className={styles.sectionDescription}>
+            <div className="flex flex-col gap-2">
+                <div className="text-[0.95rem] font-semibold text-base-content">Re-check &amp; retry timing</div>
+                <div className="text-[0.8125rem] leading-relaxed text-base-content/55">
                     How often the engine re-verifies items over time. Re-checks are Usenet-only — they
                     confirm a release is still downloadable and do not query your indexers or spend the
                     daily resolve budget.
                 </div>
             </div>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Re-check interval (seconds)</Form.Label>
-                <Form.Control className={styles.input} type="number" min={300} max={604800}
+                <Form.Control className="w-full max-w-md" type="number" min={300} max={604800}
                     disabled={!enabled}
                     value={config["watchtower.keepfresh-base-seconds"] ?? "21600"}
                     onChange={e => set("watchtower.keepfresh-base-seconds", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     How often a ready item is re-verified on Usenet to confirm it's still downloadable.
                     Items that stay healthy gradually stretch toward the max below. Default 21600 (6 hours).
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Max re-check interval (seconds)</Form.Label>
-                <Form.Control className={styles.input} type="number" min={600} max={2592000}
+                <Form.Control className="w-full max-w-md" type="number" min={600} max={2592000}
                     disabled={!enabled}
                     value={config["watchtower.keepfresh-max-seconds"] ?? "604800"}
                     onChange={e => set("watchtower.keepfresh-max-seconds", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     The longest a repeatedly-healthy item waits between re-checks. Default 604800 (7 days).
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>Dead-item retry interval (seconds)</Form.Label>
-                <Form.Control className={styles.input} type="number" min={600} max={604800}
+                <Form.Control className="w-full max-w-md" type="number" min={600} max={604800}
                     disabled={!enabled}
                     value={config["watchtower.unavailable-retry-seconds"] ?? "21600"}
                     onChange={e => set("watchtower.unavailable-retry-seconds", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     How long an unavailable ("dead") item waits before it's searched again. Lower retries
                     more often but spends more of your daily resolve budget. Default 21600 (6 hours).
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Label>List sync interval (seconds)</Form.Label>
-                <Form.Control className={styles.input} type="number" min={60} max={86400}
+                <Form.Control className="w-full max-w-md" type="number" min={60} max={86400}
                     disabled={!enabled}
                     value={config["watchtower.sync-interval-seconds"] ?? "3600"}
                     onChange={e => set("watchtower.sync-interval-seconds", e.target.value)} />
-                <p className={styles.hint}>How often remote lists are re-fetched to catch additions/removals. Default 3600.</p>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">How often remote lists are re-fetched to catch additions/removals. Default 3600.</p>
             </Form.Group>
 
-            <div className={styles.section}>
-                <div className={styles.sectionTitle}>Diagnostics</div>
-                <div className={styles.sectionDescription}>
+            <div className="flex flex-col gap-2">
+                <div className="text-[0.95rem] font-semibold text-base-content">Diagnostics</div>
+                <div className="text-[0.8125rem] leading-relaxed text-base-content/55">
                     Extra visibility into what the engine is doing, for troubleshooting. Off by default.
                 </div>
             </div>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className="flex flex-col gap-2">
                 <Form.Check
                     type="switch"
                     id="watchtower-verbose-logging"
                     label="Verbose activity logging"
                     checked={verboseLogging}
                     onChange={e => set("watchtower.verbose-logging", String(e.target.checked))} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     Writes Watchtower's per-item activity to the <b>Logs</b> page at the Information
                     level: each resolve, why an item is left unavailable, dead releases it skips or
                     finds, backup promotions, and a short heartbeat every cycle so you can confirm it's
@@ -444,7 +443,7 @@ export function WatchtowerSettings({ config, setNewConfig }: WatchtowerSettingsP
                     Watchtower is enabled. Leave off for normal use — it's chatty.
                 </p>
             </Form.Group>
-        </div>
+        </SettingsPage>
     );
 }
 

@@ -11,9 +11,17 @@ Visual and styling guidelines for the NzbDav frontend. Apply these when refactor
 
 1. **Dark-first.** The document uses daisyUI's built-in `night` theme via `data-theme="night"`.
 2. **daisyUI-native components.** Use daisyUI component classes and supported markup for buttons, forms, toggles, modals, alerts, badges, tabs, tooltips, and loading indicators. Prefer the wrappers in `app/components/ui`; direct daisyUI classes are also allowed.
-3. **Semantic colors.** New code uses daisyUI semantic utilities such as `bg-base-100`, `text-base-content`, `btn-primary`, and `text-error`, not raw slate/blue palette utilities.
+3. **Semantic colors.** Use daisyUI semantic utilities such as `bg-base-100`, `text-base-content`, `btn-primary`, and `text-error`. Do **not** use raw slate/blue/gray/amber/red palette utilities for chrome, text, borders, or surfaces.
 4. **Tailwind for layout.** Continue using Tailwind utilities for spacing, responsive layout, typography, and one-off composition around daisyUI components.
 5. **Density with breathing room.** Prefer native daisyUI size modifiers (`btn-xs`, `btn-sm`, `input-sm`) for dense controls inside generously spaced pages (`gap-8`, `p-4 md:px-8`).
+
+## Reference pages
+
+These routes already follow the design language — copy their patterns:
+
+- `app/routes/login/route.tsx` — `hero`, `card`, `floating-label`, UI kit forms
+- `app/routes/onboarding/route.tsx` — same auth/card pattern
+- `app/routes/search/route.tsx` — `join`, tables, badges, semantic tokens without CSS modules
 
 ## Theme token vocabulary
 
@@ -32,30 +40,34 @@ The old `--app-*` variables remain compatibility aliases for existing CSS module
 
 ## Color semantics
 
-- **Accent / interactive:** blue (`blue-400` text and links, `blue-500/600` fills, `focus:border-blue-500`). Active tab = `text-blue-400 border-blue-400`.
+Prefer semantic daisyUI utilities (and the shared UI kit) over fixed Tailwind palettes:
+
+- **Accent / interactive:** `text-primary`, `bg-primary`, `border-primary`, `link` / `btn-primary`. Active tab = `tab-active` (or `text-primary border-primary` when hand-rolling).
 - **Status dots** (small `rounded-full` circles, `h-2 w-2` in lists, `w-3 h-3 md:w-4 md:h-4` on cards):
-  - running/healthy → `bg-green-400` or `bg-emerald-400`
-  - stopped/error → `bg-red-400` or `bg-rose-400`
-  - degraded/unknown → `bg-yellow-400` or `bg-amber-400`
-  - inactive → `bg-slate-500`
-- **Action button intents:** start/save = green (`bg-green-500 hover:bg-green-600`), stop/delete = red (`bg-red-500 hover:bg-red-600`), restart = yellow (`bg-yellow-400 hover:bg-yellow-500`), apply/download = blue (`bg-blue-500 hover:bg-blue-600`).
-- **Alerts:** tinted translucent panels, e.g. warning = `rounded border border-amber-600/50 bg-amber-500/10 text-amber-200 px-3 py-2 text-xs`.
+  - running/healthy → `bg-success`
+  - stopped/error → `bg-error`
+  - degraded/unknown → `bg-warning`
+  - inactive → `bg-base-content/40`
+- **Action button intents:** use `btn-success`, `btn-error`, `btn-warning`, `btn-primary` (not hand-rolled `bg-green-500` etc.).
+- **Alerts:** use the shared `Alert` component or daisyUI `alert` / `alert-warning` / `alert-error` / `alert-success` / `alert-info`.
+
+Charts and other intentionally theme-independent data series may use explicit colors when needed; prefer mapping series to `var(--color-success)` / `var(--color-error)` etc. when possible.
 
 ## Surfaces and structure
 
-- **Card:** `bg-gray-800 rounded-lg shadow-md p-2.5 md:p-3`, hover `hover:bg-gray-800/70`. Whole card may be clickable.
-- **Panel / grouped section:** `rounded border border-slate-700/70` with an internal header row and `border-t` divider.
-- **Sidebar:** fixed-width (`max-w-[250px]`), `bg-gray-900 border-r border-slate-800`, collapsible on mobile (overlays as `absolute`, toggle pinned bottom-left as a `rounded-full` tab).
-- **Modal / overlay:** backdrop `fixed inset-0 z-50 bg-slate-900/80`; dialog `rounded border border-slate-700 bg-slate-900 shadow-xl max-w-xl`.
-- **Ghost icon button:** `px-2 py-1.5 rounded bg-white/10 hover:bg-white/20`.
-- **Badge / pill:** `text-[10px] px-1.5 py-0.5 rounded-full border border-slate-600/60 bg-slate-700/40 text-slate-200`; use `font-mono` for numeric metrics.
+- **Card:** `card bg-base-100 border border-base-content/10 shadow-md` (or `bg-base-100 rounded-lg …`). Prefer daisyUI `card` / `card-body` when the block is a card.
+- **Panel / grouped section:** `rounded border border-base-content/10 bg-base-100` with an internal header row and `border-t border-base-content/10` divider.
+- **Sidebar:** fixed-width (`max-w-[250px]`), `bg-base-300 border-r border-base-content/10`, collapsible on mobile.
+- **Modal / overlay:** use the shared `Modal` (`dialog.modal`) or daisyUI modal markup — do not hand-roll slate overlays.
+- **Ghost icon button:** `btn btn-ghost btn-sm` (or `btn-circle`).
+- **Badge / pill:** daisyUI `badge` / shared `Badge`; use `font-mono` for numeric metrics.
 
 ## Typography
 
-- Page title: `text-4xl font-bold`, with optional subtitle `text-xs text-slate-400 mt-1`.
+- Page title: `text-4xl font-bold`, with optional subtitle `text-xs text-base-content/60 mt-1`.
 - Section heading: `text-xl font-semibold`. Sidebar/nav group: `text-lg font-bold`.
-- Group micro-label: `text-[11px] uppercase tracking-wide text-slate-500`.
-- Body/meta hierarchy: `text-white` → `text-slate-300` → `text-slate-400` → `text-slate-500`.
+- Group micro-label: `text-xs uppercase tracking-wide text-base-content/50`.
+- Body/meta hierarchy: `text-base-content` → `text-base-content/80` → `text-base-content/60` → `text-base-content/45`.
 - Metrics and numbers: `font-mono`.
 
 ## Buttons
@@ -71,9 +83,9 @@ Use **Material Symbols Rounded** (variable font, weight 300, `FILL 0` default; `
 
 ## Forms
 
-- Use daisyUI `fieldset`, `fieldset-legend`, and `label` for grouped fields.
-- Controls use `input`, `select`, `textarea`, `checkbox`, `radio`, and `toggle`.
-- Use native semantic states such as `input-error` and native size modifiers instead of recreating borders/focus rings.
+- Use daisyUI `fieldset`, `fieldset-legend`, and `label` for grouped fields (or shared `Field` / `Label` / `HelpText`).
+- Controls use `input`, `select`, `textarea`, `checkbox`, `radio`, and `toggle` (or shared `Input` / `Select` / …).
+- Use native semantic states such as `input-error` and native size modifiers instead of recreating borders/focus rings (`border-red-500` is not allowed).
 - Do not add global element rules for inputs, selects, or checkboxes; they override daisyUI component styling.
 
 ## Tabs
@@ -90,7 +102,7 @@ Use `tabs tabs-border` with `tab`, `tab-active`, and `tab-disabled`. Tabs may pa
 ## Motion
 
 - Standard transition: `transition-all ease-in-out duration-200`.
-- Loading: `animate-spin` on a refresh/`cached` icon.
+- Loading: `animate-spin` on a refresh/`cached` icon, or daisyUI `loading loading-spinner`.
 - Chevron rotation for expand/collapse: `rotate-180` toggle with `transform transition ease-in-out`.
 - Hover micro-scale on grouped icons: `group-hover:scale-105`.
 - Drag feedback: `opacity-75 scale-[0.99]`, `cursor-grab active:cursor-grabbing`.
@@ -101,11 +113,11 @@ Hide by default in dense panes (`.no-scrollbar`), or show a thin styled one (`.y
 
 ## Applying themes
 
-Set `data-theme="night"` on the document root. New code should use daisyUI semantic classes (`bg-base-*`, `text-base-content`, etc.), not raw palette utilities.
+Set `data-theme="night"` on the document root. New code must use daisyUI semantic classes (`bg-base-*`, `text-base-content`, etc.), not raw palette utilities.
 
 ## NzbDav-specific notes
 
-- The frontend is React Router 8 with Tailwind 4, daisyUI 5, and CSS modules (not Vue/Nuxt).
-- Existing route CSS modules remain supported through the `--app-*` compatibility aliases and can migrate incrementally.
+- The frontend is React Router 8 with Tailwind 4, daisyUI 5, and (legacy) CSS modules.
+- Prefer Tailwind + daisyUI over new CSS modules. Existing route CSS modules remain supported through the `--app-*` compatibility aliases and should migrate incrementally.
 - Keep Material Symbols Rounded for icons; daisyUI does not provide an icon set.
 - Run `npm run typecheck` in `frontend/` after styling refactors.

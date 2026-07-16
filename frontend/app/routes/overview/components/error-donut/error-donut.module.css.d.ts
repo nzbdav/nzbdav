@@ -1,25 +1,6 @@
 declare const styles: {
-  readonly allClear: string;
-  readonly allClearDot: string;
-  readonly allClearTitle: string;
-  readonly allClearSub: string;
-  readonly headline: string;
-  readonly headlineRow: string;
-  readonly headlineMuted: string;
-  readonly headlineCount: string;
-  readonly headlineCountMuted: string;
-  readonly headlineLabel: string;
-  readonly noHardErrors: string;
-  readonly missNote: string;
   readonly stack: string;
   readonly stackSeg: string;
   readonly stackSegDim: string;
-  readonly legend: string;
-  readonly legendItem: string;
-  readonly legendActive: string;
-  readonly swatch: string;
-  readonly legendLabel: string;
-  readonly legendCount: string;
-  readonly legendPct: string;
 };
 export = styles;

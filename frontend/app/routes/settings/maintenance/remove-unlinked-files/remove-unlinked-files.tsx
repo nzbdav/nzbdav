@@ -123,7 +123,7 @@ export function RemoveUnlinkedFiles({ savedConfig }: RemoveUnlinkedFilesProps) {
                             <Icon name={isRunning ? "progress_activity" : "play_arrow"} className={`!text-[18px] ${isRunning ? "animate-spin" : ""}`} />
                             {runButtonLabel}
                         </Button>
-                        <div className={'font-mono text-xs text-slate-300'}>
+                        <div className={'font-mono text-xs text-base-content/80'}>
                             {statusError ?? progress}
                             {isDone && <>
                                 &nbsp;<a href="/api/remove-unlinked-files/audit">Audit.</a>

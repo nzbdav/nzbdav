@@ -55,13 +55,13 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
 
             {hasData ? (
                 <>
-                    <div className={styles.hero}>
-                        <span className={styles.heroNum}>{formatNumber(articlesRecovered)}</span>
-                        <div className={styles.heroText}>
-                            <div className={styles.heroLabel}>segments your backups rescued</div>
-                            <div className={styles.heroSub}>
+                    <div className="mb-3.5 flex items-center gap-4">
+                        <span className="shrink-0 text-[40px] leading-[0.95] font-bold tracking-tight text-base-content tabular-nums">{formatNumber(articlesRecovered)}</span>
+                        <div className="min-w-0 flex-1">
+                            <div className="text-[13px] font-medium text-base-content/80">segments your backups rescued</div>
+                            <div className="mt-0.5 text-xs text-base-content/50">
                                 {totalArticles > 0 ? (
-                                    <>that&rsquo;s <strong>{formatSmallPercent(saveRate)}</strong> of all fetches a backup had to cover</>
+                                    <>that&rsquo;s <strong className="font-semibold text-base-content">{formatSmallPercent(saveRate)}</strong> of all fetches a backup had to cover</>
                                 ) : (
                                     <>your stack self-healed every time it mattered</>
                                 )}
@@ -87,9 +87,9 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
                     </div>
 
                     {readsSaved > 0 && (
-                        <div className={styles.reads}>
-                            <strong>1 in {oneIn}</strong> sessions needed a backup
-                            <span className={styles.readsMuted}>
+                        <div className="mb-4 text-xs text-base-content/80">
+                            <strong className="font-bold text-base-content">1 in {oneIn}</strong> sessions needed a backup
+                            <span className="text-base-content/50">
                                 {" "}· {formatNumber(readsSaved)} of {formatNumber(readSessions)} rescued
                             </span>
                         </div>
@@ -123,8 +123,8 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
                     )}
 
                     {reasons.length > 0 && (
-                        <div className={styles.reasons}>
-                            <div className={styles.sectionHead}>Why they missed</div>
+                        <div className="mb-4">
+                            <div className="mb-1.5 text-[10px] tracking-wide text-base-content/50 uppercase">Why they missed</div>
                             <div className={styles.reasonBar}>
                                 {reasons.map(r => {
                                     const meta = reasonMeta(r.status);
@@ -155,22 +155,22 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
 
                     {rescuedFrom.length > 0 && (
                         <>
-                            <div className={styles.rankHead}>
+                            <div className="mt-1 flex justify-between border-b border-base-content/10 pb-1.5 text-[10px] tracking-wide text-base-content/50 uppercase">
                                 <span>Needed rescuing</span>
                                 <span>misses</span>
                             </div>
-                            <div className={styles.bars}>
+                            <div className="mb-2 flex flex-col">
                                 {rescuedFrom.map(p => {
                                     const width = (p.misses / maxMisses) * 100;
                                     const share = segmentsCovered > 0 ? (p.misses / segmentsCovered) * 100 : 0;
                                     return (
-                                        <div key={p.provider} className={styles.row} title={p.nickname?.trim() || p.provider}>
-                                            <span className={styles.name}>{p.nickname?.trim() || p.provider}</span>
-                                            <span className={styles.barTrack}>
+                                        <div key={p.provider} className="flex items-center gap-3 border-b border-base-content/10 py-2 last:border-b-0" title={p.nickname?.trim() || p.provider}>
+                                            <span className="w-[130px] shrink-0 truncate text-[13px] font-medium text-base-content">{p.nickname?.trim() || p.provider}</span>
+                                            <span className="h-2 min-w-[30px] flex-1 overflow-hidden rounded bg-base-200">
                                                 <span className={`${styles.barFill} ${styles.barFillBad}`} style={{ width: `${width.toFixed(1)}%` }} />
                                             </span>
-                                            <span className={styles.count}>{formatNumber(p.misses)}</span>
-                                            <span className={styles.share}>{share.toFixed(0)}%</span>
+                                            <span className="w-[52px] shrink-0 text-right text-[13px] font-semibold text-base-content tabular-nums">{formatNumber(p.misses)}</span>
+                                            <span className="w-9 shrink-0 text-right text-[11px] text-base-content/50 tabular-nums">{share.toFixed(0)}%</span>
                                         </div>
                                     );
                                 })}
@@ -180,30 +180,30 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
 
                     {multiProvider ? (
                         <>
-                            <div className={styles.rankHead}>
+                            <div className="mt-1 flex justify-between border-b border-base-content/10 pb-1.5 text-[10px] tracking-wide text-base-content/50 uppercase">
                                 <span>Rescued by</span>
                                 <span>saves</span>
                             </div>
-                            <div className={styles.bars}>
+                            <div className="mb-2 flex flex-col">
                                 {rescuedBy.map(p => {
                                     const width = (p.saves / maxSaves) * 100;
                                     const share = articlesRecovered > 0 ? (p.saves / articlesRecovered) * 100 : 0;
                                     return (
-                                        <div key={p.provider} className={styles.row} title={p.nickname?.trim() || p.provider}>
-                                            <span className={styles.name}>{p.nickname?.trim() || p.provider}</span>
-                                            <span className={styles.barTrack}>
+                                        <div key={p.provider} className="flex items-center gap-3 border-b border-base-content/10 py-2 last:border-b-0" title={p.nickname?.trim() || p.provider}>
+                                            <span className="w-[130px] shrink-0 truncate text-[13px] font-medium text-base-content">{p.nickname?.trim() || p.provider}</span>
+                                            <span className="h-2 min-w-[30px] flex-1 overflow-hidden rounded bg-base-200">
                                                 <span className={styles.barFill} style={{ width: `${width.toFixed(1)}%` }} />
                                             </span>
-                                            <span className={styles.count}>{formatNumber(p.saves)}</span>
-                                            <span className={styles.share}>{share.toFixed(0)}%</span>
+                                            <span className="w-[52px] shrink-0 text-right text-[13px] font-semibold text-base-content tabular-nums">{formatNumber(p.saves)}</span>
+                                            <span className="w-9 shrink-0 text-right text-[11px] text-base-content/50 tabular-nums">{share.toFixed(0)}%</span>
                                         </div>
                                     );
                                 })}
                             </div>
                         </>
                     ) : (!hasContrast && topHero) ? (
-                        <div className={styles.solo}>
-                            Every rescue came through <strong>{topHero.nickname?.trim() || topHero.provider}</strong>
+                        <div className="mt-1 flex flex-wrap items-baseline gap-1.5 rounded-box border border-base-content/10 bg-base-200 px-3.5 py-3 text-[13px] text-base-content/80">
+                            Every rescue came through <strong className="font-semibold text-base-content">{topHero.nickname?.trim() || topHero.provider}</strong>
                         </div>
                     ) : null}
 
@@ -212,7 +212,7 @@ export function FailoverSaves({ failover, window }: FailoverSavesProps) {
                     )}
 
                     {peak && peak.total > 0 && (
-                        <div className={styles.footnote}>
+                        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-base-content/50">
                             <span>Busiest {formatBucket(peak.bucket, bucketSizeMs)} ({formatNumber(peak.total)})</span>
                         </div>
                     )}
@@ -292,13 +292,13 @@ function SavesTrend({ bucketTotals, bucketSizeMs }: { bucketTotals: { bucket: nu
     const midY = (TOP_PAD + (VB_H - BOT_PAD)) / 2;
 
     return (
-        <div className={styles.trend}>
-            <div className={styles.trendHead}>
-                <span className={styles.sectionHead}>Saves over time</span>
-                <span className={styles.trendReadout}>
+        <div className="mt-3.5">
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+                <span className="text-[10px] tracking-wide text-base-content/50 uppercase">Saves over time</span>
+                <span className="min-w-0 text-right text-[11px] text-base-content/50 tabular-nums">
                     {hover ? (
                         <>
-                            <strong>{formatBucket(hover.bucket, bucketSizeMs)}</strong>
+                            <strong className="font-semibold text-base-content">{formatBucket(hover.bucket, bucketSizeMs)}</strong>
                             &nbsp;·&nbsp;{formatNumber(hover.cum)} of {formatNumber(total)} saved
                             {hover.delta > 0 && <> · +{formatNumber(hover.delta)}</>}
                         </>
@@ -308,7 +308,7 @@ function SavesTrend({ bucketTotals, bucketSizeMs }: { bucketTotals: { bucket: nu
                 </span>
             </div>
             <div className={styles.trendPlot}>
-                <div className={styles.trendYAxis}>
+                <div className="flex h-[120px] w-[30px] shrink-0 flex-col items-end justify-between text-[10px] text-base-content/50 tabular-nums select-none">
                     <span>{formatNumber(total)}</span>
                     <span>{formatNumber(Math.round(total / 2))}</span>
                     <span>0</span>
@@ -335,9 +335,9 @@ function SavesTrend({ bucketTotals, bucketSizeMs }: { bucketTotals: { bucket: nu
                     )}
                 </div>
             </div>
-            <div className={styles.trendXAxis}>
+            <div className="relative mt-1.5 ml-10 h-3.5 text-[10px] text-base-content/50 tabular-nums select-none">
                 {xTicks.map(t => (
-                    <span key={t.idx} className={styles.trendXTick} style={{ left: `${xPercent(t.idx)}%` }}>{t.label}</span>
+                    <span key={t.idx} className="absolute top-0 -translate-x-1/2 whitespace-nowrap" style={{ left: `${xPercent(t.idx)}%` }}>{t.label}</span>
                 ))}
             </div>
         </div>

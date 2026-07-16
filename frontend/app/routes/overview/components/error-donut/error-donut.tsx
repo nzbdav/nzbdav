@@ -7,18 +7,16 @@ export type ErrorDonutProps = {
     errors: ErrorSlice[],
 }
 
-// Severity-aware muted palette. The two grays are for non-critical signals
-// (Missing is the most common and just means "article wasn't on the first
-// provider"); the rest escalate toward real problems.
+// Severity-aware palette mapped to daisyUI semantic tokens where possible.
 const COLORS: Record<string, string> = {
-    Missing: "#71717a",  // zinc-500 — info / common
-    Other:   "#52525b",  // zinc-600 — unknown
-    Timeout: "#ca8a04",  // amber-600 — warning
-    Corrupt: "#9333ea",  // purple-600 — distinct
-    Network: "#dc2626",  // red-600 — real network issue
-    Auth:    "#0284c7",  // sky-600 — blocking / config
+    Missing: "color-mix(in srgb, var(--color-base-content) 45%, transparent)",
+    Other:   "color-mix(in srgb, var(--color-base-content) 35%, transparent)",
+    Timeout: "var(--color-warning)",
+    Corrupt: "var(--color-accent)",
+    Network: "var(--color-error)",
+    Auth:    "var(--color-info)",
 };
-const DEFAULT_COLOR = "#525252";
+const DEFAULT_COLOR = "color-mix(in srgb, var(--color-base-content) 35%, transparent)";
 
 const HARD_FAILURE_STATUSES = new Set(["Timeout", "Corrupt", "Auth", "Network", "Other"]);
 
@@ -57,24 +55,24 @@ export function ErrorBreakdown({ errors }: ErrorDonutProps) {
             </div>
 
             {allClear ? (
-                <div className={styles.allClear}>
-                    <div className={styles.allClearDot} />
+                <div className="flex items-center gap-3 px-3 pt-4 pb-2">
+                    <div className="h-3 w-3 shrink-0 rounded-full bg-success" />
                     <div>
-                        <div className={styles.allClearTitle}>All clear</div>
-                        <div className={styles.allClearSub}>No fetch errors in this window.</div>
+                        <div className="text-sm font-semibold text-base-content">All clear</div>
+                        <div className="mt-0.5 text-xs text-base-content/50">No fetch errors in this window.</div>
                     </div>
                 </div>
             ) : (
                 <>
-                    <div className={styles.headlineRow}>
-                        <div className={styles.headline}>
-                            <span className={styles.headlineCount}>{formatNumber(hardTotal)}</span>
-                            <span className={styles.headlineLabel}>{hardTotal === 1 ? "error" : "errors"}</span>
+                    <div className="mb-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-[28px] leading-none font-semibold tracking-tight text-base-content tabular-nums">{formatNumber(hardTotal)}</span>
+                            <span className="text-[11px] font-medium tracking-wide text-base-content/50 uppercase">{hardTotal === 1 ? "error" : "errors"}</span>
                         </div>
                         {missTotal > 0 && (
-                            <div className={styles.headlineMuted}>
-                                <span className={styles.headlineCountMuted}>{formatNumber(missTotal)}</span>
-                                <span className={styles.headlineLabel}>provider misses</span>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-xl leading-none font-semibold tracking-tight text-base-content/50 tabular-nums">{formatNumber(missTotal)}</span>
+                                <span className="text-[11px] font-medium tracking-wide text-base-content/50 uppercase">provider misses</span>
                             </div>
                         )}
                     </div>
@@ -82,7 +80,7 @@ export function ErrorBreakdown({ errors }: ErrorDonutProps) {
                     {hardTotal > 0 ? (
                         <>
                             <div
-                                className={styles.stack}
+                                className={`${styles.stack} mb-3.5`}
                                 onMouseLeave={() => setHover(null)}
                                 role="img"
                                 aria-label={`${hardTotal} hard fetch errors broken down by type`}
@@ -101,31 +99,33 @@ export function ErrorBreakdown({ errors }: ErrorDonutProps) {
                                 ))}
                             </div>
 
-                            <ul className={styles.legend}>
+                            <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-x-3.5 gap-y-1.5 p-0">
                                 {hardSegments.map(s => (
                                     <li
                                         key={s.status}
-                                        className={`${styles.legendItem} ${hover === s.status ? styles.legendActive : ""}`}
+                                        className={`grid cursor-default grid-cols-[10px_1fr_auto_auto] items-center gap-2.5 rounded-md px-1.5 py-1 text-xs transition-colors ${
+                                            hover === s.status ? "bg-base-content/[0.04]" : ""
+                                        }`}
                                         onMouseEnter={() => setHover(s.status)}
                                         onMouseLeave={() => setHover(null)}
                                     >
-                                        <span className={styles.swatch} style={{ background: s.color }} />
-                                        <span className={styles.legendLabel}>{s.status}</span>
-                                        <span className={styles.legendCount}>{formatNumber(s.count)}</span>
-                                        <span className={styles.legendPct}>{formatPercent(s.fraction * 100, 0)}</span>
+                                        <span className="h-2.5 w-2.5 rounded-sm" style={{ background: s.color }} />
+                                        <span className="text-base-content">{s.status}</span>
+                                        <span className="font-medium text-base-content tabular-nums">{formatNumber(s.count)}</span>
+                                        <span className="text-[11px] text-base-content/50 tabular-nums">{formatPercent(s.fraction * 100, 0)}</span>
                                     </li>
                                 ))}
                             </ul>
                         </>
                     ) : (
-                        <div className={styles.noHardErrors}>
+                        <div className="mb-3 text-xs leading-snug text-base-content/50">
                             No hard fetch failures — misses above are expected failover.
                         </div>
                     )}
 
                     {missTotal > 0 && (
-                        <div className={styles.missNote}>
-                            <span className={styles.swatch} style={{ background: COLORS.Missing }} />
+                        <div className="mt-3.5 flex items-start gap-2.5 border-t border-base-content/10 pt-3 text-[11px] leading-snug text-base-content/50">
+                            <span className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: COLORS.Missing }} />
                             <span>
                                 Provider misses are articles not found on the first provider tried;
                                 failover usually recovers them.

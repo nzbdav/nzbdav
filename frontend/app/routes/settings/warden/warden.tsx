@@ -1,7 +1,6 @@
 import { type ChangeEvent, type DragEvent, type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
 import { ConfirmModal } from "~/components/confirm-modal/confirm-modal";
-import { Alert, Button, Icon, Modal, NativeForm as Form, SettingsIntro, Spinner, Textarea } from "~/components/ui";
-import styles from "./warden.module.css";
+import { Alert, Button, Icon, Modal, NativeForm as Form, SettingsIntro, SettingsPage, Spinner, Textarea } from "~/components/ui";
 
 type WardenSettingsProps = {
     config: Record<string, string>;
@@ -63,8 +62,8 @@ function ago(sec?: number) {
 }
 
 function kindMeta(kind: Source["kind"]) {
-    if (kind === "local") return { label: "Local", cls: styles.kindLocal };
-    if (kind === "remote") return { label: "Remote", cls: styles.kindRemote };
+    if (kind === "local") return { label: "Local", cls: "text-success border-success/30 bg-success/10" };
+    if (kind === "remote") return { label: "Remote", cls: "text-info border-info/30 bg-info/10" };
     return { label: "Imported", cls: "" };
 }
 
@@ -392,7 +391,7 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
     const sources = snap?.sources ?? [];
 
     return (
-        <div className={styles.container}>
+        <SettingsPage>
             <SettingsIntro>
                 A portable filter list of dead-release fingerprints. Your own list fills in
                 automatically and stays independent. You can also add remote lists from a URL;
@@ -401,56 +400,56 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                 indexer, or server, and free of credentials.
             </SettingsIntro>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className={"flex flex-col gap-2"}>
                 <Form.Check
                     type="switch"
                     id="warden-hide-dead"
                     label="Filter out anything on the list"
                     checked={hideDead}
                     onChange={e => set("warden.hide-dead", String(e.target.checked))} />
-                <p className={styles.hint}>
+                <p className={"m-0 text-[11px] leading-relaxed text-base-content/45"}>
                     When on, anything whose fingerprint is filtered by your sources is removed from
                     what your search profiles return. If everything matches, results are shown anyway
                     as a last resort.
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className={"flex flex-col gap-2"}>
                 <Form.Label>Agreement needed for shared lists</Form.Label>
-                <Form.Control className={styles.input} type="number" min={1} max={20}
+                <Form.Control className={"w-full max-w-md"} type="number" min={1} max={20}
                     value={quorum}
                     onChange={e => set("warden.quorum", String(Math.max(1, parseInt(e.target.value || "1", 10))))} />
-                <p className={styles.hint}>
+                <p className={"m-0 text-[11px] leading-relaxed text-base-content/45"}>
                     A fingerprint from a “corroborate” source only filters when at least this many
                     independent sources agree. Your own list and “full”-trust sources always filter
                     on their own.
                 </p>
             </Form.Group>
 
-            <Form.Group className={styles.section}>
+            <Form.Group className={"flex flex-col gap-2"}>
                 <Form.Check
                     type="switch"
                     id="warden-backbone-scope"
                     label="Only filter when the provider matches"
                     checked={backboneScope}
                     onChange={e => set("warden.backbone-scope", String(e.target.checked))} />
-                <p className={styles.hint}>
+                <p className={"m-0 text-[11px] leading-relaxed text-base-content/45"}>
                     A verdict from a remote or imported list only filters when its provider matches one
                     of yours. Your own list always filters.
                 </p>
             </Form.Group>
 
-            <div className={`${styles.section} ${styles.sourcesSection}`}>
-                <div className={styles.sectionHeader}>
+            <div className={`${"flex flex-col gap-2"} ${"w-full"}`}>
+                <div className={"flex items-start justify-between gap-3 mb-1"}>
                     <div>
-                        <div className={styles.sectionTitle}>Sources</div>
-                        <div className={styles.sectionDescription}>
+                        <div className={"text-[0.95rem] font-semibold text-base-content"}>Sources</div>
+                        <div className={"text-[0.8125rem] leading-relaxed text-base-content/55"}>
                             {snap === null
                                 ? "Loading…"
                                 : `Filtering now: ${snap.effectiveCount.toLocaleString()} · ${snap.totalRows.toLocaleString()} total across all sources`}
                         </div>
                     </div>
-                    <div className={styles.headerActions}>
+                    <div className={"flex shrink-0 flex-wrap gap-2"}>
                         <Button size="xsmall" onClick={() => setShowAddRemote(true)}>
                             <Icon name="add_link" className="!text-[16px]" />
                             Add remote backup
@@ -477,14 +476,14 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                     </div>
                 </div>
 
-                <p className={styles.hint}>
+                <p className={"m-0 text-[11px] leading-relaxed text-base-content/45"}>
                     Each source has a trust level. <b>full</b> filters on its own;{" "}
                     <b>corroborate</b> filters only when enough sources agree (the number above);{" "}
                     <b>observe</b> keeps the list but never filters.
                 </p>
 
                 <div
-                    className={`${styles.list} ${dragOver ? styles.listDrop : ""}`}
+                    className={`${"flex flex-col gap-2.5 rounded-lg transition-shadow duration-120"} ${dragOver ? "ring-2 ring-primary/40" : ""}`}
                     onDragOver={e => { e.preventDefault(); if (!busy) setDragOver(true); }}
                     onDragLeave={e => { e.preventDefault(); setDragOver(false); }}
                     onDrop={onDrop}>
@@ -494,19 +493,19 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                         const statusErr = (s.status ?? "").startsWith("error");
                         const km = kindMeta(s.kind);
                         return (
-                            <div key={s.id} className={`${styles.card} ${!s.enabled ? styles.cardDisabled : ""}`}>
-                                <div className={styles.cardHeader}>
-                                    <div className={styles.cardTitle}>
+                            <div key={s.id} className={`${"rounded-lg border border-base-content/10 bg-base-100 p-3.5 transition-[border-color,opacity] duration-120 hover:border-base-content/20"} ${!s.enabled ? "opacity-55" : ""}`}>
+                                <div className={"flex items-center gap-2.5"}>
+                                    <div className={"flex min-w-0 flex-1 items-center gap-2.5"}>
                                         {isLocal
-                                            ? <span className={styles.name}>{s.name}</span>
-                                            : <input className={styles.nameInput} defaultValue={s.name} disabled={rowBusy}
+                                            ? <span className={"truncate text-sm font-semibold text-base-content"}>{s.name}</span>
+                                            : <input className={"min-w-0 max-w-[240px] rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-sm font-semibold text-base-content hover:border-base-content/10 focus:border-base-content/10 focus:bg-base-200 focus:outline-none"} defaultValue={s.name} disabled={rowBusy}
                                                 key={`nm-${s.id}-${s.name}`}
                                                 onBlur={e => { const v = e.target.value.trim(); if (v && v !== s.name) updateSource(s.id, { name: v }); }}
                                                 onKeyDown={e => { if (e.key === "Enter") e.currentTarget.blur(); }} />}
-                                        <span className={`${styles.kind} ${km.cls}`}>{km.label}</span>
+                                        <span className={`${"shrink-0 rounded-md border border-base-content/10 bg-base-200 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-base-content/80"} ${km.cls}`}>{km.label}</span>
                                         {rowBusy && <Spinner size="sm" />}
                                     </div>
-                                    <div className={styles.actions}>
+                                    <div className={"ml-auto flex shrink-0 items-center gap-1.5"}>
                                         {s.kind === "remote" &&
                                             <Button variant="primary" size="xsmall" disabled={rowBusy} onClick={() => refreshSource(s.id)}>
                                                 <Icon name="refresh" className="!text-[16px]" />
@@ -526,21 +525,21 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                                     </div>
                                 </div>
 
-                                {s.url && <div className={styles.url}>{s.url}</div>}
+                                {s.url && <div className={"mt-1.5 break-all font-mono text-[11px] text-base-content/60"}>{s.url}</div>}
 
-                                <div className={styles.meta}>
-                                    <span className={styles.count}>{s.count.toLocaleString()} fingerprints</span>
+                                <div className={"mt-3 flex flex-wrap items-center gap-4 border-t border-base-content/10 pt-3"}>
+                                    <span className={"text-xs text-base-content/80"}>{s.count.toLocaleString()} fingerprints</span>
                                     {isLocal
-                                        ? <span className={styles.metaLabel}>Trust: full · always on</span>
-                                        : <div className={styles.metaItem}>
-                                            <span className={styles.metaLabel}>Trust</span>
-                                            <Form.Select className={styles.trustSelect} value={s.trust} disabled={rowBusy}
+                                        ? <span className={"text-xs text-base-content/80"}>Trust: full · always on</span>
+                                        : <div className={"flex items-center gap-1.5"}>
+                                            <span className={"text-xs text-base-content/80"}>Trust</span>
+                                            <Form.Select className={"w-[123px] shrink-0 text-xs"} value={s.trust} disabled={rowBusy}
                                                 onChange={e => updateSource(s.id, { trust: e.target.value })}>
                                                 <option value="full">full</option>
                                                 <option value="corroborate">corroborate</option>
                                                 <option value="observe">observe</option>
                                             </Form.Select>
-                                            <span className={styles.metaLabel}>{TRUST_HELP[s.trust]}</span>
+                                            <span className={"text-xs text-base-content/80"}>{TRUST_HELP[s.trust]}</span>
                                         </div>}
 
                                     {!isLocal &&
@@ -549,16 +548,16 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                                             onChange={e => updateSource(s.id, { enabled: String(e.target.checked) })} />}
 
                                     {s.kind === "remote" &&
-                                        <div className={styles.metaItem}>
-                                            <span className={styles.metaLabel}>Refresh (h)</span>
-                                            <Form.Control type="number" min={1} max={720} className={styles.refreshInput}
+                                        <div className={"flex items-center gap-1.5"}>
+                                            <span className={"text-xs text-base-content/80"}>Refresh (h)</span>
+                                            <Form.Control type="number" min={1} max={720} className={"w-[72px] shrink-0 text-xs"}
                                                 key={`rh-${s.id}-${s.refreshHours}`} defaultValue={s.refreshHours} disabled={rowBusy}
                                                 onBlur={e => { const v = parseInt(e.target.value, 10); if (v && v !== s.refreshHours) updateSource(s.id, { refreshHours: String(v) }); }}
                                                 onKeyDown={e => { if (e.key === "Enter") e.currentTarget.blur(); }} />
                                         </div>}
 
                                     {s.kind === "remote" &&
-                                        <span className={`${styles.status} ${statusErr ? styles.statusError : ""}`}>
+                                        <span className={`${"ml-auto text-[11px] text-base-content/60"} ${statusErr ? "text-error" : ""}`}>
                                             updated {ago(s.lastUpdated)}{s.status ? ` · ${s.status}` : ""}
                                         </span>}
                                 </div>
@@ -567,16 +566,16 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                     })}
                 </div>
 
-                <p className={styles.dropHint}>
+                <p className={"mt-2 mb-0 text-[0.8rem] text-base-content/60"}>
                     {dragOver ? "Drop to import" : "Drag & drop a warden file here to import."}
                 </p>
             </div>
 
-            <div className={`${styles.section} ${styles.sourcesSection}`}>
-                <div className={styles.sectionHeader}>
+            <div className={`${"flex flex-col gap-2"} ${"w-full"}`}>
+                <div className={"flex items-start justify-between gap-3 mb-1"}>
                     <div>
-                        <div className={styles.sectionTitle}>Backup to GitHub</div>
-                        <div className={styles.sectionDescription}>
+                        <div className={"text-[0.95rem] font-semibold text-base-content"}>Backup to GitHub</div>
+                        <div className={"text-[0.8125rem] leading-relaxed text-base-content/55"}>
                             {backup === null
                                 ? "Loading…"
                                 : backup.repo
@@ -584,7 +583,7 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                                     : "Not configured. Push your list to your own GitHub repo as a backup."}
                         </div>
                     </div>
-                    <div className={styles.headerActions}>
+                    <div className={"flex shrink-0 flex-wrap gap-2"}>
                         <Button size="xsmall" onClick={openBackupModal}>
                             <Icon name="settings" className="!text-[16px]" />
                             Settings
@@ -603,18 +602,18 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                     </div>
                 </div>
 
-                <p className={styles.hint}>
+                <p className={"m-0 text-[11px] leading-relaxed text-base-content/45"}>
                     A personal backup of your fingerprint list to a repo you own. Keep the repo{" "}
                     <b>private</b> for a pure backup, or public to share. The file holds only fingerprint
                     hashes, no credentials. Restore reuses the same repo and token, so private repos work too.
                 </p>
 
                 {backup?.repo && backup.rawUrl &&
-                    <div className={styles.url}>{backup.rawUrl}</div>}
+                    <div className={"mt-1.5 break-all font-mono text-[11px] text-base-content/60"}>{backup.rawUrl}</div>}
             </div>
 
             {message &&
-                <Alert variant={message.variant} className={`${styles.alert} flex items-center justify-between gap-3`}>
+                <Alert variant={message.variant} className={`${"max-w-[760px] m-0"} flex items-center justify-between gap-3`}>
                     <span>{message.text}</span>
                     <button type="button" className="rounded p-1 hover:bg-white/10" onClick={() => setMessage(null)} aria-label="Dismiss message">
                         <span className="material-symbols-rounded !text-[16px]" aria-hidden="true">close</span>
@@ -635,17 +634,17 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                     </Button>
                 </>}
             >
-                    <Form.Group className={styles.modalGroup}>
+                    <Form.Group className={"mb-3.5"}>
                         <Form.Label>Backup URL</Form.Label>
                         <Form.Control type="url" placeholder="https://raw.githubusercontent.com/…/backup.ndjson.gz"
                             value={remoteUrl} onChange={e => setRemoteUrl(e.target.value)} />
                         <Form.Text muted>A raw .ndjson or .ndjson.gz file. GitHub raw URLs work great.</Form.Text>
                     </Form.Group>
-                    <Form.Group className={styles.modalGroup}>
+                    <Form.Group className={"mb-3.5"}>
                         <Form.Label>Name (optional)</Form.Label>
                         <Form.Control value={remoteName} onChange={e => setRemoteName(e.target.value)} placeholder="Shared list" />
                     </Form.Group>
-                    <div className={styles.modalRow}>
+                    <div className={"flex gap-3"}>
                         <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Trust</Form.Label>
                             <Form.Select value={remoteTrust} onChange={e => setRemoteTrust(e.target.value as Trust)}>
@@ -674,23 +673,23 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                     </Button>
                 </>}
             >
-                    <Form.Group className={styles.modalGroup}>
+                    <Form.Group className={"mb-3.5"}>
                         <Form.Label>Paste entries (one per line)</Form.Label>
                         <Textarea rows={5} value={bulkText}
                             onChange={e => setBulkText(e.target.value)}
                             placeholder={"https://example.com/a.ndjson.gz\nhttps://example.com/b.ndjson.gz"} />
                         <Form.Text muted>Or choose a file below. Lines starting with # are ignored. Ones you already have are skipped.</Form.Text>
                     </Form.Group>
-                    <div className={styles.fileRow}>
+                    <div className={"flex items-center gap-2.5"}>
                         <Button variant="primary" size="xsmall" onClick={() => bulkFileRef.current?.click()}>
                             <Icon name="attach_file" className="!text-[16px]" />
                             Choose file…
                         </Button>
-                        <span className={styles.fileName}>{bulkFile ? bulkFile.name : "No file selected"}</span>
+                        <span className={"text-[13px] text-base-content/80"}>{bulkFile ? bulkFile.name : "No file selected"}</span>
                     </div>
                     <input ref={bulkFileRef} type="file" accept=".json,.txt,application/json,text/plain"
                         style={{ display: "none" }} onChange={e => setBulkFile(e.target.files?.[0] ?? null)} />
-                    <div className={styles.modalRow} style={{ marginTop: 14 }}>
+                    <div className={"flex gap-3"} style={{ marginTop: 14 }}>
                         <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Trust for these</Form.Label>
                             <Form.Select value={bulkTrust} onChange={e => setBulkTrust(e.target.value as Trust)}>
@@ -708,13 +707,13 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                         </Form.Group>
                     </div>
                     <hr />
-                    <div className={styles.fileRow}>
+                    <div className={"flex items-center gap-2.5"}>
                         <Button variant="primary" size="xsmall" disabled={!sources.some(s => s.kind === "remote")}
                             onClick={exportSourcesBundle}>
                             <Icon name="download" className="!text-[16px]" />
                             Export bundle…
                         </Button>
-                        <span className={styles.fileName}>Save a file you can share or re-import.</span>
+                        <span className={"text-[13px] text-base-content/80"}>Save a file you can share or re-import.</span>
                     </div>
             </Modal>
 
@@ -731,17 +730,17 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
             >
                     <Form.Check type="radio" name="import-target" id="import-separate" label="Keep as a separate source (recommended)"
                         checked={importTarget === "separate"} onChange={() => setImportTarget("separate")} />
-                    <div className={styles.choiceHint}>
+                    <div className={"mb-3 ml-[26px] mt-0.5 text-[13px] text-base-content/60"}>
                         Stays isolated and reversible: one click to remove later. Best for lists from other people.
                     </div>
                     <Form.Check type="radio" name="import-target" id="import-merge" label="Merge into my list"
                         checked={importTarget === "merge"} onChange={() => setImportTarget("merge")} />
-                    <div className={styles.choiceHint}>
+                    <div className={"mb-3 ml-[26px] mt-0.5 text-[13px] text-base-content/60"}>
                         Folds the fingerprints into your own list. Can’t be un-merged.
                     </div>
 
                     {importTarget === "separate" &&
-                        <div className={styles.modalRow} style={{ marginBottom: 14 }}>
+                        <div className={"flex gap-3"} style={{ marginBottom: 14 }}>
                             <Form.Group style={{ flex: 1 }}>
                                 <Form.Label>Name</Form.Label>
                                 <Form.Control value={importName} onChange={e => setImportName(e.target.value)} placeholder="Imported list" />
@@ -757,12 +756,12 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                             </Form.Group>
                         </div>}
 
-                    <div className={styles.fileRow}>
+                    <div className={"flex items-center gap-2.5"}>
                         <Button variant="primary" size="xsmall" onClick={() => fileRef.current?.click()}>
                             <Icon name="attach_file" className="!text-[16px]" />
                             Choose file…
                         </Button>
-                        <span className={styles.fileName}>{pendingFile ? pendingFile.name : "No file selected"}</span>
+                        <span className={"text-[13px] text-base-content/80"}>{pendingFile ? pendingFile.name : "No file selected"}</span>
                     </div>
             </Modal>
 
@@ -779,7 +778,7 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
             >
                     <Form.Check type="radio" name="export-scope" id="export-local" label="My list only"
                         checked={exportScope === "local"} onChange={() => setExportScope("local")} />
-                    <div className={styles.choiceHint}>
+                    <div className={"mb-3 ml-[26px] mt-0.5 text-[13px] text-base-content/60"}>
                         Just your own verdicts: the clean file others can trust. Publish it and share the URL.
                     </div>
                     <Form.Check type="radio" name="export-scope" id="export-merged" label="Merged from selected sources"
@@ -810,12 +809,12 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                     </Button>
                 </>}
             >
-                    <Form.Group className={styles.modalGroup}>
+                    <Form.Group className={"mb-3.5"}>
                         <Form.Label>Repository</Form.Label>
                         <Form.Control placeholder="owner/repo" value={bRepo} onChange={e => setBRepo(e.target.value)} />
                         <Form.Text muted>A repo you own. Private is recommended for a personal backup.</Form.Text>
                     </Form.Group>
-                    <Form.Group className={styles.modalGroup}>
+                    <Form.Group className={"mb-3.5"}>
                         <Form.Label>GitHub token</Form.Label>
                         <Form.Control type="password" autoComplete="new-password"
                             placeholder={backup?.hasToken ? "•••••••• (stored, leave blank to keep)" : "Fine-grained PAT"}
@@ -825,7 +824,7 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                             write-only, never shown again or returned by the API.
                         </Form.Text>
                     </Form.Group>
-                    <div className={styles.modalRow}>
+                    <div className={"flex gap-3"}>
                         <Form.Group style={{ flex: 1 }}>
                             <Form.Label>File path</Form.Label>
                             <Form.Control value={bPath} onChange={e => setBPath(e.target.value)} placeholder="warden/warden.ndjson.gz" />
@@ -835,7 +834,7 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                             <Form.Control value={bBranch} onChange={e => setBBranch(e.target.value)} placeholder="main" />
                         </Form.Group>
                     </div>
-                    <div className={styles.modalRow}>
+                    <div className={"flex gap-3"}>
                         <Form.Group style={{ flex: 1 }}>
                             <Form.Label>What to back up</Form.Label>
                             <Form.Select value={bScope} onChange={e => setBScope(e.target.value as "local" | "merged")}>
@@ -872,7 +871,7 @@ export function WardenSettings({ config, setNewConfig }: WardenSettingsProps) {
                 confirmText={confirm?.kind === "remove" ? "Remove" : "Clear"}
                 onCancel={() => setConfirm(null)}
                 onConfirm={runConfirm} />
-        </div>
+        </SettingsPage>
     );
 }
 

@@ -11,7 +11,7 @@ export function LibrarySettings({ savedConfig, config, setNewConfig }: LibrarySe
     return (
         <div className={'space-y-6'}>
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-200" htmlFor="library-dir-input">Library Directory</label>
+                <label className="block text-sm font-medium text-base-content" htmlFor="library-dir-input">Library Directory</label>
                 <Input
                     className={'w-full'}
                     type="text"

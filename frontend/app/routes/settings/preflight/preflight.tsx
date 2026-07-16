@@ -1,6 +1,5 @@
 import { type Dispatch, type SetStateAction } from "react";
-import { Field, Input, Label, Select, SettingsIntro } from "~/components/ui";
-import styles from "./preflight.module.css";
+import { Field, Input, Label, Select, SettingsIntro, SettingsPage } from "~/components/ui";
 
 type PreflightSettingsProps = {
     config: Record<string, string>
@@ -13,7 +12,7 @@ export function PreflightSettings({ config, setNewConfig }: PreflightSettingsPro
     const enabled = mode !== "off";
 
     return (
-        <div className={styles.container}>
+        <SettingsPage>
             <SettingsIntro>
                 When a client asks for the list of available articles, nzbdav can quietly
                 do upfront work on the top-ranked ones so the next request reuses that warm
@@ -21,11 +20,11 @@ export function PreflightSettings({ config, setNewConfig }: PreflightSettingsPro
                 more it does.
             </SettingsIntro>
 
-            <Field className={styles.section}>
+            <Field>
                 <Label htmlFor="preflight-mode">Mode</Label>
                 <Select
                     id="preflight-mode"
-                    className={styles.input}
+                    className="w-full max-w-md"
                     value={mode}
                     onChange={e => set("preflight.mode", e.target.value)}>
                     <option value="off">off — no background work</option>
@@ -33,7 +32,7 @@ export function PreflightSettings({ config, setNewConfig }: PreflightSettingsPro
                     <option value="standard">standard — light + cache the article descriptor</option>
                     <option value="full">full — standard + resolve archive layout for previously completed items</option>
                 </Select>
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     <b>light</b> performs a cheap existence check against your provider, so missing
                     articles are skipped without re-asking the indexer.
                     <b> standard</b> additionally caches the article descriptor locally so the next
@@ -43,18 +42,18 @@ export function PreflightSettings({ config, setNewConfig }: PreflightSettingsPro
                 </p>
             </Field>
 
-            <Field className={styles.section}>
+            <Field>
                 <Label htmlFor="preflight-max-attempts">Max candidates to try</Label>
                 <Input
                     id="preflight-max-attempts"
-                    className={styles.input}
+                    className="w-full max-w-md"
                     type="number"
                     min={1}
                     max={50}
                     disabled={!enabled}
                     value={config["preflight.max-attempts"] ?? "20"}
                     onChange={e => set("preflight.max-attempts", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     Walks the top-ranked results one at a time and stops on the first one that
                     passes the check. So a missing top result automatically falls through to
                     the next one — same idea as the watchdog at click time, but in the
@@ -62,43 +61,43 @@ export function PreflightSettings({ config, setNewConfig }: PreflightSettingsPro
                 </p>
             </Field>
 
-            <Field className={styles.section}>
+            <Field>
                 <Label htmlFor="preflight-ttl">Keep preflight state for (seconds)</Label>
                 <Input
                     id="preflight-ttl"
-                    className={styles.input}
+                    className="w-full max-w-md"
                     type="number"
                     min={10}
                     max={1800}
                     disabled={!enabled}
                     value={config["preflight.ttl-seconds"] ?? "120"}
                     onChange={e => set("preflight.ttl-seconds", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     How long a preflighted result stays warm before it's discarded. Long enough
                     to scroll through and pick something, short enough not to hold stale state.
                     Default 120.
                 </p>
             </Field>
 
-            <Field className={styles.section}>
+            <Field>
                 <Label htmlFor="preflight-max-wait">Skip if indexer wait exceeds (seconds)</Label>
                 <Input
                     id="preflight-max-wait"
-                    className={styles.input}
+                    className="w-full max-w-md"
                     type="number"
                     min={0}
                     max={120}
                     disabled={!enabled}
                     value={config["preflight.indexer-max-wait-seconds"] ?? "5"}
                     onChange={e => set("preflight.indexer-max-wait-seconds", e.target.value)} />
-                <p className={styles.hint}>
+                <p className="m-0 text-[11px] leading-relaxed text-base-content/45">
                     Preflight is best-effort: if an indexer's rate limit would force it to wait
                     longer than this before a request can fire, preflight on that result is
                     skipped. Keeps real requests from being queued behind speculative work.
                     Default 5.
                 </p>
             </Field>
-        </div>
+        </SettingsPage>
     );
 }
 

@@ -1,7 +1,6 @@
-import styles from "./profiles.module.css";
 import { type Dispatch, type ReactNode, type SetStateAction, useCallback, useMemo, useState } from "react";
 import { MultiCheckboxInput } from "~/components/multi-checkbox-input/multi-checkbox-input";
-import { Button, Field, Icon, Input, Label, Select, Toggle } from "~/components/ui";
+import { Button, Field, Icon, Input, Label, Select, SettingsPage, Toggle } from "~/components/ui";
 
 type ProfilesSettingsProps = {
     config: Record<string, string>
@@ -117,9 +116,9 @@ export function ProfilesSettings({ config, setNewConfig }: ProfilesSettingsProps
     }, [profileConfig, update]);
 
     return (
-        <div className={styles.container}>
-            <div className={styles.section}>
-                <div className={styles.sectionHeader}>
+        <SettingsPage>
+            <div className="flex flex-col gap-2">
+                <div className="mb-[18px] flex items-center justify-between">
                     <div>Search Profiles</div>
                     <Button size="xsmall" onClick={add}>
                         <Icon name="add" className="!text-[16px]" />
@@ -127,7 +126,7 @@ export function ProfilesSettings({ config, setNewConfig }: ProfilesSettingsProps
                     </Button>
                 </div>
                 {profileConfig.Profiles.length === 0 ? (
-                    <p className={styles.alertMessage}>
+                    <p className="rounded-lg border border-base-content/10 bg-base-100 p-5 italic text-base-content/60">
                         No search profiles configured. Each profile exposes a token-scoped search API over its own indexer selection. Enable one or more output adapters (JSON / Newznab / Addon) to make it consumable by external clients.
                     </p>
                 ) : (
@@ -143,7 +142,7 @@ export function ProfilesSettings({ config, setNewConfig }: ProfilesSettingsProps
                     ))
                 )}
             </div>
-        </div>
+        </SettingsPage>
     );
 }
 
@@ -191,7 +190,7 @@ function FallbackControl({ label, mode, threshold, allowBroad, indexerCount, dis
         <Field>
             <Label>{label}</Label>
             <Select
-                className={styles.input}
+                className="mb-2 w-full"
                 value={mode}
                 disabled={disabled}
                 onChange={e => onModeChange(e.target.value as FallbackMode)}>
@@ -200,24 +199,24 @@ function FallbackControl({ label, mode, threshold, allowBroad, indexerCount, dis
                 {allowBroad && <option value="Broad">Title + episode, then whole show (broad)</option>}
             </Select>
             {disabled ? (
-                <p className={styles.hint}>Add indexers in the Indexers tab to use fallback.</p>
+                <p className="mb-0 mt-1 text-[11px] leading-relaxed text-base-content/45">Add indexers in the Indexers tab to use fallback.</p>
             ) : mode !== "Off" && (
                 <>
-                    <div className={styles.fallbackThresholdRow}>
-                        <span className={styles.fallbackThresholdLabel}>when the ID search finds fewer than</span>
+                    <div className="my-1.5 flex flex-wrap items-center gap-1.5">
+                        <span className="text-[13px] text-base-content/60">when the ID search finds fewer than</span>
                         <Input
                             type="number"
                             min={1}
                             step={1}
-                            className={styles.fallbackThresholdInput}
+                            className="h-auto w-[46px] flex-none px-2 py-[3px] text-center text-[13px] leading-snug [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                             value={threshold}
                             onChange={e => {
                                 const n = parseInt(e.target.value, 10);
                                 onThresholdChange(Number.isFinite(n) && n > 0 ? n : 1);
                             }} />
-                        <span className={styles.fallbackThresholdLabel}>results</span>
+                        <span className="text-[13px] text-base-content/60">results</span>
                     </div>
-                    <p className={styles.hint}>{fallbackHelp(mode, allowBroad, indexerCount)}</p>
+                    <p className="mb-0 mt-1 text-[11px] leading-relaxed text-base-content/45">{fallbackHelp(mode, allowBroad, indexerCount)}</p>
                 </>
             )}
         </Field>
@@ -266,23 +265,27 @@ function ProfileForm({ profile, index, availableIndexers, onChange, onRemove }: 
     }, [index, onChange, movieMode, tvMode, movieThreshold, tvThreshold]);
 
     return (
-        <section className={styles.instanceCard}>
-            <button className={styles.closeButton} onClick={() => onRemove(index)} aria-label="Remove">×</button>
+        <section className="relative mb-4 rounded-lg border border-base-content/10 bg-base-100 p-4 text-base-content/80 transition-colors duration-120 hover:border-base-content/20">
+            <button
+                type="button"
+                className="absolute right-2.5 top-2.5 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-lg leading-none text-base-content/45 transition-colors hover:bg-base-content/5 hover:text-base-content"
+                onClick={() => onRemove(index)}
+                aria-label="Remove">×</button>
             <div className="flex flex-col gap-4">
                 <Field>
                     <Label htmlFor={`profile-name-${profile.Token}`}>Name</Label>
                     <Input
                         id={`profile-name-${profile.Token}`}
                         type="text"
-                        className={styles.input}
+                        className="mb-2 w-full"
                         placeholder="e.g. Movies"
                         value={profile.Name}
                         onChange={e => onChange(index, { Name: e.target.value })} />
                 </Field>
                 <Field>
-                    <Label>Indexers <span className="font-normal text-slate-400">(leave all unchecked to use every enabled indexer)</span></Label>
+                    <Label>Indexers <span className="font-normal text-base-content/60">(leave all unchecked to use every enabled indexer)</span></Label>
                     {availableIndexers.length === 0 ? (
-                        <p className={styles.hint}>No indexers configured yet. Add some under the Indexers tab.</p>
+                        <p className="mb-0 mt-1 text-[11px] leading-relaxed text-base-content/45">No indexers configured yet. Add some under the Indexers tab.</p>
                     ) : (
                         <MultiCheckboxInput
                             options={availableIndexers}
@@ -294,8 +297,8 @@ function ProfileForm({ profile, index, availableIndexers, onChange, onRemove }: 
                     )}
                 </Field>
                 <Field>
-                    <Label>Output adapters <span className="font-normal text-slate-400">(toggle the protocols this profile exposes)</span></Label>
-                    <div className={styles.adapterGroup}>
+                    <Label>Output adapters <span className="font-normal text-base-content/60">(toggle the protocols this profile exposes)</span></Label>
+                    <div className="mt-2">
                         {ADAPTERS.map(adapter => (
                             <AdapterRow
                                 key={adapter.key}
@@ -309,8 +312,8 @@ function ProfileForm({ profile, index, availableIndexers, onChange, onRemove }: 
                     </div>
                 </Field>
                 <Field>
-                    <Label>Query fallback <span className="font-normal text-slate-400">(extra title searches when an ID lookup comes up short)</span></Label>
-                    <p className={styles.hint}>These fire extra queries to this profile's indexers and spend their hit and rate limits, which you set per indexer in the Indexers tab.</p>
+                    <Label>Query fallback <span className="font-normal text-base-content/60">(extra title searches when an ID lookup comes up short)</span></Label>
+                    <p className="mb-0 mt-1 text-[11px] leading-relaxed text-base-content/45">These fire extra queries to this profile's indexers and spend their hit and rate limits, which you set per indexer in the Indexers tab.</p>
                 </Field>
                 <FallbackControl
                     label="Movies"
@@ -356,11 +359,11 @@ function AdapterRow({ token, origin, adapter, enabled, onToggle }: AdapterRowPro
     }, [url]);
 
     return (
-        <div className={`${styles.adapterRow} ${enabled ? "" : styles.disabled}`}>
-            <div className={styles.adapterHeader}>
-                <div className={styles.adapterTitle}>
-                    <span className={styles.adapterName}>{adapter.name}</span>
-                    <span className={styles.adapterDescription}>{adapter.description}</span>
+        <div className={`mb-2 rounded-md border border-base-content/10 bg-base-200 p-3 ${enabled ? "" : "opacity-55"}`}>
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-medium text-base-content">{adapter.name}</span>
+                    <span className="text-xs text-base-content/60">{adapter.description}</span>
                 </div>
                 <Toggle
                     id={`adapter-${token}-${adapter.key}`}
@@ -370,9 +373,9 @@ function AdapterRow({ token, origin, adapter, enabled, onToggle }: AdapterRowPro
                     onChange={e => onToggle(e.target.checked)} />
             </div>
             {enabled && (
-                <div className={styles.urlBox}>
+                <div className="mt-2 flex items-center gap-2">
                     <Input
-                        className={styles.urlInput}
+                        className="flex-1 font-mono text-xs"
                         type="text"
                         readOnly
                         value={url}

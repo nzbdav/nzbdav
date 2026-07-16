@@ -109,12 +109,12 @@ export function ThroughputChart({
     return (
         <section className="card w-full min-w-0 overflow-visible border border-base-content/10 bg-base-100 shadow-sm">
             <div className="card-body gap-3 overflow-visible p-4">
-            <div className={styles.header}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h3 className="card-title text-base">Activity</h3>
                     <p className="text-xs text-base-content/50">Articles fetched per {bucketLabel}, last {window}</p>
                 </div>
-                <div className={styles.totals}>
+                <div className="flex gap-[18px]">
                     <Total label="Articles" value={formatNumber(totalArticles)} />
                     <Total label="Misses" value={formatNumber(totalMisses)} />
                     <Total label="Errors" value={formatNumber(totalErrors)} accent={totalErrors > 0 ? "danger" : undefined} />
@@ -125,7 +125,7 @@ export function ThroughputChart({
             {hasData ? (
                 <>
                     <div className={styles.plot}>
-                        <div className={styles.yAxis}>
+                        <div className="flex h-40 w-9 shrink-0 flex-col items-end justify-between text-[10px] text-base-content/50 tabular-nums select-none">
                             <span>{formatNumber(maxArticles)}</span>
                             <span>{formatNumber(Math.round(maxArticles / 2))}</span>
                             <span>0</span>
@@ -188,11 +188,11 @@ export function ThroughputChart({
                         </div>
                     </div>
 
-                    <div className={styles.xAxis}>
+                    <div className="relative mt-1.5 ml-[46px] h-4 text-[10px] text-base-content/50 tabular-nums select-none">
                         {xTicks.map(t => (
                             <span
                                 key={t.idx}
-                                className={styles.xTick}
+                                className="absolute top-0 -translate-x-1/2 whitespace-nowrap"
                                 style={{ left: `${xPercent(t.idx)}%` }}
                             >
                                 {t.label}
@@ -200,24 +200,29 @@ export function ThroughputChart({
                         ))}
                     </div>
 
-                    <div className={styles.legend}>
-                        <span className={styles.legendItem}>
-                            <span className={`${styles.swatch} ${styles.swatchArticles}`} />
+                    <div className="mt-2 flex flex-wrap items-center gap-3.5 text-[11px] text-base-content/50">
+                        <span className="inline-flex items-center gap-1.5">
+                            <span className="inline-block h-0.5 w-2.5 bg-success" />
                             Articles
                             {maxNetworkRate > 0 && (
                                 <> · peak {formatBytes(maxNetworkRate)}/s</>
                             )}
                         </span>
-                        {totalErrors > 0 && <span className={styles.legendItem}><span className={`${styles.swatch} ${styles.swatchErrors}`} /> Errors</span>}
-                        <span className={styles.legendRight}>
+                        {totalErrors > 0 && (
+                            <span className="inline-flex items-center gap-1.5">
+                                <span className="inline-block h-0.5 w-2.5 bg-error" />
+                                Errors
+                            </span>
+                        )}
+                        <span className="ml-auto tabular-nums">
                             Peak {formatNumber(maxArticles)} / {bucketLabel} · hover for details
                         </span>
                     </div>
                 </>
             ) : (
-                <div className={styles.empty}>
+                <div className="py-12 text-center text-[13px] text-base-content/50">
                     No activity in this window yet.
-                    <div className={styles.emptySub}>Articles you fetch will appear here.</div>
+                    <div className="mt-1.5 text-[11px] text-base-content/40">Articles you fetch will appear here.</div>
                 </div>
             )}
             </div>
@@ -259,9 +264,9 @@ function buildSparseErrorsPath(
 
 function Total({ label, value, accent }: { label: string, value: string, accent?: "danger" }) {
     return (
-        <div className={`${styles.total} ${accent === "danger" ? styles.totalDanger : ""}`}>
-            <div className={styles.totalLabel}>{label}</div>
-            <div className={styles.totalValue}>{value}</div>
+        <div className="text-right">
+            <div className="text-[10px] font-medium tracking-wide text-base-content/50 uppercase">{label}</div>
+            <div className={`text-lg font-semibold tracking-tight tabular-nums ${accent === "danger" ? "text-error" : "text-base-content"}`}>{value}</div>
         </div>
     );
 }

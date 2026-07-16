@@ -1,6 +1,5 @@
 import type { Route } from "./+types/route";
 import { Breadcrumbs } from "./breadcrumbs/breadcrumbs";
-import styles from "./route.module.css"
 import { Link, redirect, useLocation, useNavigation, useRevalidator } from "react-router";
 import {
     backendClient,
@@ -17,6 +16,10 @@ import { ItemMenu } from "./item-menu/item-menu";
 import { ConfirmModal } from "~/components/confirm-modal/confirm-modal";
 import { classNames } from "~/utils/styling";
 import { Icon, Checkbox, Button } from "~/components/ui";
+
+const ITEM_MENU_CLASS =
+    "flex select-none items-center self-stretch rounded-r-lg px-5 py-[15px]";
+const ITEM_MENU_OPEN_CLASS = "bg-base-content/10";
 
 export type ExplorePageData = {
     parentDirectories: string[],
@@ -318,7 +321,7 @@ function Body(props: ExplorePageData) {
                 />
             )}
             {!showSkeleton && visibleItems.length > 0 &&
-                <div className={styles.list}>
+                <div className="flex flex-col overflow-hidden rounded-lg border border-base-content/10 divide-y divide-base-content/10">
                     {visibleItems.filter(x => x.isDirectory).map((x, index) => {
                         const checked = selected.has(x.name);
                         return (
@@ -330,16 +333,18 @@ function Body(props: ExplorePageData) {
                                         onToggle={toggleSelect}
                                     />
                                 )}
-                                <Link to={getDirectoryPath(x.name)} discover="none">
-                                    <div className={styles["item-content"]}>
-                                        <div className={styles["directory-icon"]} />
-                                        <div className={styles["item-name"]}>{x.name}</div>
-                                    </div>
+                                <Link
+                                    to={getDirectoryPath(x.name)}
+                                    discover="none"
+                                    className={getItemContentClassName(canDelete, canDelete)}
+                                >
+                                    <Icon name="folder" className="shrink-0 text-base-content/50 !text-[32px]" />
+                                    <div className="break-all font-medium">{x.name}</div>
                                 </Link>
                                 {canDelete && (
                                     <ItemMenu
-                                        className={styles["item-menu"]}
-                                        openClassName={styles["open-item-menu"]}
+                                        className={ITEM_MENU_CLASS}
+                                        openClassName={ITEM_MENU_OPEN_CLASS}
                                         onRemove={() => requestDelete([x.name])} />
                                 )}
                             </div>
@@ -356,16 +361,19 @@ function Body(props: ExplorePageData) {
                                         onToggle={toggleSelect}
                                     />
                                 )}
-                                <a href={getFilePath(x as ExploreFile)} className={styles["item-content"]}>
+                                <a
+                                    href={getFilePath(x as ExploreFile)}
+                                    className={getItemContentClassName(canDelete, true)}
+                                >
                                     <Icon name={getIcon(x as ExploreFile)} className="text-base-content/50 shrink-0 !text-[34px]" />
-                                    <div className={styles["item-info"]}>
-                                        <div className={styles["item-name"]}>{x.name}</div>
-                                        <div className={styles["item-size"]}>{formatFileSize(x.size)}</div>
+                                    <div className="flex flex-col gap-1 leading-snug text-base-content">
+                                        <div className="break-all font-medium">{x.name}</div>
+                                        <div className="text-xs text-base-content/50">{formatFileSize(x.size)}</div>
                                     </div>
                                 </a>
                                 <ItemMenu
-                                    className={styles["item-menu"]}
-                                    openClassName={styles["open-item-menu"]}
+                                    className={ITEM_MENU_CLASS}
+                                    openClassName={ITEM_MENU_OPEN_CLASS}
                                     exploreFile={x as ExploreFile}
                                     previewPath={getFilePath(x as ExploreFile)}
                                     onRemove={canDelete ? () => requestDelete([x.name]) : undefined} />
@@ -375,7 +383,7 @@ function Body(props: ExplorePageData) {
                 </div>
             }
             </>}
-            {showSkeleton && <Loading className={styles.loading} />}
+            {showSkeleton && <Loading className="w-[calc(100%-75px)] min-h-0 flex-1 grow" />}
             <ConfirmModal
                 show={pendingDelete !== null}
                 title={pendingDelete && pendingDelete.length > 1 ? "Delete items" : "Delete item"}
@@ -535,7 +543,7 @@ function EmptyState(props: { isFiltered: boolean, onClearFilter: () => void }) {
 function CheckCell(props: { name: string, checked: boolean, onToggle: (name: string, shiftKey: boolean) => void }) {
     return (
         <label
-            className={`${styles["check-cell"]} flex shrink-0 cursor-pointer items-center`}
+            className="flex shrink-0 cursor-pointer select-none items-center justify-center py-0 pr-1.5 pl-3.5"
             onClick={e => e.stopPropagation()}
         >
             <Checkbox
@@ -565,18 +573,18 @@ function renderDeleteMessage(pending: string[] | null) {
         return (
             <div>
                 Delete <strong>{pending[0]}</strong>?
-                <div style={{ marginTop: 8, color: "var(--text-muted)" }}>This cannot be undone.</div>
+                <div className="mt-2 text-base-content/50">This cannot be undone.</div>
             </div>
         );
     }
     return (
         <div>
             Delete <strong>{pending.length} items</strong>?
-            <ul style={{ margin: "8px 0 0", paddingLeft: 18, maxHeight: 160, overflowY: "auto" }}>
+            <ul className="mt-2 max-h-40 overflow-y-auto pl-[18px]">
                 {pending.slice(0, 30).map(n => <li key={n}>{n}</li>)}
                 {pending.length > 30 && <li>…and {pending.length - 30} more</li>}
             </ul>
-            <div style={{ marginTop: 8, color: "var(--text-muted)" }}>This cannot be undone.</div>
+            <div className="mt-2 text-base-content/50">This cannot be undone.</div>
         </div>
     );
 }
@@ -654,10 +662,21 @@ function isDeletable(parentDirectories: string[]): boolean {
 }
 
 function getClassName(item: DirectoryItem | ExploreFile, isSelected: boolean) {
-    let className = styles.item;
-    if (item.name.startsWith('.')) className += " " + styles.hidden;
-    if (isSelected) className += " " + styles["item-selected"];
-    return className;
+    return classNames([
+        "relative flex bg-base-200 transition-colors duration-100",
+        "has-[a:hover]:bg-base-100 has-[a:active]:bg-base-300",
+        "[@media(hover:hover)]:has-[a:hover]:cursor-pointer",
+        item.name.startsWith(".") && "opacity-50",
+        isSelected && "bg-primary/10",
+    ]);
+}
+
+function getItemContentClassName(hasCheckbox: boolean, hasMenu: boolean) {
+    return classNames([
+        "flex flex-1 items-center gap-3.5 px-4 py-3.5 text-inherit no-underline",
+        hasCheckbox && "pl-0",
+        hasMenu && "pr-1.5",
+    ]);
 }
 
 function SearchIcon() {

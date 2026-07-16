@@ -8,6 +8,7 @@ declare const styles: {
   readonly grid: string;
   readonly card: string;
   readonly fileName: string;
+  readonly sessionId: string;
   readonly progressWrap: string;
   readonly progressFill: string;
   readonly progressIndeterminate: string;

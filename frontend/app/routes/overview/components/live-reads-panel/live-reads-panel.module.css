@@ -74,6 +74,24 @@
     min-width: 0;
 }
 
+.sessionId {
+    align-self: flex-start;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+}
+
+.sessionId:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+
 .progressWrap {
     position: relative;
     height: 4px;

@@ -65,6 +65,14 @@ export function LiveReadsPanel() {
                             <div className={styles.fileName} title={r.path}>
                                 {r.fileName || lastSegment(r.path)}
                             </div>
+                            <button
+                                type="button"
+                                className={styles.sessionId}
+                                title={`Copy session id: ${r.id}`}
+                                onClick={() => void navigator.clipboard.writeText(r.id)}
+                            >
+                                {shortSessionId(r.id)}
+                            </button>
                             <div className={styles.progressWrap}>
                                 <div
                                     className={pct !== null ? styles.progressFill : styles.progressIndeterminate}
@@ -108,4 +116,8 @@ export function LiveReadsPanel() {
 function lastSegment(path: string): string {
     const idx = path.lastIndexOf("/");
     return idx >= 0 ? path.slice(idx + 1) : path;
+}
+
+function shortSessionId(id: string): string {
+    return id.length > 8 ? id.slice(0, 8) : id;
 }

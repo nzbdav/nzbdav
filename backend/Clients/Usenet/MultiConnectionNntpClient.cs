@@ -218,8 +218,16 @@ public class MultiConnectionNntpClient(
                             break;
                         case ArticleBodyResult.Cancelled:
                             break;
+                        case ArticleBodyResult.NotRetrieved:
+                            // Seek/abort cancels mid-pipeline; UsenetSharp reports NotRetrieved
+                            // (socket unsafe to reuse). Replace the connection but do not treat
+                            // client cancellation as provider health failure.
+                            LogException(connectionLock.Replace);
+                            if (!ct.IsCancellationRequested)
+                                circuitBreaker.RecordFailure($"pipeline-callback-{result}");
+                            break;
                         default:
-                            circuitBreaker.RecordFailure();
+                            circuitBreaker.RecordFailure($"pipeline-callback-{result}");
                             LogException(connectionLock.Replace);
                             break;
                     }
@@ -248,7 +256,8 @@ public class MultiConnectionNntpClient(
             {
                 deferredCallback.Discard();
                 var wasReused = connectionLock?.WasReused ?? false;
-                if (!wasReused) circuitBreaker.RecordFailure();
+                if (!wasReused)
+                    circuitBreaker.RecordFailure($"pipeline-setup-{e.GetType().Name}");
                 LogException(() => connectionLock?.Replace());
                 LogException(() => connectionLock?.Dispose());
 
@@ -325,7 +334,7 @@ public class MultiConnectionNntpClient(
             }
             catch (Exception e)
             {
-                circuitBreaker.RecordFailure();
+                circuitBreaker.RecordFailure($"get-connection-{e.GetType().Name}");
                 LogException(() => connectionLock?.Replace());
                 LogException(() => connectionLock?.Dispose());
                 if (retryCount > 0)
@@ -380,7 +389,7 @@ public class MultiConnectionNntpClient(
                 // Exhausted the streaming-timeout retry budget — count toward the
                 // breaker once per segment (not per attempt) so chronically-slow
                 // providers still trip without over-counting a single segment.
-                circuitBreaker.RecordFailure();
+                circuitBreaker.RecordFailure($"streaming-timeout-{name}");
                 Log.Warning(
                     "Streaming timeout executing nntp {Command} command after {Timeout}s. No retries left.",
                     name, streamingTimeout.PerSegmentTimeout.TotalSeconds);
@@ -413,7 +422,7 @@ public class MultiConnectionNntpClient(
                 // on the wire) and propagate so the outer provider loop moves on.
                 IncrementTimeoutCount(providerName);
                 deferredCallback.Discard();
-                circuitBreaker.RecordFailure();
+                circuitBreaker.RecordFailure($"read-timeout-{name}");
                 LogException(() => connectionLock?.Replace());
                 LogException(() => connectionLock?.Dispose());
                 LogException(() => onConnectionReadyAgain?.Invoke(ArticleBodyResult.NotRetrieved));
@@ -423,7 +432,8 @@ public class MultiConnectionNntpClient(
             {
                 deferredCallback.Discard();
                 var wasReused = connectionLock?.WasReused ?? false;
-                if (!wasReused) circuitBreaker.RecordFailure();
+                if (!wasReused)
+                    circuitBreaker.RecordFailure($"cmd-setup-{name}-{e.GetType().Name}");
                 LogException(() => connectionLock?.Replace());
                 LogException(() => connectionLock?.Dispose());
 
@@ -478,8 +488,10 @@ public class MultiConnectionNntpClient(
 
                     if (articleBodyResult == ArticleBodyResult.NotRetrieved)
                     {
-                        circuitBreaker.RecordFailure();
                         LogException(() => connectionLock?.Replace());
+                        // Client abort (seek) must not trip the provider circuit breaker.
+                        if (!ct.IsCancellationRequested)
+                            circuitBreaker.RecordFailure($"body-callback-{name}-NotRetrieved");
                     }
                     else if (articleBodyResult == ArticleBodyResult.Retrieved)
                     {
@@ -537,7 +549,7 @@ public class MultiConnectionNntpClient(
                 }
                 catch (Exception e) when (!e.IsCancellationException())
                 {
-                    circuitBreaker.RecordFailure();
+                    circuitBreaker.RecordFailure($"pipelined-enum-{e.GetType().Name}");
                     connectionLock.Replace();
                     throw;
                 }

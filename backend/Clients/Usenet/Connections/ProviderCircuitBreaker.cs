@@ -153,7 +153,7 @@ public class ProviderCircuitBreaker
         }
     }
 
-    public void RecordFailure()
+    public void RecordFailure(string? reason = null)
     {
         lock (_lock)
         {
@@ -170,7 +170,9 @@ public class ProviderCircuitBreaker
             {
                 Volatile.Write(ref _halfOpenProbeInFlight, 0);
                 Volatile.Write(ref _probeStartedMs, 0);
-                Trip(now, "half-open probe failure");
+                Trip(now, reason is null
+                    ? "half-open probe failure"
+                    : $"half-open probe failure ({reason})");
                 return;
             }
 
@@ -190,7 +192,10 @@ public class ProviderCircuitBreaker
             if (failures >= MinFailuresToTrip
                 && failures / (double)_window.Count >= TripFailureRate)
             {
-                Trip(now, $"{failures} failures in {_window.Count}-sample window");
+                var tripReason = reason is null
+                    ? $"{failures} failures in {_window.Count}-sample window"
+                    : $"{failures} failures in {_window.Count}-sample window ({reason})";
+                Trip(now, tripReason);
             }
         }
     }

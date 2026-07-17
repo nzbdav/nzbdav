@@ -24,7 +24,7 @@ export function RemoveUnlinkedFiles({ savedConfig }: RemoveUnlinkedFilesProps) {
     const isFinished = progressMessage?.startsWith("Done") || progressMessage?.startsWith("Failed") || progressMessage?.startsWith("Aborted");
     const isRunning = !isFinished && (isFetching || runStarted);
     const isRunButtonEnabled = !!libraryDir && connected && !isRunning;
-    const runButtonVariant = isRunButtonEnabled ? 'success' : 'secondary';
+    const runButtonVariant = isRunButtonEnabled ? 'danger' : 'secondary';
     const runButtonLabel = isRunning ? "Running..." : "Run Task";
 
     useWebsocketTopic("ctp", "state", setProgress, {
@@ -72,77 +72,82 @@ export function RemoveUnlinkedFiles({ savedConfig }: RemoveUnlinkedFilesProps) {
         await startTask("/api/remove-unlinked-files/dry-run");
     }, [startTask]);
 
-    // view
-    const dryRunButton =
-        <Button
-            className={'inline-flex'}
-            disabled={!isRunButtonEnabled}
-            onClick={onDryRun}
-            variant="warning"
-            size="small"
-        >
-            <Icon name="science" className="!text-[18px]" />
-            perform a dry-run
-        </Button>;
-
     return (
         <>
             {!libraryDir &&
-                <Alert className={'mb-3'} variant="warning">
-                    Warning
-                    <ul className={'mt-2 list-disc space-y-1 pl-5'}>
-                        <li className={'text-xs'}>
-                            You must first configure the Library Directory setting before running this task.
-                            Head over to the Repairs tab.
-                        </li>
-                    </ul>
+                <Alert className="alert-soft mb-4 items-start text-sm" variant="warning">
+                    <Icon name="folder_off" className="!text-[20px]" />
+                    <div>
+                        <p className="font-semibold">Library directory required</p>
+                        <p className="mt-0.5 text-xs opacity-80">
+                            Configure the Library Directory under Repairs before running this task.
+                        </p>
+                    </div>
                 </Alert>
             }
             {libraryDir &&
-                <Alert className={'mb-3'} variant="danger">
-                    <span className="font-semibold">Danger</span>
-                    <ul className={'mt-2 list-disc space-y-1 pl-5'}>
-                        <li className={'text-xs'}>
-                            Make a backup of your NzbDAV database prior to running this task
-                        </li>
-                        <li className={'text-xs'}>
-                            Files will be removed from the webdav and will not be recoverable without a backup
-                        </li>
-                    </ul>
+                <Alert className="alert-soft mb-4 items-start py-3 text-sm" variant="warning">
+                    <Icon name="backup" className="!text-[20px]" />
+                    <div>
+                        <p className="font-semibold">Back up before cleanup</p>
+                        <p className="mt-0.5 text-xs opacity-80">
+                            Unlinked WebDAV files are permanently removed and can only be recovered from a database backup.
+                        </p>
+                    </div>
                 </Alert>
             }
-            <div className={'space-y-3'}>
-                <div className="space-y-2">
-                    <div className={'flex flex-col gap-3 sm:flex-row sm:items-center'}>
-                        <Button
-                            className={'shrink-0'}
-                            variant={runButtonVariant}
-                            onClick={onRun}
-                            disabled={!isRunButtonEnabled}
+            <div className="space-y-4">
+                <p className="text-sm leading-relaxed text-base-content/70">
+                    Scan the organized media library for symlink and STRM references, then remove WebDAV files
+                    that are no longer linked from the library.
+                </p>
+
+                <div className="rounded-lg border border-base-content/10 bg-base-200/40 p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                                className={'shrink-0'}
+                                variant={runButtonVariant}
+                                onClick={onRun}
+                                disabled={!isRunButtonEnabled}
+                            >
+                                <Icon name={isRunning ? "progress_activity" : "play_arrow"} className={`!text-[18px] ${isRunning ? "animate-spin" : ""}`} />
+                                {runButtonLabel}
+                            </Button>
+                            <Button
+                                className="shrink-0"
+                                disabled={!isRunButtonEnabled}
+                                onClick={onDryRun}
+                                variant="outline"
+                                size="small"
+                            >
+                                <Icon name="science" className="!text-[18px]" />
+                                Dry Run
+                            </Button>
+                        </div>
+                        <div
+                            aria-live="polite"
+                            className="min-w-0 whitespace-pre-line break-words font-mono text-xs text-base-content/70"
                         >
-                            <Icon name={isRunning ? "progress_activity" : "play_arrow"} className={`!text-[18px] ${isRunning ? "animate-spin" : ""}`} />
-                            {runButtonLabel}
-                        </Button>
-                        <div className={'font-mono text-xs text-base-content/80'}>
-                            {statusError ?? progress}
+                            {statusError ?? progress ?? "Ready to scan."}
                             {isDone && <>
-                                &nbsp;<a href="/api/remove-unlinked-files/audit">Audit.</a>
+                                {" "}<a className="link link-primary" href="/api/remove-unlinked-files/audit">View audit</a>
                             </>}
                         </div>
                     </div>
-                    <p className="text-[11px] leading-relaxed text-base-content/45" id="cleanup-task-progress-help">
-                        <br />
-                        This task will scan your organized media library for all symlinked or *.strm linked files.
-                        Any file on the webdav that is not pointed to by your library will be deleted.
-                        If you would like to see what would be deleted without running the task, you can {dryRunButton}.
-                        The dry-run will not delete anything.
-                        <br />
-                        <br />
-                        Note: Files still present in the History table will not be removed when running this task.
-                        It is assumed that files still present in the History table have not yet been imported by Arrs
-                        and they are expected to not yet have a corresponding symlink/strm in the Library folder.
-                        These files will remain intact until Arrs have a chance to process them and remove them from the
-                        History table.
+                    <p className="mt-3 border-t border-base-content/10 pt-2.5 text-xs text-base-content/50">
+                        Dry Run previews the files that would be removed without changing anything.
+                    </p>
+                </div>
+
+                <div
+                    className="flex items-start gap-2 rounded-lg bg-base-200/30 px-3 py-2.5 text-xs leading-relaxed text-base-content/55"
+                    id="cleanup-task-progress-help"
+                >
+                    <Icon name="history" className="mt-0.5 !text-[17px] shrink-0 text-base-content/45" />
+                    <p>
+                        <span className="font-medium text-base-content/70">History items are protected.</span>
+                        {" "}Files still in SAB history are left intact so Arrs can finish importing them before cleanup.
                     </p>
                 </div>
             </div>

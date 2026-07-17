@@ -1,12 +1,13 @@
-import { SettingsPage } from "~/components/ui";
+import { SettingsIntro, SettingsPage } from "~/components/ui";
 import { Checkbox, Input, Select } from "~/components/ui/form";
+import { Icon } from "~/components/ui/icon";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { RemoveUnlinkedFiles } from "./remove-unlinked-files/remove-unlinked-files";
 import { RenameWindowsInvalidDavPaths } from "./rename-windows-invalid-dav-paths/rename-windows-invalid-dav-paths";
 import { ConvertStrmToSymlinks } from "./strm-to-symlinks/strm-to-symlinks";
 import { RecreateStrmFiles } from "./recreate-strm-files/recreate-strm-files";
 import { MigrateDatabaseFilesToBlobstore } from "./migrate-database-files-to-blobstore/migrate-database-files-to-blobstore";
 import { ResetHealthCheckStats } from "./reset-health-check-stats/reset-health-check-stats";
-import type { Dispatch, SetStateAction } from "react";
 
 type MaintenanceProps = {
     savedConfig: Record<string, string>,
@@ -15,185 +16,271 @@ type MaintenanceProps = {
 };
 
 export function Maintenance({ savedConfig, config, setNewConfig }: MaintenanceProps) {
+    const orphanScheduleEnabled = isScheduledOrphanTaskEnabled(config);
+    const scheduledTime = getScheduledTime(config);
+
     return (
         <SettingsPage>
-                <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-base-content/80">
-                    <Checkbox
-                        id="db-startup-vacuum-enabled-checkbox"
-                        aria-describedby="db-startup-vacuum-enabled-help"
-                        checked={config["db.is-startup-vacuum-enabled"] === "true"}
-                        onChange={e => setNewConfig({ ...config, "db.is-startup-vacuum-enabled": "" + e.target.checked })}  />
-                    <span>Perform Database Vacuum on Start</span>
-                </label>
-                    <p className="text-[11px] leading-relaxed text-base-content/45" id="db-startup-vacuum-enabled-help">
-                        When enabled, NzbDAV will run a SQLite VACUUM on the database at every startup. This reclaims unused disk space and can improve query performance over time, but may increase startup time for large databases.
-                    </p>
-                </div>
-                <hr />
-                <div className="space-y-2">
-                    <label className="block text-sm text-base-content/80" htmlFor="history-retention-days">
-                        SAB History Retention (days)
-                    </label>
-                    <Input
-                        id="history-retention-days"
-                        type="number"
-                        min={0}
-                        aria-describedby="history-retention-days-help"
-                        value={config["database.history-retention-days"] ?? "90"}
-                        onChange={e => setNewConfig({
-                            ...config,
-                            "database.history-retention-days": e.target.value,
-                        })}
-                        className="max-w-xs"
-                    />
-                    <p className="text-[11px] leading-relaxed text-base-content/45" id="history-retention-days-help">
-                        Automatically prune SAB history rows older than this many days.
-                        Pruning unlinks mounts from SAB history but does not delete WebDAV files —
-                        they remain under /content until you delete them (or Remove Orphaned Files
-                        removes items with no library symlink/STRM). History pruning alone does not
-                        make items eligible for orphan removal. Set to 0 to keep everything.
-                        Can also be set with DATABASE_HISTORY_RETENTION_DAYS.
-                    </p>
-                </div>
-                <hr />
-                <div className="space-y-2">
-                    <label className="block text-sm text-base-content/80" htmlFor="healthcheck-retention-days">
-                        Health-Check History Retention (days)
-                    </label>
-                    <Input
-                        id="healthcheck-retention-days"
-                        type="number"
-                        min={0}
-                        aria-describedby="healthcheck-retention-days-help"
-                        value={config["database.healthcheck-retention-days"] ?? "30"}
-                        onChange={e => setNewConfig({
-                            ...config,
-                            "database.healthcheck-retention-days": e.target.value,
-                        })}
-                        className="max-w-xs"
-                    />
-                    <p className="text-[11px] leading-relaxed text-base-content/45" id="healthcheck-retention-days-help">
-                        Automatically prune health-check result rows older than this many days. Set to 0 to keep everything.
-                        Can also be set with the DATABASE_HEALTHCHECK_RETENTION_DAYS environment variable.
-                    </p>
-                </div>
-                <hr />
-                <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm text-base-content/80">
-                    <Checkbox
-                        id="remove-orphaned-schedule-enabled-checkbox"
-                        aria-describedby="remove-orphaned-schedule-help"
-                        checked={isScheduledOrphanTaskEnabled(config)}
-                        onChange={e => setNewConfig({ ...config, "maintenance.remove-orphaned-schedule-enabled": "" + e.target.checked })}  />
-                    <span>{'Schedule "Remove Orphaned Files" Task Daily'}</span>
-                </label>
-                    <div className="mt-4 flex w-full gap-2">
-                        <Select
-                            disabled={!isScheduledOrphanTaskEnabled(config)}
-                            value={getScheduledTime(config).hour}
-                            onChange={e => setNewConfig({
-                                ...config,
-                                "maintenance.remove-orphaned-schedule-time": buildScheduledTime(
-                                    parseInt(e.target.value),
-                                    getScheduledTime(config).minute,
-                                    getScheduledTime(config).period
-                                )
-                            })}>
-                            {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
-                                <option key={h} value={h}>{h}</option>
-                            ))}
-                        </Select>
-                        <Select
-                            disabled={!isScheduledOrphanTaskEnabled(config)}
-                            value={getScheduledTime(config).minute}
-                            onChange={e => setNewConfig({
-                                ...config,
-                                "maintenance.remove-orphaned-schedule-time": buildScheduledTime(
-                                    getScheduledTime(config).hour,
-                                    parseInt(e.target.value),
-                                    getScheduledTime(config).period
-                                )
-                            })}>
-                            <option value={0}>00</option>
-                            <option value={15}>15</option>
-                            <option value={30}>30</option>
-                            <option value={45}>45</option>
-                        </Select>
-                        <Select
-                            disabled={!isScheduledOrphanTaskEnabled(config)}
-                            value={getScheduledTime(config).period}
-                            onChange={e => setNewConfig({
-                                ...config,
-                                "maintenance.remove-orphaned-schedule-time": buildScheduledTime(
-                                    getScheduledTime(config).hour,
-                                    getScheduledTime(config).minute,
-                                    e.target.value as "am" | "pm"
-                                )
-                            })}>
-                            <option value="am">am</option>
-                            <option value="pm">pm</option>
-                        </Select>
+            <SettingsIntro>
+                Configure routine database housekeeping and schedule automatic orphan cleanup.
+                Run one-off repair and migration tools from the maintenance task panels below.
+            </SettingsIntro>
+
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <section className="overflow-hidden rounded-lg border border-base-content/10 bg-base-100">
+                    <div className="flex items-start gap-3 border-b border-base-content/10 p-4">
+                        <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                            <Icon name="database" className="!text-[20px]" />
+                        </span>
+                        <div>
+                            <h2 className="text-sm font-semibold text-base-content">Database upkeep</h2>
+                            <p className="mt-0.5 text-xs leading-relaxed text-base-content/50">
+                                Control startup optimization and automatic history pruning.
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-[11px] leading-relaxed text-base-content/45" id="remove-orphaned-schedule-help">
-                        When enabled, the "Remove Orphaned Files" task will run every day at the specified time.
-                        You may need to set the TZ env variable to ensure the correct timezone.
-                    </p>
-                </div>
-            <div className={'mt-6 space-y-3'}>
-                <hr />
-                <div className="space-y-3">
-                    <details className={'overflow-hidden rounded border border-base-content/10'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
-                            Remove Orphaned Files
-                        </summary>
-                        <div className={'border-t border-base-content/10 p-4'}>
-                            <RemoveUnlinkedFiles savedConfig={savedConfig} />
+
+                    <div className="space-y-4 p-4">
+                        <label
+                            className="flex cursor-pointer items-start gap-3 rounded-lg bg-base-200/40 p-3"
+                            htmlFor="db-startup-vacuum-enabled-checkbox"
+                        >
+                            <Checkbox
+                                className="checkbox-primary mt-0.5 shrink-0"
+                                id="db-startup-vacuum-enabled-checkbox"
+                                aria-describedby="db-startup-vacuum-enabled-help"
+                                checked={config["db.is-startup-vacuum-enabled"] === "true"}
+                                onChange={e => setNewConfig({
+                                    ...config,
+                                    "db.is-startup-vacuum-enabled": String(e.target.checked),
+                                })}
+                            />
+                            <span>
+                                <span className="block text-sm font-medium text-base-content">Vacuum on startup</span>
+                                <span
+                                    className="mt-0.5 block text-xs leading-relaxed text-base-content/50"
+                                    id="db-startup-vacuum-enabled-help"
+                                >
+                                    Reclaim unused SQLite space. Large databases may take longer to start.
+                                </span>
+                            </span>
+                        </label>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-base-content" htmlFor="history-retention-days">
+                                    SAB history retention
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        className="w-full"
+                                        id="history-retention-days"
+                                        type="number"
+                                        min={0}
+                                        aria-describedby="history-retention-days-help"
+                                        value={config["database.history-retention-days"] ?? "90"}
+                                        onChange={e => setNewConfig({
+                                            ...config,
+                                            "database.history-retention-days": e.target.value,
+                                        })}
+                                    />
+                                    <span className="text-xs text-base-content/45">days</span>
+                                </div>
+                                <p className="text-[11px] leading-relaxed text-base-content/45" id="history-retention-days-help">
+                                    Prunes SAB history without deleting WebDAV files or making them eligible for orphan cleanup.
+                                    Set to 0 to keep everything.
+                                    Environment: <code className="break-all font-mono">DATABASE_HISTORY_RETENTION_DAYS</code>.
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-base-content" htmlFor="healthcheck-retention-days">
+                                    Health-check retention
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        className="w-full"
+                                        id="healthcheck-retention-days"
+                                        type="number"
+                                        min={0}
+                                        aria-describedby="healthcheck-retention-days-help"
+                                        value={config["database.healthcheck-retention-days"] ?? "30"}
+                                        onChange={e => setNewConfig({
+                                            ...config,
+                                            "database.healthcheck-retention-days": e.target.value,
+                                        })}
+                                    />
+                                    <span className="text-xs text-base-content/45">days</span>
+                                </div>
+                                <p className="text-[11px] leading-relaxed text-base-content/45" id="healthcheck-retention-days-help">
+                                    Prunes old health-check results. Set to 0 to keep everything.
+                                    Environment: <code className="break-all font-mono">DATABASE_HEALTHCHECK_RETENTION_DAYS</code>.
+                                </p>
+                            </div>
                         </div>
-                    </details>
-                    <details className={'overflow-hidden rounded border border-base-content/10'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
-                            Rename Windows-Invalid Paths
-                        </summary>
-                        <div className={'border-t border-base-content/10 p-4'}>
-                            <RenameWindowsInvalidDavPaths savedConfig={savedConfig} />
+                    </div>
+                </section>
+
+                <section className="overflow-hidden rounded-lg border border-base-content/10 bg-base-100">
+                    <div className="flex items-start gap-3 border-b border-base-content/10 p-4">
+                        <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                            <Icon name="event_repeat" className="!text-[20px]" />
+                        </span>
+                        <div>
+                            <h2 className="text-sm font-semibold text-base-content">Scheduled cleanup</h2>
+                            <p className="mt-0.5 text-xs leading-relaxed text-base-content/50">
+                                Run Remove Orphaned Files automatically once per day.
+                            </p>
                         </div>
-                    </details>
-                    <details className={'overflow-hidden rounded border border-base-content/10'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
-                            Convert Strm Files to Symlnks
-                        </summary>
-                        <div className={'border-t border-base-content/10 p-4'}>
-                            <ConvertStrmToSymlinks savedConfig={savedConfig} />
+                    </div>
+
+                    <div className="space-y-4 p-4">
+                        <label
+                            className="flex cursor-pointer items-start gap-3 rounded-lg bg-base-200/40 p-3"
+                            htmlFor="remove-orphaned-schedule-enabled-checkbox"
+                        >
+                            <Checkbox
+                                className="checkbox-primary mt-0.5 shrink-0"
+                                id="remove-orphaned-schedule-enabled-checkbox"
+                                aria-describedby="remove-orphaned-schedule-help"
+                                checked={orphanScheduleEnabled}
+                                onChange={e => setNewConfig({
+                                    ...config,
+                                    "maintenance.remove-orphaned-schedule-enabled": String(e.target.checked),
+                                })}
+                            />
+                            <span>
+                                <span className="block text-sm font-medium text-base-content">Enable daily cleanup</span>
+                                <span
+                                    className="mt-0.5 block text-xs leading-relaxed text-base-content/50"
+                                    id="remove-orphaned-schedule-help"
+                                >
+                                    Runs the same protected cleanup available in the task panel below.
+                                </span>
+                            </span>
+                        </label>
+
+                        <fieldset className="space-y-2" disabled={!orphanScheduleEnabled}>
+                            <legend className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                                Daily run time
+                            </legend>
+                            <div className="grid grid-cols-3 gap-2">
+                                <label className="space-y-1">
+                                    <span className="block text-[11px] text-base-content/45">Hour</span>
+                                    <Select
+                                        className="w-full"
+                                        aria-label="Cleanup hour"
+                                        value={scheduledTime.hour}
+                                        onChange={e => setNewConfig({
+                                            ...config,
+                                            "maintenance.remove-orphaned-schedule-time": buildScheduledTime(
+                                                parseInt(e.target.value),
+                                                scheduledTime.minute,
+                                                scheduledTime.period
+                                            )
+                                        })}>
+                                        {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+                                            <option key={h} value={h}>{h}</option>
+                                        ))}
+                                    </Select>
+                                </label>
+                                <label className="space-y-1">
+                                    <span className="block text-[11px] text-base-content/45">Minute</span>
+                                    <Select
+                                        className="w-full"
+                                        aria-label="Cleanup minute"
+                                        value={scheduledTime.minute}
+                                        onChange={e => setNewConfig({
+                                            ...config,
+                                            "maintenance.remove-orphaned-schedule-time": buildScheduledTime(
+                                                scheduledTime.hour,
+                                                parseInt(e.target.value),
+                                                scheduledTime.period
+                                            )
+                                        })}>
+                                        <option value={0}>00</option>
+                                        <option value={15}>15</option>
+                                        <option value={30}>30</option>
+                                        <option value={45}>45</option>
+                                    </Select>
+                                </label>
+                                <label className="space-y-1">
+                                    <span className="block text-[11px] text-base-content/45">Period</span>
+                                    <Select
+                                        className="w-full"
+                                        aria-label="Cleanup period"
+                                        value={scheduledTime.period}
+                                        onChange={e => setNewConfig({
+                                            ...config,
+                                            "maintenance.remove-orphaned-schedule-time": buildScheduledTime(
+                                                scheduledTime.hour,
+                                                scheduledTime.minute,
+                                                e.target.value as "am" | "pm"
+                                            )
+                                        })}>
+                                        <option value="am">AM</option>
+                                        <option value="pm">PM</option>
+                                    </Select>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div className="flex items-start gap-2 rounded-lg bg-base-200/30 px-3 py-2.5 text-xs leading-relaxed text-base-content/55">
+                            <Icon name="schedule" className="mt-0.5 !text-[17px] shrink-0 text-base-content/45" />
+                            <p>
+                                Schedule times use the server timezone. Set <code className="font-mono text-base-content/70">TZ</code>
+                                {" "}in the container environment if the displayed time does not match your location.
+                            </p>
                         </div>
-                    </details>
-                    <details className={'overflow-hidden rounded border border-base-content/10'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
-                            Recreate STRM Files
-                        </summary>
-                        <div className={'border-t border-base-content/10 p-4'}>
-                            <RecreateStrmFiles savedConfig={savedConfig} />
-                        </div>
-                    </details>
-                    <details className={'overflow-hidden rounded border border-base-content/10'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
-                            Migrate Large Database Blobs to Blobstore
-                        </summary>
-                        <div className={'border-t border-base-content/10 p-4'}>
-                            <MigrateDatabaseFilesToBlobstore savedConfig={savedConfig} />
-                        </div>
-                    </details>
-                    <details className={'overflow-hidden rounded border border-base-content/10'}>
-                        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-base-content hover:bg-base-content/5">
-                            Reset Health-Check Statistics
-                        </summary>
-                        <div className={'border-t border-base-content/10 p-4'}>
-                            <ResetHealthCheckStats />
-                        </div>
-                    </details>
-                </div>
+                    </div>
+                </section>
             </div>
+
+            <section className="space-y-3">
+                <div className="flex items-end justify-between gap-4">
+                    <div>
+                        <h2 className="text-lg font-semibold text-base-content">Maintenance tasks</h2>
+                        <p className="mt-1 text-xs leading-relaxed text-base-content/50">
+                            Run repair, migration, and destructive cleanup tools on demand.
+                        </p>
+                    </div>
+                    <span className="badge badge-ghost badge-sm shrink-0">6 tools</span>
+                </div>
+                <div className="space-y-3">
+                    <MaintenanceTaskDetails title="Remove Orphaned Files">
+                        <RemoveUnlinkedFiles savedConfig={savedConfig} />
+                    </MaintenanceTaskDetails>
+                    <MaintenanceTaskDetails title="Rename Windows-Invalid Paths">
+                        <RenameWindowsInvalidDavPaths savedConfig={savedConfig} />
+                    </MaintenanceTaskDetails>
+                    <MaintenanceTaskDetails title="Convert STRM Files to Symlinks">
+                        <ConvertStrmToSymlinks savedConfig={savedConfig} />
+                    </MaintenanceTaskDetails>
+                    <MaintenanceTaskDetails title="Recreate STRM Files">
+                        <RecreateStrmFiles savedConfig={savedConfig} />
+                    </MaintenanceTaskDetails>
+                    <MaintenanceTaskDetails title="Migrate Large Database Blobs to Blobstore">
+                        <MigrateDatabaseFilesToBlobstore savedConfig={savedConfig} />
+                    </MaintenanceTaskDetails>
+                    <MaintenanceTaskDetails title="Reset Health-Check Statistics">
+                        <ResetHealthCheckStats />
+                    </MaintenanceTaskDetails>
+                </div>
+            </section>
         </SettingsPage>
+    );
+}
+
+function MaintenanceTaskDetails({ title, children }: { title: string, children: ReactNode }) {
+    return (
+        <details className="collapse collapse-arrow overflow-hidden rounded-lg border border-base-content/10 bg-base-100">
+            <summary className="collapse-title min-h-0 cursor-pointer px-4 py-3 text-sm font-semibold text-base-content transition-colors hover:bg-base-content/5">
+                {title}
+            </summary>
+            <div className="collapse-content border-t border-base-content/10 px-4 pb-4 pt-4">
+                {children}
+            </div>
+        </details>
     );
 }
 

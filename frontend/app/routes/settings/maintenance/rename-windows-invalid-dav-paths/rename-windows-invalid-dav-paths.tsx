@@ -23,7 +23,7 @@ export function RenameWindowsInvalidDavPaths({ savedConfig }: RenameWindowsInval
         || progressMessage?.startsWith("Aborted");
     const isRunning = !isFinished && (isFetching || runStarted);
     const isRunButtonEnabled = windowsSafeEnabled && connected && !isRunning;
-    const runButtonVariant = isRunButtonEnabled ? "success" : "secondary";
+    const runButtonVariant = isRunButtonEnabled ? "warning" : "secondary";
     const runButtonLabel = isRunning ? "Running..." : "Apply Renames";
 
     useWebsocketTopic("rwip", "state", setProgress, {
@@ -68,74 +68,84 @@ export function RenameWindowsInvalidDavPaths({ savedConfig }: RenameWindowsInval
         await startTask("/api/rename-windows-invalid-dav-paths/dry-run");
     }, [startTask]);
 
-    const dryRunButton =
-        <Button
-            className={"inline-flex"}
-            disabled={!isRunButtonEnabled}
-            onClick={onDryRun}
-            variant="warning"
-            size="small"
-        >
-            <Icon name="science" className="!text-[18px]" />
-            perform a dry-run
-        </Button>;
-
     return (
         <>
             {!windowsSafeEnabled &&
-                <Alert className={"mb-3"} variant="warning">
-                    Warning
-                    <ul className={"mt-2 list-disc space-y-1 pl-5"}>
-                        <li className={"text-xs"}>
-                            Enable &quot;Windows-safe paths&quot; under the WebDAV settings tab before running this task.
-                        </li>
-                    </ul>
+                <Alert className="alert-soft mb-4 items-start text-sm" variant="warning">
+                    <Icon name="settings_alert" className="!text-[20px]" />
+                    <div>
+                        <p className="font-semibold">Windows-safe paths required</p>
+                        <p className="mt-0.5 text-xs opacity-80">
+                            Enable Windows-safe paths under WebDAV settings before running this task.
+                        </p>
+                    </div>
                 </Alert>
             }
             {windowsSafeEnabled &&
-                <Alert className={"mb-3"} variant="warning">
-                    <span className="font-semibold">Note</span>
-                    <ul className={"mt-2 list-disc space-y-1 pl-5"}>
-                        <li className={"text-xs"}>
-                            Make a backup of your NzbDAV database prior to applying renames.
-                        </li>
-                        <li className={"text-xs"}>
-                            Prefer a dry-run first to review the report of paths that would change.
-                        </li>
-                    </ul>
+                <Alert className="alert-soft mb-4 items-start py-3 text-sm" variant="warning">
+                    <Icon name="backup" className="!text-[20px]" />
+                    <div>
+                        <p className="font-semibold">Back up before renaming</p>
+                        <p className="mt-0.5 text-xs opacity-80">
+                            Review a dry run first, then back up the database before applying path changes.
+                        </p>
+                    </div>
                 </Alert>
             }
-            <div className={"space-y-3"}>
-                <div className="space-y-2">
-                    <div className={"flex flex-col gap-3 sm:flex-row sm:items-center"}>
-                        <Button
-                            className={"shrink-0"}
-                            variant={runButtonVariant}
-                            onClick={onApply}
-                            disabled={!isRunButtonEnabled}
+            <div className="space-y-4">
+                <p className="text-sm leading-relaxed text-base-content/70">
+                    Find WebDAV names that Windows cannot use and rename those path components with the
+                    configured Windows-safe sanitizer.
+                </p>
+
+                <div className="rounded-lg border border-base-content/10 bg-base-200/40 p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                                className="shrink-0"
+                                variant={runButtonVariant}
+                                onClick={onApply}
+                                disabled={!isRunButtonEnabled}
+                            >
+                                <Icon name={isRunning ? "progress_activity" : "drive_file_rename_outline"} className={`!text-[18px] ${isRunning ? "animate-spin" : ""}`} />
+                                {runButtonLabel}
+                            </Button>
+                            <Button
+                                className="shrink-0"
+                                disabled={!isRunButtonEnabled}
+                                onClick={onDryRun}
+                                variant="outline"
+                                size="small"
+                            >
+                                <Icon name="science" className="!text-[18px]" />
+                                Dry Run
+                            </Button>
+                        </div>
+                        <div
+                            aria-live="polite"
+                            className="min-w-0 whitespace-pre-line break-words font-mono text-xs text-base-content/70"
                         >
-                            <Icon name={isRunning ? "progress_activity" : "play_arrow"} className={`!text-[18px] ${isRunning ? "animate-spin" : ""}`} />
-                            {runButtonLabel}
-                        </Button>
-                        <div className={"font-mono text-xs text-base-content/80"}>
-                            {statusError ?? progress}
+                            {statusError ?? progress ?? "Ready to scan."}
                             {isDone && <>
-                                &nbsp;<a href="/api/rename-windows-invalid-dav-paths/audit">Report.</a>
+                                {" "}<a className="link link-primary" href="/api/rename-windows-invalid-dav-paths/audit">View report</a>
                             </>}
                         </div>
                     </div>
-                    <p className="text-[11px] leading-relaxed text-base-content/45" id="rename-windows-invalid-paths-help">
-                        <br />
-                        This task finds WebDAV items whose names contain characters invalid on Windows
-                        (or trailing dots/spaces / reserved device names) and renames those path
-                        components to match the current Windows-safe sanitizer. Child paths are updated
-                        for the whole subtree. Name collisions get a <code>_2</code> / <code>_3</code> suffix.
-                        Start with a {dryRunButton} to generate a report without writing changes.
-                        <br />
-                        <br />
-                        Library STRM files and symlinks target items by DavItem Id under <code>/.ids</code>,
-                        so organized libraries keep working after renames. WebDAV browse paths and any
-                        on-disk STRM file locations that mirror the old path will change.
+                    <p className="mt-3 border-t border-base-content/10 pt-2.5 text-xs text-base-content/50">
+                        Dry Run generates a report without changing paths. Name collisions receive a
+                        {" "}<code className="font-mono">_2</code>, <code className="font-mono">_3</code>, or later suffix.
+                    </p>
+                </div>
+
+                <div
+                    className="flex items-start gap-2 rounded-lg bg-base-200/30 px-3 py-2.5 text-xs leading-relaxed text-base-content/55"
+                    id="rename-windows-invalid-paths-help"
+                >
+                    <Icon name="link" className="mt-0.5 !text-[17px] shrink-0 text-base-content/45" />
+                    <p>
+                        <span className="font-medium text-base-content/70">Organized links remain valid.</span>
+                        {" "}STRM files and symlinks target stable DavItem IDs, although browse paths and
+                        mirrored on-disk STRM locations will change.
                     </p>
                 </div>
             </div>

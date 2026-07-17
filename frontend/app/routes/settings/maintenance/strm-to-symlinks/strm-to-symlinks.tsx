@@ -16,11 +16,10 @@ export function ConvertStrmToSymlinks({ savedConfig }: ConvertStrmToSymlinksProp
 
     // derived variables
     const libraryDir = savedConfig["media.library-dir"];
-    const isDone = progress?.startsWith("Done");
     const isFinished = progress?.startsWith("Done") || progress?.startsWith("Failed");
     const isRunning = !isFinished && (isFetching || progress !== null);
     const isRunButtonEnabled = !!libraryDir && connected && !isRunning;
-    const runButtonVariant = isRunButtonEnabled ? 'success' : 'secondary';
+    const runButtonVariant = isRunButtonEnabled ? 'danger' : 'secondary';
     const runButtonLabel = isRunning ? "Running..." : "Run Task";
 
     useWebsocketTopic("st2sy", "state", setProgress, {
@@ -38,34 +37,38 @@ export function ConvertStrmToSymlinks({ savedConfig }: ConvertStrmToSymlinksProp
     return (
         <>
             {!libraryDir &&
-                <Alert className={'mb-3'} variant="warning">
-                    Warning
-                    <ul className={'mt-2 list-disc space-y-1 pl-5'}>
-                        <li className={'text-xs'}>
-                            You must first configure the Library Directory setting before running this task.
-                            Head over to the Repairs tab.
-                        </li>
-                    </ul>
+                <Alert className="alert-soft mb-4 items-start text-sm" variant="warning">
+                    <Icon name="folder_off" className="!text-[20px]" />
+                    <div>
+                        <p className="font-semibold">Library directory required</p>
+                        <p className="mt-0.5 text-xs opacity-80">
+                            Configure the Library Directory under Repairs before running this task.
+                        </p>
+                    </div>
                 </Alert>
             }
             {libraryDir &&
-                <Alert className={'mb-3'} variant="danger">
-                    <span className="font-semibold">Danger</span>
-                    <ul className={'mt-2 list-disc space-y-1 pl-5'}>
-                        <li className={'text-xs'}>
-                            Make a backup of your entire Library Dir prior to running this task
-                        </li>
-                        <li className={'text-xs'}>
-                            Strm files will be deleted from `{libraryDir}` and will not be recoverable without a backup.
-                        </li>
-                    </ul>
+                <Alert className="alert-soft mb-4 items-start py-3 text-sm" variant="warning">
+                    <Icon name="backup" className="!text-[20px]" />
+                    <div>
+                        <p className="font-semibold">Back up the library first</p>
+                        <p className="mt-0.5 text-xs opacity-80">
+                            STRM files under <span className="font-mono">{libraryDir}</span> are replaced and
+                            cannot be recovered without a backup.
+                        </p>
+                    </div>
                 </Alert>
             }
-            <div className={'space-y-3'}>
-                <div className="space-y-2">
-                    <div className={'flex flex-col gap-3 sm:flex-row sm:items-center'}>
+            <div className="space-y-4">
+                <p className="text-sm leading-relaxed text-base-content/70">
+                    Replace NzbDav STRM files in the organized media library with filesystem symlinks to
+                    the corresponding files in the rclone mount.
+                </p>
+
+                <div className="rounded-lg border border-base-content/10 bg-base-200/40 p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <Button
-                            className={'shrink-0'}
+                            className="shrink-0"
                             variant={runButtonVariant}
                             onClick={onRun}
                             disabled={!isRunButtonEnabled}
@@ -73,15 +76,26 @@ export function ConvertStrmToSymlinks({ savedConfig }: ConvertStrmToSymlinksProp
                             <Icon name={isRunning ? "progress_activity" : "play_arrow"} className={`!text-[18px] ${isRunning ? "animate-spin" : ""}`} />
                             {runButtonLabel}
                         </Button>
-                        <div className={'font-mono text-xs text-base-content/80'}>
-                            {progress}
+                        <div
+                            aria-live="polite"
+                            className="min-w-0 whitespace-pre-line break-words font-mono text-xs text-base-content/70"
+                        >
+                            {progress ?? "Ready to convert."}
                         </div>
                     </div>
-                    <p className="text-[11px] leading-relaxed text-base-content/45" id="cleanup-task-progress-help">
-                        <br />
-                        This task will scan your organized media library for all *.strm files.
-                        Every *.strm file that links to nzbdav media will be deleted and be replaced by a symlink.
-                        The newly created symlinks will all point to the corresponding file within your rclone mount.
+                    <p className="mt-3 border-t border-base-content/10 pt-2.5 text-xs text-base-content/50">
+                        Only STRM files that link to NzbDav media are converted.
+                    </p>
+                </div>
+
+                <div
+                    className="flex items-start gap-2 rounded-lg bg-base-200/30 px-3 py-2.5 text-xs leading-relaxed text-base-content/55"
+                    id="convert-strm-to-symlinks-help"
+                >
+                    <Icon name="link" className="mt-0.5 !text-[17px] shrink-0 text-base-content/45" />
+                    <p>
+                        <span className="font-medium text-base-content/70">The rclone mount must remain available.</span>
+                        {" "}Created symlinks point directly to their matching mounted files.
                     </p>
                 </div>
             </div>

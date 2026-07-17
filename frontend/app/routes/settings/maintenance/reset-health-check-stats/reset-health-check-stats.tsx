@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Alert } from "~/components/ui/feedback";
+import { Icon } from "~/components/ui/icon";
 
 export function ResetHealthCheckStats() {
     const [isRunning, setIsRunning] = useState(false);
@@ -35,21 +36,50 @@ export function ResetHealthCheckStats() {
     }, []);
 
     return (
-        <div className="space-y-3">
-            <p className="text-[11px] leading-relaxed text-base-content/45">
-                Clears all accumulated health-check history and counters (repairs, deletions, healthy/unhealthy totals).
+        <div className="space-y-4">
+            <Alert className="alert-soft items-start py-3 text-sm" variant="warning">
+                <Icon name="warning" className="!text-[20px]" />
+                <div>
+                    <p className="font-semibold">This cannot be undone</p>
+                    <p className="mt-0.5 text-xs opacity-80">
+                        All accumulated health-check results and counters will be permanently removed.
+                    </p>
+                </div>
+            </Alert>
+
+            <p className="text-sm leading-relaxed text-base-content/70">
+                Clear health-check history and reset repair, deletion, healthy, and unhealthy counters.
             </p>
-            <Button
-                type="button"
-                variant={isRunning ? "secondary" : "danger"}
-                disabled={isRunning}
-                className="inline-flex"
-                onClick={onReset}
-            >
-                {isRunning ? "Resetting..." : "Reset Health-Check Statistics"}
-            </Button>
-            {message && <Alert variant="success">{message}</Alert>}
-            {error && <Alert variant="danger">{error}</Alert>}
+
+            <div className="rounded-lg border border-base-content/10 bg-base-200/40 p-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <Button
+                        type="button"
+                        variant={isRunning ? "secondary" : "danger"}
+                        disabled={isRunning}
+                        className="shrink-0"
+                        onClick={onReset}
+                    >
+                        <Icon
+                            name={isRunning ? "progress_activity" : "delete_sweep"}
+                            className={`!text-[18px] ${isRunning ? "animate-spin" : ""}`}
+                        />
+                        {isRunning ? "Resetting..." : "Reset Statistics"}
+                    </Button>
+                    <div
+                        aria-live="polite"
+                        className={`min-w-0 break-words font-mono text-xs ${
+                            error
+                                ? "text-error"
+                                : message
+                                    ? "text-success"
+                                    : "text-base-content/70"
+                        }`}
+                    >
+                        {error ?? message ?? "Ready to reset."}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

@@ -28,7 +28,7 @@ export function RecreateStrmFiles({ savedConfig }: RecreateStrmFilesProps) {
     );
     const isRunning = runStarted && !isFinished && (isFetching || progress !== null);
     const isRunButtonEnabled = canRun && connected && !isRunning;
-    const runButtonVariant = isRunButtonEnabled ? "success" : "secondary";
+    const runButtonVariant = isRunButtonEnabled ? "primary" : "secondary";
     const runButtonLabel = isRunning ? "Running..." : "Run Task";
 
     useWebsocketTopic("rstm", "state", (msg) => {
@@ -69,76 +69,77 @@ export function RecreateStrmFiles({ savedConfig }: RecreateStrmFilesProps) {
     return (
         <>
             {!canRun &&
-                <Alert className={"mb-3"} variant="warning">
-                    Warning
-                    <ul className={"mt-2 list-disc space-y-1 pl-5"}>
+                <Alert className="alert-soft mb-4 items-start text-sm" variant="warning">
+                    <Icon name="settings_alert" className="!text-[20px]" />
+                    <div>
+                        <p className="font-semibold">Configuration required</p>
+                        <ul className="mt-1 list-disc space-y-1 pl-4 text-xs opacity-80">
                         {!isStrmStrategy &&
-                            <li className={"text-xs"}>
+                            <li>
                                 Import strategy must be set to STRM Files under the SABnzbd tab.
                             </li>
                         }
                         {!completedDir &&
-                            <li className={"text-xs"}>
+                            <li>
                                 Configure Completed Downloads Directory under the SABnzbd tab.
                             </li>
                         }
                         {!baseUrl &&
-                            <li className={"text-xs"}>
+                            <li>
                                 Configure Base URL under the SABnzbd tab (used inside STRM URLs).
                             </li>
                         }
-                    </ul>
-                </Alert>
-            }
-            {canRun &&
-                <Alert className={"mb-3"} variant="warning">
-                    <span className="font-semibold">Note</span>
-                    <ul className={"mt-2 list-disc space-y-1 pl-5"}>
-                        <li className={"text-xs"}>
-                            Writes STRM sidecars under `{completedDir}` mirroring `/content`.
-                        </li>
-                        <li className={"text-xs"}>
-                            Default mode only creates missing files or updates ones whose URL content changed
-                            (e.g. after a base-url change). Rewrite-all forces every file to be rewritten and
-                            will update mtimes, which may trigger a media-server library rescan.
-                        </li>
-                    </ul>
+                        </ul>
+                    </div>
                 </Alert>
             }
             {error &&
-                <Alert className={"mb-3"} variant="danger">{error}</Alert>
+                <Alert className="alert-soft mb-4 text-sm" variant="danger">{error}</Alert>
             }
-            <div className={"space-y-3"}>
-                <label className="flex items-center gap-2 text-sm text-base-content/80">
-                    <Checkbox
-                        id="recreate-strm-rewrite-all"
-                        checked={rewriteAll}
-                        onChange={e => setRewriteAll(e.target.checked)}
-                        disabled={isRunning}
-                    />
-                    <span>Rewrite all STRM files (update mtimes)</span>
-                </label>
-                <div className={"flex flex-col gap-3 sm:flex-row sm:items-center"}>
-                    <Button
-                        className={"shrink-0"}
-                        variant={runButtonVariant}
-                        onClick={onRun}
-                        disabled={!isRunButtonEnabled}
-                    >
-                        <Icon
-                            name={isRunning ? "progress_activity" : "play_arrow"}
-                            className={`!text-[18px] ${isRunning ? "animate-spin" : ""}`}
+            <div className="space-y-4">
+                <p className="text-sm leading-relaxed text-base-content/70">
+                    Create missing STRM sidecars for mounted videos or refresh sidecars whose target URL has changed.
+                </p>
+
+                <div className="rounded-lg border border-base-content/10 bg-base-200/40 p-3">
+                    <label className="flex items-center gap-2 text-sm text-base-content/75">
+                        <Checkbox
+                            id="recreate-strm-rewrite-all"
+                            checked={rewriteAll}
+                            onChange={e => setRewriteAll(e.target.checked)}
+                            disabled={isRunning}
                         />
-                        {runButtonLabel}
-                    </Button>
-                    <div className={"whitespace-pre-wrap font-mono text-xs text-base-content/80"}>
-                        {progress}
+                        <span>Rewrite every STRM file and update modification times</span>
+                    </label>
+                    <div className="mt-3 flex flex-col gap-3 border-t border-base-content/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                        <Button
+                            className="shrink-0"
+                            variant={runButtonVariant}
+                            onClick={onRun}
+                            disabled={!isRunButtonEnabled}
+                        >
+                            <Icon
+                                name={isRunning ? "progress_activity" : "refresh"}
+                                className={`!text-[18px] ${isRunning ? "animate-spin" : ""}`}
+                            />
+                            {runButtonLabel}
+                        </Button>
+                        <div
+                            aria-live="polite"
+                            className="min-w-0 whitespace-pre-line break-words font-mono text-xs text-base-content/70"
+                        >
+                            {progress ?? "Ready to recreate sidecars."}
+                        </div>
                     </div>
                 </div>
-                <p className="text-[11px] leading-relaxed text-base-content/45">
-                    Use this to repair libraries that missed STRM creation (e.g. season packs processed
-                    before the create-for-all-videos fix), or to refresh URLs after changing Base URL.
-                </p>
+
+                <div className="flex items-start gap-2 rounded-lg bg-base-200/30 px-3 py-2.5 text-xs leading-relaxed text-base-content/55">
+                    <Icon name="info" className="mt-0.5 !text-[17px] shrink-0 text-base-content/45" />
+                    <p>
+                        STRM files are written under <span className="font-mono text-base-content/70">{completedDir || "the completed downloads directory"}</span>.
+                        {" "}Rewrite-all can trigger a media-server rescan because it updates every file&apos;s modification time.
+                    </p>
+                </div>
             </div>
         </>
     );

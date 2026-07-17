@@ -1,6 +1,6 @@
 import chartStyles from "./bench-chart.module.css";
 import { type Dispatch, type SetStateAction, type ReactNode, type CSSProperties, useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Alert, Badge, Button, HelpText, Icon, Input, Label, Modal, Select, SettingsPage } from "~/components/ui";
+import { Alert, Badge, Button, HelpText, Icon, Input, Label, Modal, Select, SettingsIntro, SettingsPage } from "~/components/ui";
 import { Checkbox } from "~/components/ui/form";
 import { subscribeWebsocketTopics, useWebsocketTopic } from "~/utils/shared-websocket";
 import { isMaskedSecret } from "~/utils/config-mask";
@@ -404,33 +404,57 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
     // view
     return (
         <SettingsPage>
-            <div className={'space-y-4'}>
-                <div className={'flex items-center justify-between text-lg font-semibold text-base-content'}>
-                    <div>Usenet Providers</div>
-                    <Button variant="primary" size="small" onClick={handleAddProvider}>
-                        <Icon name="add" className="!text-[18px]" />
-                        Add
-                    </Button>
+            <SettingsIntro>
+                Configure NNTP providers, decide whether they share load or cascade in priority order, and tune
+                pipelining for faster queue imports.
+            </SettingsIntro>
+
+            <section className="space-y-3">
+                <div className="flex items-end justify-between gap-4">
+                    <div>
+                        <h2 className="text-lg font-semibold text-base-content">Providers</h2>
+                        <p className="mt-1 text-xs leading-relaxed text-base-content/50">
+                            Add Usenet accounts, monitor connection usage, and edit credentials.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="badge badge-ghost badge-sm shrink-0">
+                            {providerConfig.Providers.length}{" "}
+                            {providerConfig.Providers.length === 1 ? "provider" : "providers"}
+                        </span>
+                        <Button variant="primary" size="small" onClick={handleAddProvider}>
+                            <Icon name="add" className="!text-[18px]" />
+                            Add
+                        </Button>
+                    </div>
                 </div>
+
                 {providerConfig.Providers.length === 0 ? (
-                    <p className={'rounded border border-base-content/10 bg-base-200/40 px-3 py-2 text-sm text-base-content/60'}>
-                        No Usenet providers configured.
-                        Click on the "Add" button to get started.
-                    </p>
+                    <div className="rounded-lg border border-dashed border-base-content/15 bg-base-200/20 px-4 py-8 text-center">
+                        <Icon name="cloud_off" className="!text-[28px] text-base-content/35" />
+                        <p className="mt-2 text-sm text-base-content/55">No Usenet providers configured.</p>
+                        <p className="mt-1 text-xs text-base-content/40">
+                            Click Add to connect your first NNTP account.
+                        </p>
+                    </div>
                 ) : (
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={providerConfig.Providers.map(providerKey)} strategy={rectSortingStrategy}>
-                    <div className="mb-7 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         {displayedProviders.map(({ provider, index }) => {
                             const isDisabled = provider.Type === ProviderType.Disabled;
                             return (
                             <SortableItem key={providerKey(provider)} id={providerKey(provider)} disabled={!cascadeEnabled}>
                             {({ setNodeRef, setActivatorNodeRef, attributes, listeners, style, isDragging }) => (
-                            <div ref={setNodeRef} style={style} className={`card border border-base-content/10 bg-base-100 shadow-sm ${isDisabled ? "opacity-60" : ""}`}>
-                                <div className="card-body gap-3 p-4">
+                            <div
+                                ref={setNodeRef}
+                                style={style}
+                                className={`overflow-hidden rounded-lg border border-base-content/10 bg-base-100 ${isDisabled ? "opacity-60" : ""}`}
+                            >
+                                <div className="space-y-3 p-4">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0 flex-1">
-                                            <div className="break-all text-[15px] font-semibold leading-snug tracking-tight text-base-content">
+                                            <div className="break-all text-sm font-semibold leading-snug text-base-content">
                                                 {cascadeEnabled && !isDisabled && (
                                                     <Badge className="badge-ghost badge-sm mr-2 align-middle">#{index + 1}</Badge>
                                                 )}
@@ -438,11 +462,11 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                                 {isDisabled && <Badge className="badge-ghost badge-sm ml-2 align-middle">Disabled</Badge>}
                                             </div>
                                             {provider.Nickname?.trim() && (
-                                                <div className="mb-0.5 break-all text-xs text-base-content/60">
+                                                <div className="mt-0.5 break-all text-xs text-base-content/60">
                                                     {provider.Host}
                                                 </div>
                                             )}
-                                            <div className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">
+                                            <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-base-content/50">
                                                 Port {provider.Port}
                                             </div>
                                         </div>
@@ -496,24 +520,21 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                         </div>
                                     </div>
 
-                                    <div className={'mt-4 border-t border-base-content/10 pt-3'}>
-                                        <div className={'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
-
-                                            <div className={'relative flex min-w-0 items-center gap-2'}>
-                                                <div className={'text-primary'}>
+                                    <div className="border-t border-base-content/10 pt-3">
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                            <div className="relative flex min-w-0 items-center gap-2">
+                                                <div className="text-primary">
                                                     <Icon name="person" className="!text-[18px]" />
                                                 </div>
-                                                <div className={'flex min-w-0 flex-col'}>
-                                                    <span className={'text-[11px] uppercase tracking-wide text-base-content/50'}>Username</span>
-                                                    <span className={'truncate text-sm text-base-content'}>{provider.User}</span>
+                                                <div className="flex min-w-0 flex-col">
+                                                    <span className="text-[11px] uppercase tracking-wide text-base-content/50">Username</span>
+                                                    <span className="truncate text-sm text-base-content">{provider.User}</span>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2.5 rounded-md border border-base-content/10 bg-base-200/40 px-2.5 py-2">
-                                                <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded bg-base-300 text-base-content/60">
-                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                                    </svg>
+                                            <div className="flex items-center gap-2.5 rounded-lg border border-base-content/10 bg-base-200/40 px-2.5 py-2">
+                                                <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md bg-base-300 text-base-content/60">
+                                                    <Icon name="hub" className="!text-[16px]" />
                                                 </div>
                                                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                                                     <span className="text-[10px] font-medium uppercase tracking-wide text-base-content/50">Connections</span>
@@ -525,20 +546,20 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                                 </div>
                                             </div>
 
-                                            <div className={'relative flex min-w-0 items-center gap-2'}>
-                                                <div className={'text-primary'}>
+                                            <div className="relative flex min-w-0 items-center gap-2">
+                                                <div className="text-primary">
                                                     <Icon name={provider.UseSsl ? "lock" : "lock_open"} className="!text-[18px]" />
                                                 </div>
-                                                <div className={'flex min-w-0 flex-col'}>
-                                                    <span className={'text-[11px] uppercase tracking-wide text-base-content/50'}>Security</span>
-                                                    <span className={'truncate text-sm text-base-content'}>
+                                                <div className="flex min-w-0 flex-col">
+                                                    <span className="text-[11px] uppercase tracking-wide text-base-content/50">Security</span>
+                                                    <span className="truncate text-sm text-base-content">
                                                         {provider.UseSsl ? "SSL Enabled" : "No SSL"}
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            <div className={'relative flex min-w-0 items-center gap-2'}>
-                                                <div className={'text-primary'}>
+                                            <div className="relative flex min-w-0 items-center gap-2">
+                                                <div className="text-primary">
                                                     <Icon name="account_tree" className="!text-[18px]" />
                                                 </div>
                                                 <div className="flex min-w-0 flex-col">
@@ -550,17 +571,16 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                             </div>
 
                                             {provider.StorageGroup?.trim() && (
-                                                <div className={'relative flex min-w-0 items-center gap-2'}>
-                                                    <div className={'text-primary'}>
+                                                <div className="relative flex min-w-0 items-center gap-2">
+                                                    <div className="text-primary">
                                                         <Icon name="storage" className="!text-[18px]" />
                                                     </div>
-                                                    <div className={'flex min-w-0 flex-col'}>
-                                                        <span className={'text-[11px] uppercase tracking-wide text-base-content/50'}>Storage group</span>
-                                                        <span className={'truncate text-sm text-base-content'}>{provider.StorageGroup.trim()}</span>
+                                                    <div className="flex min-w-0 flex-col">
+                                                        <span className="text-[11px] uppercase tracking-wide text-base-content/50">Storage group</span>
+                                                        <span className="truncate text-sm text-base-content">{provider.StorageGroup.trim()}</span>
                                                     </div>
                                                 </div>
                                             )}
-
                                         </div>
 
                                         <UsageRow
@@ -579,15 +599,28 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                     </SortableContext>
                     </DndContext>
                 )}
-            </div>
+            </section>
 
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3">
-                    <div className="text-base font-semibold text-base-content">Cascade (Optional)</div>
+            <section className="overflow-hidden rounded-lg border border-base-content/10 bg-base-100">
+                <div className="flex items-start gap-3 border-b border-base-content/10 p-4">
+                    <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                        <Icon name="tune" className="!text-[20px]" />
+                    </span>
+                    <div>
+                        <h2 className="text-sm font-semibold text-base-content">Global settings</h2>
+                        <p className="mt-0.5 text-xs leading-relaxed text-base-content/50">
+                            Shared routing and pipelining options that apply across all providers.
+                        </p>
+                    </div>
                 </div>
-                <div className="mt-3 flex flex-col gap-1.5">
-                    <label htmlFor="cascade-enabled" className="flex items-center gap-2">
+
+                <div className="space-y-4 p-4">
+                    <label
+                        className="flex cursor-pointer items-start gap-3 rounded-lg bg-base-200/40 p-3"
+                        htmlFor="cascade-enabled"
+                    >
                         <Checkbox
+                            className="checkbox-primary mt-0.5 shrink-0"
                             id="cascade-enabled"
                             checked={cascadeEnabled}
                             onChange={(e) => {
@@ -603,58 +636,66 @@ export function UsenetSettings({ config, setNewConfig }: UsenetSettingsProps) {
                                 });
                             }}
                         />
-                        <span className="text-sm text-base-content/80">Enable cascade routing</span>
+                        <span>
+                            <span className="block text-sm font-medium text-base-content">Enable cascade routing</span>
+                            <span className="mt-0.5 block text-xs leading-relaxed text-base-content/50">
+                                Prefer providers in drag order. While off, all enabled providers share work in the pool.
+                            </span>
+                        </span>
                     </label>
-                    <HelpText>
-                        Sets the order your providers are used. Drag the cards to arrange them. While this is off, all
-                        providers are used together.
-                    </HelpText>
-                </div>
-            </div>
 
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3">
-                    <div className="text-base font-semibold text-base-content">NNTP Pipelining</div>
+                    <div className="border-t border-base-content/10 pt-4">
+                        <Alert className="alert-soft mb-4 items-start py-3 text-sm" variant="warning">
+                            <Icon name="science" className="!text-[20px]" />
+                            <div>
+                                <p className="font-semibold">Speed-test pipelining first</p>
+                                <p className="mt-0.5 text-xs opacity-80">
+                                    Run Auto-tune connections on a provider before enabling this. It measures whether
+                                    pipelining helps on your network.
+                                </p>
+                            </div>
+                        </Alert>
+
+                        <label
+                            className="flex cursor-pointer items-start gap-3 rounded-lg bg-base-200/40 p-3"
+                            htmlFor="pipelining-enabled"
+                        >
+                            <Checkbox
+                                className="checkbox-primary mt-0.5 shrink-0"
+                                id="pipelining-enabled"
+                                checked={config["usenet.pipelining.enabled"] === "true"}
+                                onChange={(e) => setNewConfig({
+                                    ...config,
+                                    "usenet.pipelining.enabled": e.target.checked ? "true" : "false",
+                                })}
+                            />
+                            <span>
+                                <span className="block text-sm font-medium text-base-content">Enable NNTP pipelining</span>
+                                <span className="mt-0.5 block text-xs leading-relaxed text-base-content/50">
+                                    Batch BODY requests during queue imports and benchmarks. WebDAV streaming has its
+                                    own toggle under WebDAV settings.
+                                </span>
+                            </span>
+                        </label>
+
+                        <div className="mt-4 space-y-2">
+                            <Label htmlFor="pipelining-depth">Default pipeline depth</Label>
+                            <Input
+                                type="text"
+                                id="pipelining-depth"
+                                className={`w-full max-w-[10rem] ${config["usenet.pipelining.depth"] !== undefined && config["usenet.pipelining.depth"] !== "" && !isPositiveInteger(config["usenet.pipelining.depth"]) ? "input-error" : ""}`}
+                                placeholder="8"
+                                value={config["usenet.pipelining.depth"] ?? ""}
+                                onChange={(e) => setNewConfig({ ...config, "usenet.pipelining.depth": e.target.value })}
+                            />
+                            <p className="text-[11px] leading-relaxed text-base-content/45">
+                                Requests kept in flight per connection (1–64). 8 is a good default. Each provider can
+                                override this in its settings.
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <Alert variant="warning" className="mt-3 text-xs">
-                    Run the <strong>speed test</strong> on a provider (edit → Auto-tune connections) before
-                    enabling this. It measures whether pipelining helps on your network — when it does,
-                    queue imports can be substantially faster.
-                </Alert>
-                <div className="mt-3 flex flex-col gap-1.5">
-                    <label htmlFor="pipelining-enabled" className="flex items-center gap-2">
-                        <Checkbox
-                            id="pipelining-enabled"
-                            checked={config["usenet.pipelining.enabled"] === "true"}
-                            onChange={(e) => setNewConfig({
-                                ...config,
-                                "usenet.pipelining.enabled": e.target.checked ? "true" : "false",
-                            })}
-                        />
-                        <span className="text-sm text-base-content/80">Enable NNTP pipelining</span>
-                    </label>
-                    <HelpText>
-                        Batch BODY requests on a single connection during queue imports and benchmarks.
-                        WebDAV streaming uses the separate <strong>Pipelined article downloads</strong> toggle
-                        under WebDAV settings.
-                    </HelpText>
-                </div>
-                <div className="mt-3 flex flex-col gap-1.5">
-                    <Label htmlFor="pipelining-depth">Default pipeline depth</Label>
-                    <Input
-                        type="text"
-                        id="pipelining-depth"
-                        className={`w-full ${config["usenet.pipelining.depth"] !== undefined && config["usenet.pipelining.depth"] !== "" && !isPositiveInteger(config["usenet.pipelining.depth"]) ? "input-error" : ""}`}
-                        placeholder="8"
-                        value={config["usenet.pipelining.depth"] ?? ""}
-                        onChange={(e) => setNewConfig({ ...config, "usenet.pipelining.depth": e.target.value })}
-                    />
-                    <HelpText>
-                        Requests kept in flight per connection (1–64). 8 is a good default. Each
-                        provider can override this in its own settings.
-                    </HelpText>
-                </div>
-            </div>
+            </section>
 
             <ProviderModal
                 show={showModal}
@@ -693,7 +734,7 @@ function UsageRow({ provider, usage, onReset }: UsageRowProps) {
     const barToneClass = tone === "danger" ? "bg-error" : tone === "warn" ? "bg-warning" : tone === "ok" ? "bg-success" : "bg-base-content/40";
 
     return (
-        <div className="mt-3 flex flex-col gap-2 rounded-md border border-base-content/10 bg-base-200/40 p-3">
+        <div className="mt-3 flex flex-col gap-2 rounded-lg border border-base-content/10 bg-base-200/40 p-3">
             <div className="flex flex-wrap items-center gap-2.5">
                 <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-base-content/50">
                     {hasLimit ? "Data Cap" : "Data Used"}

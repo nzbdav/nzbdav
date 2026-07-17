@@ -10,7 +10,7 @@ import { Button } from "~/components/ui/button";
 import { Alert, Badge, Spinner } from "~/components/ui/feedback";
 import { Checkbox, Input, Select } from "~/components/ui/form";
 import { Icon } from "~/components/ui/icon";
-import { SettingsPage } from "~/components/ui";
+import { SettingsIntro, SettingsPage } from "~/components/ui";
 import { useWebsocketTopic } from "~/utils/shared-websocket";
 
 type BackupSettingsProps = {
@@ -325,198 +325,319 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
 
     return (
         <SettingsPage>
+            <SettingsIntro>
+                Create logical SQL dumps of your databases, schedule automatic backups, and restore from a previous
+                snapshot when needed.
+            </SettingsIntro>
+
             {!reportDismissed && lastRestoreReport && lastRestoreReport.missingBlobRefs > 0 && (
-                <Alert variant="warning" className="mb-4 text-sm">
-                    <div className="flex items-start justify-between gap-3">
+                <Alert className="alert-soft items-start py-3 text-sm" variant="warning">
+                    <Icon name="warning" className="!text-[20px]" />
+                    <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
                         <div>
-                            Last restore of <span className="font-mono">{lastRestoreReport.backupId}</span> found{" "}
-                            <strong>{lastRestoreReport.missingBlobRefs}</strong> of{" "}
-                            {lastRestoreReport.checkedRefs} blob references pointing to missing files under{" "}
-                            <code className="font-mono">blobs/</code>. Affected items may fail to stream until
-                            re-downloaded.
+                            <p className="font-semibold">Missing blobs after restore</p>
+                            <p className="mt-0.5 text-xs opacity-80">
+                                Restore of <span className="font-mono">{lastRestoreReport.backupId}</span> found{" "}
+                                <strong>{lastRestoreReport.missingBlobRefs}</strong> of{" "}
+                                {lastRestoreReport.checkedRefs} blob references pointing to missing files under{" "}
+                                <code className="font-mono">blobs/</code>. Affected items may fail to stream until
+                                re-downloaded.
+                            </p>
                         </div>
-                        <Button variant="ghost" size="small" onClick={() => setReportDismissed(true)}>
+                        <Button variant="ghost" size="xsmall" onClick={() => setReportDismissed(true)}>
                             Dismiss
                         </Button>
                     </div>
                 </Alert>
             )}
 
-            <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm text-base-content/80">
-                    <Checkbox
-                        id="backup-schedule-enabled"
-                        checked={scheduleEnabled}
-                        onChange={(e) =>
-                            setNewConfig({
-                                ...config,
-                                "backup.schedule-enabled": "" + e.target.checked,
-                            })
-                        }
-                    />
-                    <span>Schedule database backup daily</span>
-                </label>
-                <div className="mt-4 flex w-full gap-2">
-                    <Select
-                        disabled={!scheduleEnabled}
-                        value={scheduleTime.hour}
-                        onChange={(e) =>
-                            setNewConfig({
-                                ...config,
-                                "backup.schedule-time": buildScheduledTime(
-                                    parseInt(e.target.value),
-                                    scheduleTime.minute,
-                                    scheduleTime.period,
-                                ),
-                            })
-                        }
-                    >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                            <option key={h} value={h}>
-                                {h}
-                            </option>
-                        ))}
-                    </Select>
-                    <Select
-                        disabled={!scheduleEnabled}
-                        value={scheduleTime.minute}
-                        onChange={(e) =>
-                            setNewConfig({
-                                ...config,
-                                "backup.schedule-time": buildScheduledTime(
-                                    scheduleTime.hour,
-                                    parseInt(e.target.value),
-                                    scheduleTime.period,
-                                ),
-                            })
-                        }
-                    >
-                        <option value={0}>00</option>
-                        <option value={15}>15</option>
-                        <option value={30}>30</option>
-                        <option value={45}>45</option>
-                    </Select>
-                    <Select
-                        disabled={!scheduleEnabled}
-                        value={scheduleTime.period}
-                        onChange={(e) =>
-                            setNewConfig({
-                                ...config,
-                                "backup.schedule-time": buildScheduledTime(
-                                    scheduleTime.hour,
-                                    scheduleTime.minute,
-                                    e.target.value as "am" | "pm",
-                                ),
-                            })
-                        }
-                    >
-                        <option value="am">am</option>
-                        <option value="pm">pm</option>
-                    </Select>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <section className="overflow-hidden rounded-lg border border-base-content/10 bg-base-100">
+                    <div className="flex items-start gap-3 border-b border-base-content/10 p-4">
+                        <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                            <Icon name="event_repeat" className="!text-[20px]" />
+                        </span>
+                        <div>
+                            <h2 className="text-sm font-semibold text-base-content">Scheduled backups</h2>
+                            <p className="mt-0.5 text-xs leading-relaxed text-base-content/50">
+                                Create a database dump automatically once per day.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 p-4">
+                        <label
+                            className="flex cursor-pointer items-start gap-3 rounded-lg bg-base-200/40 p-3"
+                            htmlFor="backup-schedule-enabled"
+                        >
+                            <Checkbox
+                                className="checkbox-primary mt-0.5 shrink-0"
+                                id="backup-schedule-enabled"
+                                checked={scheduleEnabled}
+                                onChange={(e) =>
+                                    setNewConfig({
+                                        ...config,
+                                        "backup.schedule-enabled": String(e.target.checked),
+                                    })
+                                }
+                            />
+                            <span>
+                                <span className="block text-sm font-medium text-base-content">Enable daily backup</span>
+                                <span className="mt-0.5 block text-xs leading-relaxed text-base-content/50">
+                                    Writes a logical <code className="font-mono">.sql</code> dump of all databases under
+                                    the config volume.
+                                </span>
+                            </span>
+                        </label>
+
+                        <fieldset className="space-y-2" disabled={!scheduleEnabled}>
+                            <legend className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                                Daily run time
+                            </legend>
+                            <div className="grid grid-cols-3 gap-2">
+                                <label className="space-y-1">
+                                    <span className="block text-[11px] text-base-content/45">Hour</span>
+                                    <Select
+                                        className="w-full"
+                                        aria-label="Backup hour"
+                                        value={scheduleTime.hour}
+                                        onChange={(e) =>
+                                            setNewConfig({
+                                                ...config,
+                                                "backup.schedule-time": buildScheduledTime(
+                                                    parseInt(e.target.value),
+                                                    scheduleTime.minute,
+                                                    scheduleTime.period,
+                                                ),
+                                            })
+                                        }
+                                    >
+                                        {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                                            <option key={h} value={h}>
+                                                {h}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                </label>
+                                <label className="space-y-1">
+                                    <span className="block text-[11px] text-base-content/45">Minute</span>
+                                    <Select
+                                        className="w-full"
+                                        aria-label="Backup minute"
+                                        value={scheduleTime.minute}
+                                        onChange={(e) =>
+                                            setNewConfig({
+                                                ...config,
+                                                "backup.schedule-time": buildScheduledTime(
+                                                    scheduleTime.hour,
+                                                    parseInt(e.target.value),
+                                                    scheduleTime.period,
+                                                ),
+                                            })
+                                        }
+                                    >
+                                        <option value={0}>00</option>
+                                        <option value={15}>15</option>
+                                        <option value={30}>30</option>
+                                        <option value={45}>45</option>
+                                    </Select>
+                                </label>
+                                <label className="space-y-1">
+                                    <span className="block text-[11px] text-base-content/45">Period</span>
+                                    <Select
+                                        className="w-full"
+                                        aria-label="Backup period"
+                                        value={scheduleTime.period}
+                                        onChange={(e) =>
+                                            setNewConfig({
+                                                ...config,
+                                                "backup.schedule-time": buildScheduledTime(
+                                                    scheduleTime.hour,
+                                                    scheduleTime.minute,
+                                                    e.target.value as "am" | "pm",
+                                                ),
+                                            })
+                                        }
+                                    >
+                                        <option value="am">AM</option>
+                                        <option value="pm">PM</option>
+                                    </Select>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div className="flex items-start gap-2 rounded-lg bg-base-200/30 px-3 py-2.5 text-xs leading-relaxed text-base-content/55">
+                            <Icon name="schedule" className="mt-0.5 !text-[17px] shrink-0 text-base-content/45" />
+                            <p>
+                                Schedule times use the server timezone. Set{" "}
+                                <code className="font-mono text-base-content/70">TZ</code> in the container environment
+                                if the displayed time does not match your location.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="overflow-hidden rounded-lg border border-base-content/10 bg-base-100">
+                    <div className="flex items-start gap-3 border-b border-base-content/10 p-4">
+                        <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                            <Icon name="inventory_2" className="!text-[20px]" />
+                        </span>
+                        <div>
+                            <h2 className="text-sm font-semibold text-base-content">Retention</h2>
+                            <p className="mt-0.5 text-xs leading-relaxed text-base-content/50">
+                                Control how many non-preserved backups are kept automatically.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 p-4">
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-base-content" htmlFor="backup-retention-count">
+                                Keep newest backups
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id="backup-retention-count"
+                                    type="number"
+                                    min={0}
+                                    value={config["backup.retention-count"] ?? "5"}
+                                    onChange={(e) =>
+                                        setNewConfig({
+                                            ...config,
+                                            "backup.retention-count": e.target.value,
+                                        })
+                                    }
+                                    className="w-full max-w-[8rem]"
+                                />
+                                <span className="text-xs text-base-content/45">count</span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed text-base-content/45">
+                                Prunes older non-preserved backups. Set to 0 to disable pruning.
+                            </p>
+                        </div>
+
+                        <div className="flex items-start gap-2 rounded-lg bg-base-200/30 px-3 py-2.5 text-xs leading-relaxed text-base-content/55">
+                            <Icon name="lock" className="mt-0.5 !text-[17px] shrink-0 text-base-content/45" />
+                            <p>
+                                <span className="font-medium text-base-content/70">Preserved backups are never pruned.</span>
+                                {" "}Mark important snapshots as preserved in the list below.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section className="overflow-hidden rounded-lg border border-base-content/10 bg-base-100">
+                <div className="flex items-start gap-3 border-b border-base-content/10 p-4">
+                    <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                        <Icon name="backup" className="!text-[20px]" />
+                    </span>
+                    <div>
+                        <h2 className="text-sm font-semibold text-base-content">Create or upload</h2>
+                        <p className="mt-0.5 text-xs leading-relaxed text-base-content/50">
+                            Start a backup now or import a previously downloaded archive.
+                        </p>
+                    </div>
                 </div>
-                <p className="text-[11px] leading-relaxed text-base-content/45">
-                    Creates a logical <code className="font-mono">.sql</code> dump of all databases under the config
-                    volume. Set the <code className="font-mono">TZ</code> env variable for the correct timezone.
-                </p>
-            </div>
 
-            <hr />
-
-            <div className="space-y-2">
-                <label className="block text-sm text-base-content/80" htmlFor="backup-retention-count">
-                    Retention count (non-preserved backups)
-                </label>
-                <Input
-                    id="backup-retention-count"
-                    type="number"
-                    min={0}
-                    value={config["backup.retention-count"] ?? "5"}
-                    onChange={(e) =>
-                        setNewConfig({
-                            ...config,
-                            "backup.retention-count": e.target.value,
-                        })
-                    }
-                    className="max-w-xs"
-                />
-                <p className="text-[11px] leading-relaxed text-base-content/45">
-                    Keep the newest N backups that are not preserved. Set to 0 to disable pruning. Preserved backups
-                    are never deleted by retention.
-                </p>
-            </div>
-
-            <hr />
-
-            <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-base-content">Create backup now</h2>
-                <Input
-                    placeholder="Optional notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                />
-                <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                        variant="success"
-                        disabled={busy === "create" || taskRunning}
-                        onClick={() => void createBackup()}
-                    >
-                        {busy === "create" ? <Spinner className="h-4 w-4" /> : <Icon name="backup" className="!text-[18px]" />}
-                        Create Backup
-                    </Button>
-                    <Button
-                        variant="outline"
-                        disabled={busy === "upload"}
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        {busy === "upload" ? <Spinner className="h-4 w-4" /> : <Icon name="upload" className="!text-[18px]" />}
-                        Upload Backup
-                    </Button>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".zip,.sql,application/zip,text/plain"
-                        className="hidden"
-                        onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) void uploadBackup(file);
-                        }}
+                <div className="space-y-4 p-4">
+                    <Input
+                        placeholder="Optional notes for this backup"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
                     />
-                    {!wsConnected && (
-                        <span className="text-[11px] text-base-content/45">Connecting for live progress…</span>
+
+                    <div className="rounded-lg border border-base-content/10 bg-base-200/40 p-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                    className="shrink-0"
+                                    variant="primary"
+                                    disabled={busy === "create" || taskRunning}
+                                    onClick={() => void createBackup()}
+                                >
+                                    {busy === "create"
+                                        ? <Spinner className="h-4 w-4" />
+                                        : <Icon name="backup" className="!text-[18px]" />}
+                                    Create Backup
+                                </Button>
+                                <Button
+                                    className="shrink-0"
+                                    variant="outline"
+                                    disabled={busy === "upload"}
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    {busy === "upload"
+                                        ? <Spinner className="h-4 w-4" />
+                                        : <Icon name="upload" className="!text-[18px]" />}
+                                    Upload Backup
+                                </Button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".zip,.sql,application/zip,text/plain"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) void uploadBackup(file);
+                                    }}
+                                />
+                            </div>
+                            <div
+                                aria-live="polite"
+                                className="min-w-0 whitespace-pre-line break-words font-mono text-xs text-base-content/70"
+                            >
+                                {backupProgress
+                                    || (restoreProgress && restorePhase === "staging" ? restoreProgress : null)
+                                    || (!wsConnected ? "Connecting for live progress…" : "Ready to create a backup.")}
+                            </div>
+                        </div>
+                    </div>
+
+                    {(message || listError) && (
+                        <Alert
+                            className="alert-soft text-sm"
+                            variant={
+                                listError || message?.variant === "danger"
+                                    ? "danger"
+                                    : message?.variant === "warning"
+                                        ? "warning"
+                                        : "success"
+                            }
+                        >
+                            {listError ?? message?.text}
+                        </Alert>
                     )}
                 </div>
-                {backupProgress && (
-                    <p className="font-mono text-xs text-base-content/70">{backupProgress}</p>
-                )}
-                {restoreProgress && restorePhase === "staging" && (
-                    <p className="font-mono text-xs text-base-content/70">{restoreProgress}</p>
-                )}
-            </div>
+            </section>
 
-            {message && (
-                <Alert variant={message.variant === "danger" ? "danger" : message.variant === "warning" ? "warning" : "success"} className="text-sm">
-                    {message.text}
-                </Alert>
-            )}
-            {listError && (
-                <Alert variant="danger" className="text-sm">
-                    {listError}
-                </Alert>
-            )}
-
-            <hr />
-
-            <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-sm font-semibold text-base-content">Backups</h2>
-                    <Button variant="ghost" size="small" onClick={() => void refreshList()}>
-                        <Icon name="refresh" className="!text-[16px]" />
-                        Refresh
-                    </Button>
+            <section className="space-y-3">
+                <div className="flex items-end justify-between gap-4">
+                    <div>
+                        <h2 className="text-lg font-semibold text-base-content">Backup library</h2>
+                        <p className="mt-1 text-xs leading-relaxed text-base-content/50">
+                            Download, preserve, restore, or delete existing snapshots.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="badge badge-ghost badge-sm shrink-0">
+                            {backups.length} {backups.length === 1 ? "backup" : "backups"}
+                        </span>
+                        <Button variant="ghost" size="small" onClick={() => void refreshList()}>
+                            <Icon name="refresh" className="!text-[16px]" />
+                            Refresh
+                        </Button>
+                    </div>
                 </div>
 
                 {backups.length === 0 ? (
-                    <p className="text-sm text-base-content/50">No backups yet.</p>
+                    <div className="rounded-lg border border-dashed border-base-content/15 bg-base-200/20 px-4 py-8 text-center">
+                        <Icon name="folder_off" className="!text-[28px] text-base-content/35" />
+                        <p className="mt-2 text-sm text-base-content/55">No backups yet.</p>
+                        <p className="mt-1 text-xs text-base-content/40">
+                            Create one above or upload an archive to get started.
+                        </p>
+                    </div>
                 ) : (
                     <ul className="space-y-3">
                         {backups.map((backup) => {
@@ -524,22 +645,25 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
                             return (
                                 <li
                                     key={backup.id}
-                                    className="rounded border border-base-content/10 bg-base-200/40 p-3 space-y-3"
+                                    className="overflow-hidden rounded-lg border border-base-content/10 bg-base-100"
                                 >
-                                    <div className="flex flex-wrap items-start justify-between gap-2">
-                                        <div className="space-y-1">
+                                    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-base-content/10 p-4">
+                                        <div className="min-w-0 space-y-1">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span className="font-mono text-sm text-base-content">{backup.id}</span>
-                                                <Badge className="badge-sm">{backup.kind}</Badge>
-                                                {backup.preserved && <Badge className="badge-sm badge-warning">preserved</Badge>}
+                                                <Badge className="badge-sm badge-ghost">{backup.kind}</Badge>
+                                                {backup.preserved && (
+                                                    <Badge className="badge-sm badge-warning badge-soft">preserved</Badge>
+                                                )}
                                             </div>
                                             <p className="text-[11px] text-base-content/50">
                                                 {formatDate(backup.createdAt)} · {formatBytes(totalBytes)}
                                                 {backup.appVersion ? ` · v${backup.appVersion}` : ""}
                                             </p>
                                         </div>
-                                        <label className="flex items-center gap-2 text-xs text-base-content/80">
+                                        <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-base-200/40 px-3 py-1.5 text-xs text-base-content/80">
                                             <Checkbox
+                                                className="checkbox-primary checkbox-sm"
                                                 checked={backup.preserved}
                                                 onChange={(e) =>
                                                     void updateBackup(backup.id, { preserved: e.target.checked })
@@ -548,59 +672,66 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
                                             Preserve
                                         </label>
                                     </div>
-                                    <Input
-                                        defaultValue={backup.notes ?? ""}
-                                        placeholder="Notes"
-                                        onBlur={(e) => {
-                                            if (e.target.value !== (backup.notes ?? "")) {
-                                                void updateBackup(backup.id, { notes: e.target.value });
-                                            }
-                                        }}
-                                    />
-                                    <div className="flex flex-wrap gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="small"
-                                            disabled={busy === `download-${backup.id}`}
-                                            onClick={() => void downloadBackup(backup.id)}
-                                        >
-                                            {busy === `download-${backup.id}`
-                                                ? <Spinner className="h-4 w-4" />
-                                                : <Icon name="download" className="!text-[16px]" />}
-                                            Download
-                                        </Button>
-                                        <Button
-                                            variant="warning"
-                                            size="small"
-                                            disabled={!!busy || taskRunning}
-                                            onClick={() => setConfirmRestoreId(backup.id)}
-                                        >
-                                            <Icon name="restore" className="!text-[16px]" />
-                                            Restore
-                                        </Button>
-                                        <Button
-                                            variant="danger"
-                                            size="small"
-                                            disabled={busy === `delete-${backup.id}`}
-                                            onClick={() => setConfirmDeleteId(backup.id)}
-                                        >
-                                            <Icon name="delete" className="!text-[16px]" />
-                                            Delete
-                                        </Button>
+
+                                    <div className="space-y-3 p-4">
+                                        <Input
+                                            defaultValue={backup.notes ?? ""}
+                                            placeholder="Notes"
+                                            onBlur={(e) => {
+                                                if (e.target.value !== (backup.notes ?? "")) {
+                                                    void updateBackup(backup.id, { notes: e.target.value });
+                                                }
+                                            }}
+                                        />
+                                        <div className="flex flex-wrap gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="small"
+                                                disabled={busy === `download-${backup.id}`}
+                                                onClick={() => void downloadBackup(backup.id)}
+                                            >
+                                                {busy === `download-${backup.id}`
+                                                    ? <Spinner className="h-4 w-4" />
+                                                    : <Icon name="download" className="!text-[16px]" />}
+                                                Download
+                                            </Button>
+                                            <Button
+                                                variant="warning"
+                                                size="small"
+                                                disabled={!!busy || taskRunning}
+                                                onClick={() => setConfirmRestoreId(backup.id)}
+                                            >
+                                                <Icon name="restore" className="!text-[16px]" />
+                                                Restore
+                                            </Button>
+                                            <Button
+                                                variant="danger"
+                                                size="small"
+                                                disabled={busy === `delete-${backup.id}`}
+                                                onClick={() => setConfirmDeleteId(backup.id)}
+                                            >
+                                                <Icon name="delete" className="!text-[16px]" />
+                                                Delete
+                                            </Button>
+                                        </div>
                                     </div>
                                 </li>
                             );
                         })}
                     </ul>
                 )}
-            </div>
 
-            <p className="text-[11px] leading-relaxed text-base-content/45">
-                Backups include <code className="font-mono">db.sqlite</code>,{" "}
-                <code className="font-mono">metrics.sqlite</code>, and <code className="font-mono">warden.db</code> as
-                logical SQL dumps. The <code className="font-mono">blobs/</code> folder is not included — restoring an
-                older dump may leave some items with missing blob files.
-            </p>
+                <div className="flex items-start gap-2 rounded-lg bg-base-200/30 px-3 py-2.5 text-xs leading-relaxed text-base-content/55">
+                    <Icon name="info" className="mt-0.5 !text-[17px] shrink-0 text-base-content/45" />
+                    <p>
+                        Backups include <code className="font-mono text-base-content/70">db.sqlite</code>,{" "}
+                        <code className="font-mono text-base-content/70">metrics.sqlite</code>, and{" "}
+                        <code className="font-mono text-base-content/70">warden.db</code> as logical SQL dumps. The{" "}
+                        <code className="font-mono text-base-content/70">blobs/</code> folder is not included — restoring
+                        an older dump may leave some items with missing blob files.
+                    </p>
+                </div>
+            </section>
 
             <ConfirmModal
                 show={confirmDeleteId !== null}

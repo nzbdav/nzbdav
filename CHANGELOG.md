@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.7.25](https://github.com/nzbdav/nzbdav/compare/v0.7.24...v0.7.25) (2026-07-17)
+
+
+### Features
+
+* **ui:** modernize speed-test panel and raise data budget options ([853c4cd](https://github.com/nzbdav/nzbdav/commit/853c4cdab24dc5f7f81afc740803a61804d04b5c))
+
+
+### Bug Fixes
+
+* **usenet:** keep long speed tests alive past proxy timeouts ([aeca1cf](https://github.com/nzbdav/nzbdav/commit/aeca1cfa07638ec06b86ad20a37c01de5a7a8049))
+* **usenet:** prefer healthy large files for speed-test corpus ([745a82a](https://github.com/nzbdav/nzbdav/commit/745a82ad335ac03fbd669046f39617388eb07171))
+* **usenet:** recover speed-test rates when the byte budget finishes in warmup ([ef4ff24](https://github.com/nzbdav/nzbdav/commit/ef4ff24a9ad5549e9be00d690cfb0b5f36858881))
+* **usenet:** rename speed-test MbPerSec fields to MegaBytesPerSec ([643d278](https://github.com/nzbdav/nzbdav/commit/643d27863da9ba1451d6272360d97d0a922d726f))
+* **usenet:** reserve speed-test budget for pipelining recommendations ([7ca4c0b](https://github.com/nzbdav/nzbdav/commit/7ca4c0b564f2d00df4bc49c2b97364fa63e086b1))
+* **usenet:** score speed-test confidence from knee region and confirm runs ([7445ef0](https://github.com/nzbdav/nzbdav/commit/7445ef07ad09f781aaa8ff7fa1ef254fcc33c21f))
+* **usenet:** speed test keeps budget for pipelining and fits results in the provider modal ([1d32148](https://github.com/nzbdav/nzbdav/commit/1d321487092c3f6493e1fe03191e3a91d1e70282))
+* **usenet:** speed test no longer reports low confidence on fast connections ([b66f375](https://github.com/nzbdav/nzbdav/commit/b66f375530e457d2e6ad08dfca449682f8d3f27b))
+* **usenet:** speed test uses MB correctly and survives long 20 GB runs ([69bf34e](https://github.com/nzbdav/nzbdav/commit/69bf34e9f6c5bfe2e176ace298c048a5499bcdfd))
+* **usenet:** stop speed-test cancel from poisoning NNTP sockets ([ede637e](https://github.com/nzbdav/nzbdav/commit/ede637e191f1ade24a10e42c711771b85b815d03))
+* **usenet:** stop verify-at-N from reporting 0 MB/s on fast lines ([0ed20cb](https://github.com/nzbdav/nzbdav/commit/0ed20cbbd07c54b2818e6ca7f6f9f60a02386da2))
+* **usenet:** Verify at N connections no longer reports 0 MB/s on fast lines ([62a94c9](https://github.com/nzbdav/nzbdav/commit/62a94c9b52c3b2770955ae2eba1605ef03b843ed))
+
+
+### UX
+
+* **usenet:** clarify speed-test rates vs total data used ([#440](https://github.com/nzbdav/nzbdav/issues/440)) ([a954e4d](https://github.com/nzbdav/nzbdav/commit/a954e4d446fbd26a23b18ac8cf3e627c7bea3a4f))
+
 ## [0.7.24](https://github.com/nzbdav/nzbdav/compare/v0.7.23...v0.7.24) (2026-07-17)
 
 

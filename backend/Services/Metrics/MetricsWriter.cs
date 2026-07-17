@@ -195,6 +195,48 @@ public class MetricsWriter : BackgroundService
 
     internal Task FlushNowAsync() => FlushAsync();
 
+    /// <summary>
+    /// Drops all queued-but-unflushed rows and zeroes the drop/flush health
+    /// counters. Used by the overview-stats reset so stale rows don't reappear
+    /// on the next flush tick.
+    /// </summary>
+    public void DiscardQueuedAndResetStats()
+    {
+        while (_fetches.TryDequeue(out _)) { }
+        while (_events.TryDequeue(out _)) { }
+        while (_sessions.TryDequeue(out _)) { }
+        while (_failoverMisses.TryDequeue(out _)) { }
+        Interlocked.Exchange(ref _droppedFetches, 0);
+        Interlocked.Exchange(ref _droppedEvents, 0);
+        Interlocked.Exchange(ref _droppedSessions, 0);
+        Interlocked.Exchange(ref _droppedFailoverMisses, 0);
+        Volatile.Write(ref _lastFlushError, null);
+    }
+
+    /// <summary>
+    /// Drops queued rows belonging to one provider (fetches and failover misses;
+    /// events and sessions are not provider-keyed). Drop counters are untouched.
+    /// </summary>
+    public void DiscardQueuedForProvider(string providerKey)
+    {
+        FilterQueue(_fetches, f => !string.Equals(f.Provider, providerKey, StringComparison.Ordinal));
+        FilterQueue(_failoverMisses, m =>
+            !string.Equals(m.FromProvider, providerKey, StringComparison.Ordinal)
+            && !string.Equals(m.ToProvider, providerKey, StringComparison.Ordinal));
+    }
+
+    private static void FilterQueue<T>(ConcurrentQueue<T> queue, Func<T, bool> keep)
+    {
+        // One pass over the current length: concurrent enqueues during the loop
+        // are newer entries and are simply kept.
+        var count = queue.Count;
+        for (var i = 0; i < count; i++)
+        {
+            if (!queue.TryDequeue(out var item)) break;
+            if (keep(item)) queue.Enqueue(item);
+        }
+    }
+
     public record MetricsStats(
         int QueuedFetches,
         int QueuedEvents,

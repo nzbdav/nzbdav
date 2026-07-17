@@ -86,6 +86,34 @@ public sealed class ProviderBytesTracker
         return drained;
     }
 
+    /// <summary>
+    /// Clears pending minute buckets and all lifetime counters. Used by the
+    /// overview-stats reset after usage has been folded into BytesUsedOffset.
+    /// Speed EWMAs are kept: they drive failover heuristics, not statistics.
+    /// </summary>
+    public void ResetCounters()
+    {
+        _buckets.Clear();
+        _lifetime.Clear();
+        Interlocked.Exchange(ref _lifetimeAll, 0);
+    }
+
+    /// <summary>
+    /// Clears one provider's pending buckets and lifetime counter, and deducts
+    /// its share from the all-time total. Unlike SetLifetime (config-change
+    /// rehydration), this is a deliberate stats reset, so the overview tile
+    /// dropping is the intended outcome.
+    /// </summary>
+    public void ResetProvider(string providerKey)
+    {
+        if (string.IsNullOrEmpty(providerKey)) return;
+        foreach (var key in _buckets.Keys)
+            if (key.ProviderKey == providerKey)
+                _buckets.TryRemove(key, out _);
+        if (_lifetime.TryRemove(providerKey, out var removed))
+            Interlocked.Add(ref _lifetimeAll, -removed);
+    }
+
     private static long NowMinute()
     {
         var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

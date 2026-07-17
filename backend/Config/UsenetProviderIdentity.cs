@@ -35,7 +35,9 @@ public static class UsenetProviderIdentity
 
         try
         {
-            await PersistProvidersAsync(configManager, providerConfig, ct).ConfigureAwait(false);
+            await SaveProvidersAsync(configManager, providerConfig, ct).ConfigureAwait(false);
+            Log.Information("Assigned and persisted ProviderId for {Count} usenet provider(s).",
+                providerConfig.Providers.Count);
         }
         catch (Exception ex)
         {
@@ -94,7 +96,12 @@ public static class UsenetProviderIdentity
         }
     }
 
-    private static async Task PersistProvidersAsync(
+    /// <summary>
+    /// Persists the full usenet.providers config item and refreshes
+    /// <see cref="ConfigManager"/>. Used after assigning ProviderIds and after
+    /// folding usage into BytesUsedOffset during an overview-stats reset.
+    /// </summary>
+    public static async Task SaveProvidersAsync(
         ConfigManager configManager,
         UsenetProviderConfig providerConfig,
         CancellationToken ct)
@@ -120,8 +127,6 @@ public static class UsenetProviderIdentity
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         configManager.UpdateValues([item]);
-        Log.Information("Assigned and persisted ProviderId for {Count} usenet provider(s).",
-            providerConfig.Providers.Count);
     }
 
     public static async Task RemapHostKeyedMetricsAsync(

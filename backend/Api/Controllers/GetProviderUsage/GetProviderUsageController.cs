@@ -33,6 +33,9 @@ public class GetProviderUsageController(
                     Index = index,
                     Host = provider.Host,
                     Nickname = provider.Nickname,
+                    ProviderId = provider.ProviderId == Guid.Empty
+                        ? null
+                        : UsenetProviderIdentity.MetricsKey(provider),
                     BytesUsed = used,
                     ByteLimit = provider.ByteLimit,
                     OverLimit = ProviderUsageHelper.IsOverLimit(bytesTracker, provider),

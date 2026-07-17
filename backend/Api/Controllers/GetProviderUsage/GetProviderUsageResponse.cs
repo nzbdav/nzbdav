@@ -12,6 +12,11 @@ public class GetProviderUsageResponse : BaseApiResponse
         public int Index { get; set; }
         public string Host { get; set; } = string.Empty;
         public string? Nickname { get; set; }
+        /// <summary>
+        /// Stable metrics key (<c>ProviderId</c> in "N" format). Null when the
+        /// provider has not yet been assigned an id.
+        /// </summary>
+        public string? ProviderId { get; set; }
         public long BytesUsed { get; set; }
         public long? ByteLimit { get; set; }
         public bool OverLimit { get; set; }

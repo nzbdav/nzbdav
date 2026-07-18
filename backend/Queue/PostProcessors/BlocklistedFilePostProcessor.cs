@@ -17,7 +17,8 @@ public class BlocklistedFilePostProcessor(ConfigManager configManager, DavDataba
             .Where(x => x.State == EntityState.Added)
             .Select(x => x.Entity)
             .Where(x => x.Type != DavItem.ItemType.Directory)
-            .Where(x => MatchesAnyPattern(x.Name, blocklistPatterns));
+            .Where(x => MatchesAnyPattern(x.Name, blocklistPatterns))
+            .ToList();
 
         foreach (var blocklistedFile in blocklistedFiles)
             RemoveBlocklistedFile(blocklistedFile);

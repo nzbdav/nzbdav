@@ -12,6 +12,7 @@ copyright = "NzbDav is released under the MIT License"
 nav = [
   { "Home" = "index.md" },
   { "Setup guide" = "setup-guide.md" },
+  { "SABnzbd API compatibility" = "sab-api.md" },
   { "Watchtower" = "watchtower.md" },
   { "NNTP pipelining" = "nntp-pipelining.md" },
   { "Contributing" = "contributing.md" },

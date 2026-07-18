@@ -636,7 +636,7 @@ Mounted content under `/content` can vanish for several independent reasons. Rep
 
 | Cause | Trigger | What happens |
 | --- | --- | --- |
-| History delete with delete-files | SAB API / UI history delete with `del_files=1` | Mounted DavItems for that history row are deleted (download dir immediately; children via background cleanup). |
+| History delete with delete-files | Admin UI history delete, or the NzbDav-specific `del_completed_files=1` API parameter | Mounted DavItems for that completed history row are deleted (download dir immediately; children via background cleanup). SAB's `del_files=1` applies only to failed jobs, which never mount content in NzbDav. |
 | Cascading child sweep | Any deleted directory | Children are deleted in the background (`DavCleanupService`). |
 | Health repair | `repair.enable` + missing Usenet articles | Orphaned/blocklisted items are deleted; linked items may be removed after *Arr remove-and-search. Unreachable *Arr instances defer deletion (fail safe). |
 | Remove Orphaned Files | Scheduled or manual task | Deletes Usenet files with **no library symlink/STRM** (and empty dirs). Uses library links, **not** SAB history. Aborts if fewer than 5 linked files are found or if more than 90% of deletable items look unlinked. |

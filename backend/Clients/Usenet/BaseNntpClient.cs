@@ -3,7 +3,6 @@ using NzbWebDAV.Exceptions;
 using NzbWebDAV.Extensions;
 using UsenetSharp.Clients;
 using UsenetSharp.Models;
-using UsenetSharp.Streams;
 
 namespace NzbWebDAV.Clients.Usenet;
 
@@ -18,7 +17,10 @@ public class BaseNntpClient : NntpClient
 {
     private readonly IUsenetClient _client;
 
-    public BaseNntpClient() : this(new UsenetClient())
+    public BaseNntpClient() : this(new UsenetClient(new UsenetClientOptions
+    {
+        CrcValidation = YencCrcValidationMode.WhenPresent,
+    }))
     {
     }
 
@@ -160,18 +162,25 @@ public class BaseNntpClient : NntpClient
     )
     {
         segmentId = PrepareSegmentId(segmentId);
-        var articleResponse = await _client.ArticleAsync(segmentId, onConnectionReadyAgain, cancellationToken);
+        var headResponse = await _client.HeadAsync(segmentId, cancellationToken).ConfigureAwait(false);
+        if (headResponse.ResponseType != UsenetResponseType.ArticleRetrievedHeadFollows)
+            throw CreateArticleFetchException(segmentId, headResponse);
 
-        if (articleResponse.ResponseType != UsenetResponseType.ArticleRetrievedHeadAndBodyFollow)
-            throw CreateArticleFetchException(segmentId, articleResponse);
+        // UsenetSharp validates CRCs on decoded BODY responses. Pair HEAD + BODY
+        // instead of locally decoding ARTICLE so first-segment metadata probes get
+        // the same corruption detection as normal streaming.
+        var bodyResponse = await _client.DecodedBodyAsync(
+            segmentId, onConnectionReadyAgain, cancellationToken).ConfigureAwait(false);
+        if (bodyResponse.ResponseType != UsenetResponseType.ArticleRetrievedBodyFollows)
+            throw CreateArticleFetchException(segmentId, bodyResponse);
 
         return new UsenetDecodedArticleResponse()
         {
-            SegmentId = articleResponse.SegmentId,
-            ResponseCode = articleResponse.ResponseCode,
-            ResponseMessage = articleResponse.ResponseMessage,
-            ArticleHeaders = articleResponse.ArticleHeaders!,
-            Stream = new YencStream(articleResponse.Stream!),
+            SegmentId = bodyResponse.SegmentId,
+            ResponseCode = bodyResponse.ResponseCode,
+            ResponseMessage = bodyResponse.ResponseMessage,
+            ArticleHeaders = headResponse.ArticleHeaders!,
+            Stream = bodyResponse.Stream!,
         };
     }
 

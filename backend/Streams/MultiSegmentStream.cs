@@ -16,6 +16,7 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
 {
     private const int BodyPipelineBatchSize = 4;
     private const int MaxBodyRetries = 2;
+    private const int MaxCorruptionRetries = 3;
     private const int MaxConsecutiveZeroFills = 3;
 
     private readonly Memory<string> _segmentIds;
@@ -273,6 +274,20 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
                     e.SegmentId,
                     e);
             }
+            catch (UsenetCorruptArticleException e) when (!cancellationToken.IsCancellationRequested)
+            {
+                if (attempt >= MaxCorruptionRetries)
+                    throw;
+
+                Log.Debug(
+                    e,
+                    "Corrupt segment {SegmentId} from provider {Provider}; retrying to allow provider failover (attempt {Attempt}).",
+                    segmentId,
+                    e.ProviderKey,
+                    attempt + 1);
+                await Task.Delay(TimeSpan.FromMilliseconds(250 * (attempt + 1)), cancellationToken)
+                    .ConfigureAwait(false);
+            }
             catch (Exception e) when (!cancellationToken.IsCancellationRequested)
             {
                 if (attempt < MaxBodyRetries)
@@ -328,6 +343,13 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
                 e.SegmentId,
                 e);
         }
+        catch (UsenetCorruptArticleException e) when (!cancellationToken.IsCancellationRequested)
+        {
+            var stream = await RetryCorruptSegmentAsync(
+                    segmentId, e, cancellationToken)
+                .ConfigureAwait(false);
+            return SegmentDownloadResult.Success(stream);
+        }
         catch (Exception e) when (!cancellationToken.IsCancellationRequested)
         {
             if (_failFastOnFirstSegment && isFirstSegment) throw;
@@ -335,6 +357,40 @@ public class MultiSegmentStream : FastReadOnlyNonSeekableStream
                 "Segment {SegmentId} unavailable while reading {FileName}. Zero-filling {Bytes} bytes to keep playback alive.",
                 segmentId, e);
         }
+    }
+
+    private async Task<Stream> RetryCorruptSegmentAsync(
+        string segmentId,
+        UsenetCorruptArticleException initialFailure,
+        CancellationToken cancellationToken)
+    {
+        var failure = initialFailure;
+        for (var attempt = 1; attempt <= MaxCorruptionRetries; attempt++)
+        {
+            Log.Debug(
+                failure,
+                "Corrupt pipelined segment {SegmentId} from provider {Provider}; retrying to allow provider failover (attempt {Attempt}).",
+                segmentId,
+                failure.ProviderKey,
+                attempt);
+            await Task.Delay(TimeSpan.FromMilliseconds(250 * attempt), cancellationToken)
+                .ConfigureAwait(false);
+
+            try
+            {
+                var response = await _usenetClient.DecodedBodyAsync(segmentId, cancellationToken)
+                    .ConfigureAwait(false);
+                return await DrainSegmentAsync(response.Stream!, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (UsenetCorruptArticleException exception)
+            {
+                failure = exception;
+            }
+        }
+
+        ExceptionDispatchInfo.Capture(failure).Throw();
+        throw new InvalidOperationException("Unreachable after rethrowing a corrupt segment failure.");
     }
 
     /// <summary>

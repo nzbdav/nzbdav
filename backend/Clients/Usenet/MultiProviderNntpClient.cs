@@ -13,6 +13,7 @@ using NzbWebDAV.Streams;
 using Serilog;
 using Serilog.Context;
 using UsenetSharp.Models;
+using UsenetSharp.Streams;
 
 namespace NzbWebDAV.Clients.Usenet;
 
@@ -244,7 +245,7 @@ public class MultiProviderNntpClient(
                 _usageTracker.RecordSuccess(primaryProvider.MetricsKey);
                 RecordFetch(primaryProvider.MetricsKey, SegmentFetch.FetchStatus.Ok,
                     primaryStopwatch.ElapsedMilliseconds, 0);
-                return WrapStreamForByteCounting(response, primaryProvider.MetricsKey);
+                return WrapProviderResponse(response, primaryProvider.MetricsKey);
             }
 
             if (response != null && UsenetArticleAvailability.IsDefinitiveMissing(response))
@@ -304,7 +305,7 @@ public class MultiProviderNntpClient(
                             _usageTracker.RecordFailoverSave();
                             RecordFailoverMisses(priorMisses, provider.MetricsKey);
                         }
-                        response = WrapStreamForByteCounting(response, provider.MetricsKey);
+                        response = WrapProviderResponse(response, provider.MetricsKey);
                         fallbackCompletionOwnedByTransfer = true;
                         deferredCallback.Activate(result =>
                         {
@@ -501,7 +502,7 @@ public class MultiProviderNntpClient(
                         _usageTracker.RecordFailoverSave();
                         RecordFailoverMisses(priorMisses, provider.MetricsKey);
                     }
-                    result = WrapStreamForByteCounting(result, provider.MetricsKey);
+                    result = WrapProviderResponse(result, provider.MetricsKey);
                     deferredCallback.Activate(onConnectionReadyAgain ?? (_ => { }));
                     return result;
                 }
@@ -630,7 +631,7 @@ public class MultiProviderNntpClient(
                         _usageTracker.RecordFailoverSave();
                         RecordFailoverMisses(priorMisses, rescuer: provider.MetricsKey);
                     }
-                    result = WrapStreamForByteCounting(result, provider.MetricsKey);
+                    result = WrapProviderResponse(result, provider.MetricsKey);
                 }
                 else if (result is UsenetDecodedBodyResponse or UsenetDecodedArticleResponse)
                 {
@@ -713,17 +714,30 @@ public class MultiProviderNntpClient(
         }
     }
 
-    private T WrapStreamForByteCounting<T>(T result, string metricsKey) where T : UsenetResponse
+    private T WrapProviderResponse<T>(T result, string metricsKey) where T : UsenetResponse
     {
-        if (bytesTracker == null) return result;
         return result switch
         {
             UsenetDecodedBodyResponse b
-                => (T)(object)(b with { Stream = new CountingYencStream(b.Stream!, bytesTracker, metricsKey, activeReadRegistry) }),
+                => (T)(object)(b with
+                {
+                    Stream = WrapProviderStream(b.Stream!, b.SegmentId, metricsKey)
+                }),
             UsenetDecodedArticleResponse a
-                => (T)(object)(a with { Stream = new CountingYencStream(a.Stream!, bytesTracker, metricsKey, activeReadRegistry) }),
+                => (T)(object)(a with
+                {
+                    Stream = WrapProviderStream(a.Stream!, a.SegmentId, metricsKey)
+                }),
             _ => result,
         };
+    }
+
+    private YencStream WrapProviderStream(YencStream stream, SegmentId segmentId, string metricsKey)
+    {
+        YencStream wrapped = new CorruptionDetectingYencStream(stream, segmentId, metricsKey);
+        if (bytesTracker != null)
+            wrapped = new CountingYencStream(wrapped, bytesTracker, metricsKey, activeReadRegistry);
+        return wrapped;
     }
 
     private static SegmentFetch.FetchStatus ClassifyException(Exception ex)

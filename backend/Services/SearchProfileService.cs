@@ -490,7 +490,7 @@ public class SearchProfileService(
             if (alive.Count > 0) candidates = alive;
         }
 
-        var tokens = cache.AddGroup(candidates, type, profileToken, id);
+        var tokens = await cache.AddGroupAsync(candidates, type, profileToken, id).ConfigureAwait(false);
         if (startPreflight)
             preflightOrchestrator.Start(profileToken, type, id, candidates);
 

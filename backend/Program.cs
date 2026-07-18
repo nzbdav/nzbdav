@@ -174,7 +174,7 @@ class Program
                     sp.GetRequiredService<UsenetStreamingClient>(),
                     sp.GetRequiredService<ConfigManager>()))
                 .AddSingleton<QueueManager>()
-                .AddSingleton<NzbResolutionCache>()
+                .AddSingleton(_ => new NzbResolutionCache(() => new DavDatabaseContext()))
                 .AddSingleton<PreferredOrderStore>()
                 .AddSingleton<NzbFetchCoalescer>()
                 .AddSingleton<PlayResolutionCoalescer>()

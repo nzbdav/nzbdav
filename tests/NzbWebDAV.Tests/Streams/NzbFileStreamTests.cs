@@ -296,11 +296,27 @@ public class NzbFileStreamTests
             firstFlakyBody);
     }
 
+    /// <summary>
+    /// Serilog's <see cref="Log.Logger"/> is process-global, so while a test has this
+    /// sink installed every test class running in parallel emits into it too.
+    /// The fix is to lock writes and return a snapshot for reads.
+    /// </summary>
     private sealed class CollectingSink : ILogEventSink
     {
-        public List<LogEvent> Events { get; } = [];
+        private readonly List<LogEvent> _events = [];
 
-        public void Emit(LogEvent logEvent) => Events.Add(logEvent);
+        public IReadOnlyList<LogEvent> Events
+        {
+            get
+            {
+                lock (_events) return _events.ToArray();
+            }
+        }
+
+        public void Emit(LogEvent logEvent)
+        {
+            lock (_events) _events.Add(logEvent);
+        }
     }
 
     /// <summary>

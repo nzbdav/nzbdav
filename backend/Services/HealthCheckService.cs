@@ -106,7 +106,16 @@ public class HealthCheckService : BackgroundService
             }
             catch (Exception e)
             {
-                Log.Error(e, $"Unexpected error performing background health checks: {e.Message}");
+                if (e.TryGetKnownErrorMessage(out var reason))
+                {
+                    Log.Warning("Background health check deferred. Reason: {Reason}", reason);
+                    Log.Debug(e, "Background health check known failure stack");
+                }
+                else
+                {
+                    Log.Error(e, "Unexpected error performing background health checks: {Message}", e.Message);
+                }
+
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken).ConfigureAwait(false);
             }
         }
@@ -238,7 +247,33 @@ public class HealthCheckService : BackgroundService
                 HealthCheckResult.RepairAction.ActionNeeded,
                 $"Unexpected NNTP response during health check: {e.Message}", ct).ConfigureAwait(false);
         }
+        catch (Exception e) when (e.IsTransientTransportException())
+        {
+            // STAT/read timeouts and socket/IO failures must not dump stacks or trigger Arr repair —
+            // defer and surface ActionNeeded with a single human-readable Warning.
+            _ = _websocketManager.SendMessage(WebsocketTopic.HealthItemProgress, $"{davItem.Id}|100");
+            _ = _websocketManager.SendMessage(WebsocketTopic.HealthItemProgress, $"{davItem.Id}|done");
+            var utcNow = DateTimeOffset.UtcNow;
+            davItem.LastHealthCheck = utcNow;
+            davItem.NextHealthCheck = utcNow + TimeSpan.FromDays(1);
+            e.TryGetKnownErrorMessage(out var reason);
+            Log.Warning(
+                "NNTP transport failure during health check for {Path}. Deferred next check. Reason: {Reason}",
+                davItem.Path, reason);
+            Log.Debug(e, "Health check transport failure stack for {Path}", davItem.Path);
+            await RecordHealthResult(
+                dbClient, davItem,
+                HealthCheckResult.HealthResult.Unhealthy,
+                HealthCheckResult.RepairAction.ActionNeeded,
+                FormatTransportFailureHealthMessage(reason), ct).ConfigureAwait(false);
+        }
     }
+
+    /// <summary>
+    /// Health-result message for deferred NNTP transport failures (timeouts, socket/IO).
+    /// </summary>
+    internal static string FormatTransportFailureHealthMessage(string reason) =>
+        $"NNTP transport failure during health check: {reason}";
 
     /// <summary>
     /// Schedules the next health check so the interval doubles with the item's age since release,

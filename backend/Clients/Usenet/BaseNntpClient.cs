@@ -19,7 +19,8 @@ public class BaseNntpClient : NntpClient
     /// <summary>
     /// Sweep chunk size for <see cref="StatsPipelinedAsync"/>. UsenetSharp windows STAT
     /// internally with a sliding MaxPipelineDepth; this bound is only for progress
-    /// reporting and early-stop-on-miss granularity (not BODY pipelining depth).
+    /// reporting and call batching (not BODY pipelining depth). The sweep drains the
+    /// full enumerable — misses are collected for failover recheck, not early-stopped.
     /// </summary>
     internal const int StatPipelinedSweepChunkSize = 512;
 

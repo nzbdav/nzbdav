@@ -473,11 +473,21 @@ public abstract class NntpClient : INntpClient
                 missing.Add(result.SegmentId);
             }
         }
-        catch (UsenetUnexpectedResponseException)
+        catch (Exception e) when (!e.IsCancellationException())
         {
-            // Session hiccup during the primary-only sweep: fall back to the concurrent
-            // path rather than failing the health check (retryable parity with today).
-            await CheckAllSegmentsAsync(segmentIds, fallbackConcurrency, progress, cancellationToken)
+            // Session/protocol/transport failure during the primary-only sweep (e.g.
+            // UsenetUnexpectedResponseException for a buffered 400 goodbye, or
+            // UsenetSharp UsenetProtocolException when the connection dies mid-batch):
+            // fall back to the concurrent path rather than failing the check.
+            Log.Debug(
+                e,
+                "Pipelined STAT sweep failed after {Processed}/{Total} segments; falling back to concurrent STAT",
+                processed,
+                segmentIds.Count);
+            var fallbackProgress = progress == null
+                ? null
+                : new Progress<int>(n => progress.Report(Math.Max(processed, n)));
+            await CheckAllSegmentsAsync(segmentIds, fallbackConcurrency, fallbackProgress, cancellationToken)
                 .ConfigureAwait(false);
             return;
         }

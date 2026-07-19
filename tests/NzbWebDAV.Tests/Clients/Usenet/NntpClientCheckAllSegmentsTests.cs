@@ -1,6 +1,7 @@
 using NzbWebDAV.Clients.Usenet;
 using NzbWebDAV.Clients.Usenet.Models;
 using NzbWebDAV.Exceptions;
+using UsenetSharp.Exceptions;
 using UsenetSharp.Models;
 using UsenetSharp.Streams;
 
@@ -101,13 +102,49 @@ public class NntpClientCheckAllSegmentsTests
         var client = new TrackingPipelinedStatClient(
             pipelinedExists: null,
             recheckCodes: [223, 223],
-            throwUnexpectedOnSweep: true);
+            sweepException: new UsenetUnexpectedResponseException("a@example", "400 idle timeout"));
 
         await client.CheckAllSegmentsPipelinedAsync(
             ["a@example", "b@example"], 8, 2, null, CancellationToken.None);
 
         Assert.Equal(1, client.CheckAllSegmentsCallCount);
         Assert.Equal(["a@example", "b@example"], client.RecheckedSegmentIds);
+    }
+
+    [Fact]
+    public async Task CheckAllSegmentsPipelinedAsync_SweepThrowsProtocol_FallsBackToFullConcurrentPath()
+    {
+        var client = new TrackingPipelinedStatClient(
+            pipelinedExists: null,
+            recheckCodes: [223, 223],
+            sweepException: new UsenetProtocolException(
+                "The NNTP connection closed before all pipelined STAT responses were received."));
+
+        await client.CheckAllSegmentsPipelinedAsync(
+            ["a@example", "b@example"], 8, 2, null, CancellationToken.None);
+
+        Assert.Equal(1, client.CheckAllSegmentsCallCount);
+        Assert.Equal(["a@example", "b@example"], client.RecheckedSegmentIds);
+    }
+
+    [Fact]
+    public async Task CheckAllSegmentsPipelinedAsync_SweepThrowsAfterProgress_FallbackProgressIsMonotonic()
+    {
+        var reports = new List<int>();
+        var progress = new Progress<int>(n => reports.Add(n));
+        var client = new TrackingPipelinedStatClient(
+            pipelinedExists: [true, true, true],
+            recheckCodes: [223, 223, 223],
+            sweepException: new UsenetProtocolException("connection closed mid-sweep"),
+            throwAfterYieldCount: 2);
+
+        await client.CheckAllSegmentsPipelinedAsync(
+            ["a@example", "b@example", "c@example"], 8, 2, progress, CancellationToken.None);
+
+        Assert.Equal(1, client.CheckAllSegmentsCallCount);
+        Assert.Equal(["a@example", "b@example", "c@example"], client.RecheckedSegmentIds);
+        // Pipelined reports 1,2 then throw; fallback clamps so n=1,2 stay at 2 before advancing to 3.
+        Assert.Equal([1, 2, 2, 2, 3], reports);
     }
 
     [Fact]
@@ -128,7 +165,8 @@ public class NntpClientCheckAllSegmentsTests
     private sealed class TrackingPipelinedStatClient(
         bool[]? pipelinedExists,
         int[] recheckCodes,
-        bool throwUnexpectedOnSweep = false) : NntpClient
+        Exception? sweepException = null,
+        int throwAfterYieldCount = 0) : NntpClient
     {
         private int _recheckIndex;
 
@@ -141,11 +179,14 @@ public class NntpClientCheckAllSegmentsTests
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
             await Task.Yield();
-            if (throwUnexpectedOnSweep)
-                throw new UsenetUnexpectedResponseException(segmentIds[0], "400 idle timeout");
+            if (sweepException != null && throwAfterYieldCount <= 0)
+                throw sweepException;
 
             for (var i = 0; i < segmentIds.Count; i++)
             {
+                if (sweepException != null && i == throwAfterYieldCount)
+                    throw sweepException;
+
                 yield return new PipelinedStatResult
                 {
                     SegmentId = segmentIds[i],

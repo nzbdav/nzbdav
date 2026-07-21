@@ -164,12 +164,45 @@ jobs:
           RELEASE_URL="https://github.com/${REPO}/releases/tag/v${VERSION}"
           ANNOUNCEMENT_BODY=$(printf '**New Release: v%s**\n%s\n\n%s' "${VERSION}" "${RELEASE_NOTES}" "${RELEASE_URL}")
 
+          # Discord content limit is 2000; split on newlines instead of truncating.
           MAX_LEN=1900
-          if [ "${#ANNOUNCEMENT_BODY}" -gt "${MAX_LEN}" ]; then
-            ANNOUNCEMENT_BODY="${ANNOUNCEMENT_BODY:0:$((MAX_LEN - 3))}..."
-          fi
+          post_discord_chunk() {
+            local escaped
+            escaped=$(printf '%s' "$1" | jq -Rsa .)
+            curl --fail-with-body -sS -H "Content-Type: application/json" \
+              -d "{\"content\": ${escaped}, \"flags\": 4}" \
+              "$DISCORD_ANNOUNCEMENTS_WEBHOOK_URL"
+          }
 
-          ESCAPED_BODY=$(printf '%s' "$ANNOUNCEMENT_BODY" | jq -Rsa .)
-          curl --fail-with-body -sS -H "Content-Type: application/json" \
-            -d "{\"content\": ${ESCAPED_BODY}, \"flags\": 4}" \
-            "$DISCORD_ANNOUNCEMENTS_WEBHOOK_URL"
+          buf=""
+          first_chunk=1
+          while IFS= read -r line || [ -n "${line}" ]; do
+            if [ -n "${buf}" ]; then
+              candidate="${buf}"$'\n'"${line}"
+            else
+              candidate="${line}"
+            fi
+            if [ "${#candidate}" -le "${MAX_LEN}" ]; then
+              buf="${candidate}"
+              continue
+            fi
+            if [ -n "${buf}" ]; then
+              if [ "${first_chunk}" -eq 0 ]; then sleep 1; fi
+              post_discord_chunk "${buf}"
+              first_chunk=0
+              buf="${line}"
+            else
+              buf="${line}"
+            fi
+            while [ "${#buf}" -gt "${MAX_LEN}" ]; do
+              if [ "${first_chunk}" -eq 0 ]; then sleep 1; fi
+              post_discord_chunk "${buf:0:${MAX_LEN}}"
+              first_chunk=0
+              buf="${buf:${MAX_LEN}}"
+            done
+          done <<< "${ANNOUNCEMENT_BODY}"
+
+          if [ -n "${buf}" ]; then
+            if [ "${first_chunk}" -eq 0 ]; then sleep 1; fi
+            post_discord_chunk "${buf}"
+          fi

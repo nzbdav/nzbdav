@@ -19,7 +19,7 @@ public class TestIndexerConnectionController(NzbWebDAV.Config.ConfigManager conf
                 : request.ProxyUrl;
             var timeout = request.TimeoutSeconds
                           ?? (indexerConfig.TimeoutSeconds is int g && g > 0 ? g : NzbWebDAV.Config.IndexerConfig.DefaultTimeoutSeconds);
-            var client = new NewznabClient(request.Url, request.ApiKey, ua, proxy, timeout);
+            var client = new NewznabClient(request.Url, request.ApiKey, ua, proxy, timeout, request.UseHealthProxy);
             var ok = await client.TestAsync(HttpContext.RequestAborted).ConfigureAwait(false);
             return Ok(new TestIndexerConnectionResponse { Status = true, Connected = ok });
         }

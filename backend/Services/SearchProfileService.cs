@@ -628,7 +628,7 @@ public class SearchProfileService(
                 var proxy = string.IsNullOrWhiteSpace(x.ProxyUrl) ? globalProxy : x.ProxyUrl;
                 var timeout = indexerConfig.GetEffectiveTimeoutSeconds(x);
                 var target = indexerConfig.GetEffectiveSearchResultLimit(x);
-                var client = new NewznabClient(x.Url, x.ApiKey, searchUa, proxy, timeout);
+                var client = new NewznabClient(x.Url, x.ApiKey, searchUa, proxy, timeout, x.UseHealthProxy);
                 var baseQuery = ApplyIndexerCategoryOverrides(queryParams, x);
 
                 // Page through the indexer (offset += 100) until we've gathered `target` results,

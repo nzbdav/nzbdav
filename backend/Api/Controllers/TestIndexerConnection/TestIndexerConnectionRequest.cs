@@ -9,6 +9,7 @@ public class TestIndexerConnectionRequest
     public string? UserAgent { get; init; }
     public string? ProxyUrl { get; init; }
     public int? TimeoutSeconds { get; init; }
+    public bool UseHealthProxy { get; init; }
 
     public TestIndexerConnectionRequest(HttpContext context)
     {
@@ -22,5 +23,7 @@ public class TestIndexerConnectionRequest
         ProxyUrl = context.Request.Form["proxyUrl"].FirstOrDefault();
         var rawTimeout = context.Request.Form["timeoutSeconds"].FirstOrDefault();
         TimeoutSeconds = int.TryParse(rawTimeout, out var t) && t > 0 ? t : null;
+        UseHealthProxy = string.Equals(
+            context.Request.Form["useHealthProxy"].FirstOrDefault(), "true", StringComparison.OrdinalIgnoreCase);
     }
 }

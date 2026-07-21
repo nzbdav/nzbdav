@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -18,34 +18,7 @@ public static class SymlinkAndStrmUtil
 
     private static IEnumerable<ISymlinkOrStrmInfo> GetAllSymlinksAndStrmsLinux(string directoryPath)
     {
-        // find -exec (instead of piping to xargs) keeps traversal errors (permission
-        // denied, etc.) in find's own exit code without `set -o pipefail`, which
-        // Ubuntu's dash (/bin/sh) does not support.
-        const string command =
-            """
-            find . \( -type l -o -name '*.strm' \) -exec sh -c '
-              for path in \"$@\"; do
-                echo \"$path\"
-                if [ \"${path##*.}\" = \"strm\" ]; then
-                  echo \"$(cat \"$path\")\"
-                else
-                  echo \"$(readlink \"$path\")\"
-                fi
-              done
-            ' sh {} +
-            """;
-
-        var escapedDirectory = directoryPath.Replace("'", "'\"'\"'");
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "sh",
-            Arguments = $"-c \"cd '{escapedDirectory}' && {command}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
+        var startInfo = CreateLinuxFindStartInfo(directoryPath);
         using var process = Process.Start(startInfo)!;
 
         // Drain stderr asynchronously. Leaving it unread can fill the OS pipe buffer and
@@ -66,26 +39,25 @@ public static class SymlinkAndStrmUtil
         };
         process.BeginErrorReadLine();
 
-        while (process.StandardOutput.EndOfStream == false)
+        while (ReadNullTerminated(process.StandardOutput) is { } filePath)
         {
-            var filePath = process.StandardOutput.ReadLine();
-            if (filePath == null) break;
-            var target = process.StandardOutput.ReadLine();
-            if (target == null) break;
-
-            if (filePath.ToLower().EndsWith(".strm"))
+            var fullPath = Path.GetFullPath(filePath);
+            if (Path.GetExtension(fullPath).Equals(".strm", StringComparison.OrdinalIgnoreCase))
             {
-                yield return new StrmInfo()
+                yield return new StrmInfo
                 {
-                    StrmPath = Path.GetFullPath(filePath, directoryPath),
-                    TargetUrl = target
+                    StrmPath = fullPath,
+                    TargetUrl = File.ReadAllText(fullPath)
                 };
+                continue;
             }
-            else
+
+            var target = new FileInfo(fullPath).LinkTarget;
+            if (target is not null)
             {
-                yield return new SymlinkInfo()
+                yield return new SymlinkInfo
                 {
-                    SymlinkPath = Path.GetFullPath(filePath, directoryPath),
+                    SymlinkPath = fullPath,
                     TargetPath = target
                 };
             }
@@ -101,6 +73,52 @@ public static class SymlinkAndStrmUtil
             throw new InvalidOperationException(
                 $"Library symlink scan failed with exit code {process.ExitCode}" +
                 (string.IsNullOrWhiteSpace(stderr) ? "." : $": {stderr}"));
+        }
+    }
+
+    /// <summary>
+    /// Builds the Linux traversal process without a command shell. Every value,
+    /// including the user-selected root, is passed as a distinct argv entry.
+    /// </summary>
+    internal static ProcessStartInfo CreateLinuxFindStartInfo(string directoryPath)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "find",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        // -H preserves the old `cd root && find .` behavior when the selected
+        // root itself is a symlink, without following symlinks found below it.
+        startInfo.ArgumentList.Add("-H");
+        // An absolute starting point cannot be interpreted as a find option even
+        // when a caller supplies a relative directory beginning with '-'.
+        startInfo.ArgumentList.Add(Path.GetFullPath(directoryPath));
+        startInfo.ArgumentList.Add("(");
+        startInfo.ArgumentList.Add("-type");
+        startInfo.ArgumentList.Add("l");
+        startInfo.ArgumentList.Add("-o");
+        startInfo.ArgumentList.Add("-name");
+        startInfo.ArgumentList.Add("*.strm");
+        startInfo.ArgumentList.Add(")");
+        startInfo.ArgumentList.Add("-print0");
+        return startInfo;
+    }
+
+    private static string? ReadNullTerminated(StreamReader reader)
+    {
+        var value = new StringBuilder();
+        while (true)
+        {
+            var next = reader.Read();
+            if (next < 0)
+                return value.Length == 0 ? null : value.ToString();
+            if (next == '\0')
+                return value.ToString();
+            value.Append((char)next);
         }
     }
 

@@ -888,6 +888,7 @@ function ProviderModal({ show, provider, onClose, onSave, onApplyPipelining, def
 
     const handleTestConnection = useCallback(async () => {
         setIsTestingConnection(true);
+        setConnectionTested(false);
         setTestError(null);
 
         try {
@@ -1111,6 +1112,15 @@ function ProviderModal({ show, provider, onClose, onSave, onApplyPipelining, def
                     <Button variant="outline" onClick={onClose}>
                         Cancel
                     </Button>
+                    {canSave && type !== ProviderType.Disabled && (
+                        <Button
+                            variant="outline"
+                            onClick={handleTestConnection}
+                            disabled={!isFormValid || isTestingConnection}
+                        >
+                            {isTestingConnection ? "Testing..." : "Test Connection"}
+                        </Button>
+                    )}
                     {!canSave ? (
                         <Button
                             variant="primary"

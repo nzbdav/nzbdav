@@ -23,7 +23,7 @@ public class BaseStoreItemPropertyManager() : PropertyManager<BaseStoreItem>(Dav
         },
         new DavGetLastModified<BaseStoreItem>
         {
-            Getter = x => x.CreatedAt
+            Getter = x => x.CreatedAt.ToUniversalTime()
         },
         new Win32FileAttributes<BaseStoreItem>
         {

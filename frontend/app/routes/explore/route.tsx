@@ -25,6 +25,7 @@ export type ExplorePageData = {
     parentDirectories: string[],
     items: (DirectoryItem | ExploreFile)[],
     error: "not-found" | null,
+    enforceReadonly: boolean,
 }
 
 export type ExploreFile = DirectoryItem & {
@@ -46,14 +47,23 @@ export async function loader({ request, params }: Route.LoaderArgs) {
             parentDirectories: [],
             items: [],
             error: "not-found" as const,
+            enforceReadonly: true,
         };
     }
     const path = parsed.path;
     try {
+        const [entries, config] = await Promise.all([
+            backendClient.listWebdavDirectory(path),
+            backendClient.getConfig(["webdav.enforce-readonly"]),
+        ]);
+        // WebDAV is read-only by default in the backend, so an unset or empty value counts as enforced.
+        const enforceReadonlyValue = config.find(x => x.configName === "webdav.enforce-readonly")?.configValue;
+        const enforceReadonly = !enforceReadonlyValue || enforceReadonlyValue.toLowerCase() === "true";
         return {
             parentDirectories: getParentDirectories(path),
             error: null,
-            items: (await backendClient.listWebdavDirectory(path)).map(x => {
+            enforceReadonly,
+            items: entries.map(x => {
                 if (x.isDirectory) return x;
                 return {
                     ...x,
@@ -68,6 +78,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
             parentDirectories: getParentDirectories(path),
             items: [],
             error: "not-found" as const,
+            enforceReadonly: true,
         };
     }
 }
@@ -88,7 +99,7 @@ function Body(props: ExplorePageData) {
     const parentDirectories = isNavigating
         ? getParentDirectories(getWebdavPathDecoded(navigation.location!.pathname))
         : props.parentDirectories;
-    const canDelete = isDeletable(parentDirectories);
+    const canDelete = isDeletable(parentDirectories, props.enforceReadonly);
 
     const [query, setQuery] = useState("");
     const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -657,8 +668,8 @@ function getParentDirectories(webdavPath: string): string[] {
     return webdavPath == "" ? [] : webdavPath.split('/');
 }
 
-function isDeletable(parentDirectories: string[]): boolean {
-    return parentDirectories.length >= 2;
+export function isDeletable(parentDirectories: string[], enforceReadonly: boolean): boolean {
+    return parentDirectories.length >= 2 && !enforceReadonly;
 }
 
 function getClassName(item: DirectoryItem | ExploreFile, isSelected: boolean) {

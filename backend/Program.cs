@@ -64,18 +64,9 @@ class Program
             .MinimumLevel.Override("Microsoft.AspNetCore.Routing", AtLeast(level, LogEventLevel.Warning))
             .MinimumLevel.Override("Microsoft.AspNetCore.Server.Kestrel", AtLeast(level, LogEventLevel.Error))
             .MinimumLevel.Override("Microsoft.AspNetCore.DataProtection", AtLeast(level, LogEventLevel.Error))
-            // Suppress NWebDav's per-property "raised an exception" Errors when
-            // the cause is client cancellation. When a WebDAV client disconnects
-            // mid-PROPFIND, PropFindHandler keeps iterating its property list
-            // and every remaining property's getter throws
-            // OperationCanceledException against the now-cancelled token. Each
-            // one logs an Error with a full stack trace — ~10 lines for a
-            // single cancelled PROPFIND, and clients like Plex/Jellyfin/rclone
-            // cancel slow PROPFINDs routinely. Client cancellation is normal
-            // behaviour, not an error worth alerting on.
-            .Filter.ByExcluding(e =>
-                e.Exception is OperationCanceledException
-                && e.MessageTemplate.Text.StartsWith("Property "))
+            // NWebDav logs every remaining property as an Error after a
+            // PROPFIND client disconnects. Suppress only that known event.
+            .Filter.ByExcluding(NWebDavLogFilter.IsCancelledPropFindPropertyError)
             .WriteTo.Console(new ExpressionTemplate(
                 "[{@t:HH:mm:ss} {@l:u3}] " +
                 "{#if SourceContext is not null}" +

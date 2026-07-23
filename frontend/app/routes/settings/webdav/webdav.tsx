@@ -24,7 +24,7 @@ function SettingsCard({
     return (
         <section className="overflow-hidden rounded-lg border border-base-content/10 bg-base-100">
             <div className="flex items-start gap-3 border-b border-base-content/10 p-4">
-                <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Icon name={icon} className="!text-[20px]" />
                 </span>
                 <div>

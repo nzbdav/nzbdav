@@ -8,6 +8,7 @@ using NzbWebDAV.Database;
 using NzbWebDAV.Database.Models;
 using NzbWebDAV.Exceptions;
 using NzbWebDAV.Extensions;
+using NzbWebDAV.Queue;
 using NzbWebDAV.Queue.PostProcessors;
 using NzbWebDAV.Utils;
 using NzbWebDAV.Websocket;
@@ -34,6 +35,7 @@ public class HealthCheckService : BackgroundService
     private readonly WebsocketManager _websocketManager;
     private readonly BenchmarkGate _benchmarkGate;
     private readonly StreamingFailureTracker _failureTracker;
+    private readonly QueueManager _queueManager;
 
     private static readonly HashSet<string> _missingSegmentIds = [];
     private static readonly Queue<string> _missingSegmentOrder = [];
@@ -44,7 +46,8 @@ public class HealthCheckService : BackgroundService
         UsenetStreamingClient usenetClient,
         WebsocketManager websocketManager,
         BenchmarkGate benchmarkGate,
-        StreamingFailureTracker failureTracker
+        StreamingFailureTracker failureTracker,
+        QueueManager queueManager
     )
     {
         _configManager = configManager;
@@ -52,6 +55,7 @@ public class HealthCheckService : BackgroundService
         _websocketManager = websocketManager;
         _benchmarkGate = benchmarkGate;
         _failureTracker = failureTracker;
+        _queueManager = queueManager;
 
         _configManager.OnConfigChanged += (_, configEventArgs) =>
         {
@@ -80,6 +84,15 @@ public class HealthCheckService : BackgroundService
 
                 // if the repair-job is disabled, then don't do anything
                 if (!_configManager.IsRepairJobEnabled())
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                // Defer new background library health checks while the NZB queue
+                // is actively processing. An already-running check finishes normally;
+                // queue-item article validation inside QueueItemProcessor is separate.
+                if (_queueManager.HasActiveQueueItems)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken).ConfigureAwait(false);
                     continue;

@@ -45,6 +45,7 @@ const defaultConfig = {
     "usenet.max-download-connections-per-stream": "false",
     "usenet.max-download-connections-per-stream-preset": "high",
     "usenet.max-queue-connections": "",
+    "queue.worker-count": "1",
     "usenet.streaming-priority": "80",
     "usenet.streaming-segment-timeout-seconds": "8",
     "usenet.streaming-segment-retries": "3",

@@ -18,21 +18,37 @@ public class GetQueueController(
 {
     private async Task<GetQueueResponse> GetQueueAsync(GetQueueRequest request)
     {
-        // get in progress item
-        var (inProgressQueueItem, progressPercentage) = queueManager.GetInProgressQueueItem();
+        // Snapshot every in-progress item (primary first).
+        var inProgress = queueManager.GetInProgressQueueItems();
+        if (!string.IsNullOrEmpty(request.Category))
+        {
+            inProgress = inProgress
+                .Where(x => x.QueueItem.Category == request.Category)
+                .ToList();
+        }
+
+        var inProgressIds = inProgress.Select(x => x.QueueItem.Id).ToHashSet();
+        var inProgressById = inProgress.ToDictionary(x => x.QueueItem.Id);
 
         // get total count
         var ct = request.CancellationToken;
         var totalCount = await dbClient.GetQueueItemsCount(request.Category, ct).ConfigureAwait(false);
 
-        // get queued items
-        var getQueueItemsTask = dbClient.GetQueueItems(request.Category, request.Start, request.Limit, ct);
-        var queueItems = (await getQueueItemsTask.ConfigureAwait(false))
-            .Where(x => x.Id != inProgressQueueItem?.Id)
+        // get queued items, then merge active items ahead for the requested page
+        var getQueueItemsTask = dbClient.GetQueueItems(request.Category, 0, request.Start + request.Limit, ct);
+        var queuedItems = (await getQueueItemsTask.ConfigureAwait(false))
+            .Where(x => !inProgressIds.Contains(x.Id))
             .ToArray();
 
+        var merged = inProgress
+            .Select(x => x.QueueItem)
+            .Concat(queuedItems)
+            .Skip(request.Start)
+            .Take(request.Limit)
+            .ToList();
+
         // Metrics keys of every configured Usenet provider — used to show idle providers
-        // alongside active ones for the in-progress download.
+        // alongside active ones for in-progress downloads.
         var configuredProviders = configManager.GetUsenetProviderConfig().Providers;
         var configuredKeys = configuredProviders
             .Where(p => p.ProviderId != Guid.Empty)
@@ -42,24 +58,23 @@ public class GetQueueController(
         var displayByMetricsKey = ProviderUsageHelper.BuildDisplayByMetricsKey(configuredProviders);
 
         // get slots
-        var slots = queueItems
-            .Prepend(request is { Start: 0, Limit: > 0 } ? inProgressQueueItem : null)
-            .Where(queueItem => queueItem != null)
+        var slots = merged
             .Select((queueItem, index) =>
             {
-                var isInProgress = queueItem == inProgressQueueItem;
-                var percentage = (isInProgress ? progressPercentage : 0)!.Value;
+                var isInProgress = inProgressById.TryGetValue(queueItem.Id, out var active);
+                var percentage = isInProgress ? active.ProgressPercentage : 0;
                 var status = isInProgress ? "Downloading" : "Queued";
                 IReadOnlyDictionary<string, long> providerUsage =
-                    GetProviderUsageForSlot(isInProgress, queueItem!.Id, providerUsageTracker);
+                    GetProviderUsageForSlot(isInProgress, queueItem.Id, providerUsageTracker);
                 if (isInProgress && configuredKeys.Count > 0)
                 {
-                    var merged = new Dictionary<string, long>();
-                    foreach (var key in configuredKeys) merged[key] = 0;
-                    foreach (var kv in providerUsage) merged[kv.Key] = kv.Value;
-                    providerUsage = merged;
+                    var mergedUsage = new Dictionary<string, long>();
+                    foreach (var key in configuredKeys) mergedUsage[key] = 0;
+                    foreach (var kv in providerUsage) mergedUsage[kv.Key] = kv.Value;
+                    providerUsage = mergedUsage;
                 }
-                return GetQueueResponse.QueueSlot.FromQueueItem(queueItem!, index, percentage, status, providerUsage, displayByMetricsKey);
+                return GetQueueResponse.QueueSlot.FromQueueItem(
+                    queueItem, index, percentage, status, providerUsage, displayByMetricsKey);
             })
             .ToList();
 
@@ -77,7 +92,7 @@ public class GetQueueController(
 
     /// <summary>
     /// Queued slots do not display live provider metrics; only snapshot the
-    /// in-progress item to keep large queues responsive.
+    /// in-progress items to keep large queues responsive.
     /// </summary>
     internal static IReadOnlyDictionary<string, long> GetProviderUsageForSlot(
         bool isInProgress,

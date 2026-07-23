@@ -66,7 +66,7 @@ export function useQueueEvents(
             }
             if (moved.length === 0) return slots;
 
-            // Keep an in-progress download pinned at the front (matches GetQueueController).
+            // Keep every in-progress download pinned at the front (matches GetQueueController).
             const insertAt = remaining.findIndex(s => s.status !== "Downloading");
             const index = insertAt < 0 ? remaining.length : insertAt;
             return [

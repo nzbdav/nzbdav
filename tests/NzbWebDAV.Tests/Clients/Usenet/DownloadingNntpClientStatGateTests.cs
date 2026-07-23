@@ -1,7 +1,10 @@
+using System.Collections.Concurrent;
 using NzbWebDAV.Clients.Usenet;
+using NzbWebDAV.Clients.Usenet.Contexts;
 using NzbWebDAV.Clients.Usenet.Models;
 using NzbWebDAV.Config;
 using NzbWebDAV.Database.Models;
+using NzbWebDAV.Extensions;
 using UsenetSharp.Models;
 
 namespace NzbWebDAV.Tests.Clients.Usenet;
@@ -89,13 +92,97 @@ public class DownloadingNntpClientStatGateTests
         Assert.True(maxInFlight <= 2);
     }
 
+    [Fact]
+    public async Task StatAsync_PrimaryQueueContext_AdmittedBeforeSecondaryWaiters()
+    {
+        var holdSecondary = new ManualResetEventSlim(false);
+        var holdPrimary = new ManualResetEventSlim(false);
+        var entered = new ConcurrentQueue<string>();
+        var fake = new SelectiveBlockingStatNntpClient(
+            segmentId =>
+            {
+                entered.Enqueue(segmentId);
+                return segmentId switch
+                {
+                    "secondary-held" => holdSecondary,
+                    "primary-waiting" => holdPrimary,
+                    _ => null,
+                };
+            });
+
+        var config = CreateConfig(maxQueueConnections: 1, maxDownloadConnections: 10, poolConnections: 20);
+        using var client = new DownloadingNntpClient(fake, config);
+
+        var secondaryCtx = new QueueDownloadContext
+        {
+            IsPrimary = false,
+            GetFanOutConcurrency = () => 1,
+        };
+        var primaryCtx = new QueueDownloadContext
+        {
+            IsPrimary = true,
+            GetFanOutConcurrency = () => 1,
+        };
+
+        using var secondaryHeldCts = new CancellationTokenSource();
+        using var secondaryHeldReg = secondaryHeldCts.Token.SetContext(secondaryCtx);
+        var heldSecondary = client.StatAsync(new SegmentId("secondary-held"), secondaryHeldCts.Token);
+        await WaitUntilAsync(() => entered.Contains("secondary-held"), TimeSpan.FromSeconds(2));
+
+        using var primaryCts = new CancellationTokenSource();
+        using var primaryReg = primaryCts.Token.SetContext(primaryCtx);
+        var primary = client.StatAsync(new SegmentId("primary-waiting"), primaryCts.Token);
+
+        using var secondaryWaitingCts = new CancellationTokenSource();
+        using var secondaryWaitingReg = secondaryWaitingCts.Token.SetContext(secondaryCtx);
+        var waitingSecondary = client.StatAsync(new SegmentId("secondary-waiting"), secondaryWaitingCts.Token);
+
+        await Task.Delay(80);
+        Assert.DoesNotContain("primary-waiting", entered);
+        Assert.DoesNotContain("secondary-waiting", entered);
+
+        // Free the held secondary; the waiting primary (High lane) should run next
+        // and remain in-flight while we assert the Low-lane secondary is still waiting.
+        holdSecondary.Set();
+        await WaitUntilAsync(() => entered.Contains("primary-waiting"), TimeSpan.FromSeconds(2));
+        await Task.Delay(50);
+        Assert.DoesNotContain("secondary-waiting", entered);
+
+        holdPrimary.Set();
+        await Task.WhenAll(primary, heldSecondary, waitingSecondary);
+
+        var order = entered.ToArray();
+        Assert.Equal(
+            new[] { "secondary-held", "primary-waiting", "secondary-waiting" },
+            order);
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (condition()) return;
+            await Task.Delay(10);
+        }
+
+        Assert.Fail($"Condition not met within {timeout.TotalSeconds:0.#}s");
+    }
+
     private static ConfigManager CreateConfig(
         int maxQueueConnections,
-        int maxDownloadConnections)
+        int maxDownloadConnections,
+        int poolConnections = 50)
     {
         var config = new ConfigManager();
         config.UpdateValues(
         [
+            new ConfigItem
+            {
+                ConfigName = ConfigKeys.UsenetProviders,
+                ConfigValue =
+                    $$"""{"providers":[{"host":"nntp.example","port":563,"useSsl":true,"user":"u","pass":"p","maxConnections":{{poolConnections}},"type":1}]}""",
+            },
             new ConfigItem { ConfigName = ConfigKeys.UsenetMaxQueueConnections, ConfigValue = maxQueueConnections.ToString() },
             new ConfigItem { ConfigName = ConfigKeys.UsenetMaxDownloadConnections, ConfigValue = maxDownloadConnections.ToString() },
         ]);
@@ -180,6 +267,36 @@ public class DownloadingNntpClientStatGateTests
 
         public override void Dispose()
         {
+        }
+    }
+
+    private sealed class SelectiveBlockingStatNntpClient(Func<string, ManualResetEventSlim?> gateFor)
+        : MinimalNntpClient
+    {
+        public override async Task<UsenetStatResponse> StatAsync(
+            SegmentId segmentId, CancellationToken cancellationToken)
+        {
+            var gate = gateFor(segmentId.ToString());
+            if (gate is not null)
+            {
+                while (!gate.IsSet)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            return await base.StatAsync(segmentId, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private sealed class RecordingStatNntpClient(INntpClient inner, ConcurrentQueue<string> entered) : MinimalNntpClient
+    {
+        public override Task<UsenetStatResponse> StatAsync(
+            SegmentId segmentId, CancellationToken cancellationToken)
+        {
+            entered.Enqueue(segmentId.ToString());
+            return inner.StatAsync(segmentId, cancellationToken);
         }
     }
 

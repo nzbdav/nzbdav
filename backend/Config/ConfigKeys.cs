@@ -39,6 +39,7 @@ public static class ConfigKeys
     public const string UsenetMaxDownloadConnectionsPerStream = "usenet.max-download-connections-per-stream";
     public const string UsenetMaxDownloadConnectionsPerStreamPreset = "usenet.max-download-connections-per-stream-preset";
     public const string UsenetMaxQueueConnections = "usenet.max-queue-connections";
+    public const string QueueWorkerCount = "queue.worker-count";
     public const string UsenetPipelinedBodyRequests = "usenet.pipelined-body-requests";
     public const string UsenetPipeliningDepth = "usenet.pipelining.depth";
     public const string UsenetPipeliningEnabled = "usenet.pipelining.enabled";

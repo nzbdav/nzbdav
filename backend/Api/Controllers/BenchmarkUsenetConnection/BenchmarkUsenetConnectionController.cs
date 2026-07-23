@@ -52,7 +52,7 @@ public class BenchmarkUsenetConnectionController(
             // Activity we can't pause — a download already mid-flight or live
             // streams — still uses connections; capture it so we can flag it.
             var streamsBefore = activeReads.Count;
-            var (inProgressBefore, _) = queueManager.GetInProgressQueueItem();
+            var inProgressBefore = queueManager.HasActiveQueueItems;
 
             var result = await benchmarkService.RunAsync(
                 request.ToConnectionDetails(),
@@ -65,13 +65,13 @@ public class BenchmarkUsenetConnectionController(
             ).ConfigureAwait(false);
 
             var streamsAfter = activeReads.Count;
-            var (inProgressAfter, _) = queueManager.GetInProgressQueueItem();
+            var inProgressAfter = queueManager.HasActiveQueueItems;
             AddContentionWarnings(
                 result,
                 streamsBefore,
                 streamsAfter,
-                inProgressBefore != null,
-                inProgressAfter != null);
+                inProgressBefore,
+                inProgressAfter);
 
             return new BenchmarkUsenetConnectionResponse { Status = true, Result = result };
         }

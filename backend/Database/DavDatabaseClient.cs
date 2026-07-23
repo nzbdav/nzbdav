@@ -161,14 +161,29 @@ public sealed class DavDatabaseClient(DavDatabaseContext ctx)
         CancellationToken ct = default
     )
     {
+        return await GetTopQueueItem(excludeIds: null, ct).ConfigureAwait(false);
+    }
+
+    public async Task<(QueueItem? queueItem, Stream? queueNzbStream)> GetTopQueueItem
+    (
+        IReadOnlyCollection<Guid>? excludeIds,
+        CancellationToken ct = default
+    )
+    {
         // read queue item from database
         var nowTime = DateTime.Now;
-        var queueItem = await Ctx.QueueItems
+        var query = Ctx.QueueItems
             .OrderByDescending(q => q.Priority)
             .ThenBy(q => q.CreatedAt)
-            .Where(q => q.PauseUntil == null || nowTime >= q.PauseUntil)
-            .Skip(0)
-            .Take(1)
+            .Where(q => q.PauseUntil == null || nowTime >= q.PauseUntil);
+
+        if (excludeIds is { Count: > 0 })
+        {
+            var excluded = excludeIds as HashSet<Guid> ?? excludeIds.ToHashSet();
+            query = query.Where(q => !excluded.Contains(q.Id));
+        }
+
+        var queueItem = await query
             .FirstOrDefaultAsync(ct).ConfigureAwait(false);
 
         // attempt to read nzb contents from blob-store.

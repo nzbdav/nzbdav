@@ -18,7 +18,7 @@ public class QueueManagerLoopTests
         using var manager = CreateManager();
         var iterations = 0;
         manager.ErrorBackoffDelay = TimeSpan.FromSeconds(5);
-        manager.GetTopQueueItemOverride = _ =>
+        manager.GetTopQueueItemOverride = (_, _) =>
         {
             Interlocked.Increment(ref iterations);
             throw new InvalidOperationException("persistent db failure");
@@ -39,7 +39,7 @@ public class QueueManagerLoopTests
 
         var pollTimes = new List<DateTime>();
         var pauseCalls = 0;
-        manager.GetTopQueueItemOverride = _ =>
+        manager.GetTopQueueItemOverride = (_, _) =>
         {
             lock (pollTimes) pollTimes.Add(DateTime.UtcNow);
             return Task.FromResult<(QueueItem? queueItem, Stream? queueNzbStream)>((null, null));
@@ -87,7 +87,7 @@ public class QueueManagerLoopTests
     {
         using var manager = CreateManager();
         manager.IdleDelay = TimeSpan.FromMinutes(1);
-        manager.GetTopQueueItemOverride = _ =>
+        manager.GetTopQueueItemOverride = (_, _) =>
             Task.FromResult<(QueueItem? queueItem, Stream? queueNzbStream)>((null, null));
 
         using var cts = new CancellationTokenSource();

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using NzbWebDAV.Clients.Usenet;
+using NzbWebDAV.Clients.Usenet.Contexts;
 using NzbWebDAV.Config;
 using NzbWebDAV.Database;
 using NzbWebDAV.Database.Models;
@@ -14,13 +15,13 @@ namespace NzbWebDAV.Queue;
 
 public class QueueManager : IDisposable
 {
-    private InProgressQueueItem? _inProgressQueueItem;
-
+    private readonly ConcurrentDictionary<Guid, InProgressQueueItem> _inProgress = new();
     private readonly ConcurrentDictionary<Guid, int> _retryAttempts = new();
 
     private readonly UsenetStreamingClient _usenetClient;
     private readonly CancellationTokenSource? _cancellationTokenSource;
-    private readonly SemaphoreSlim _semaphore = new(1, 1);
+    private readonly SemaphoreSlim _stateLock = new(1, 1);
+    private readonly SemaphoreSlim _finalizeLock = new(1, 1);
     private readonly ConfigManager _configManager;
     private readonly WebsocketManager _websocketManager;
     private readonly ProviderUsageTracker _providerUsageTracker;
@@ -31,15 +32,21 @@ public class QueueManager : IDisposable
     private CancellationTokenSource _sleepingQueueToken = new();
     private readonly Lock _sleepingQueueLock = new();
     private int _loopStarted;
+    private Task? _coordinatorTask;
+    private Guid? _primaryId;
 
     // Overridable in tests so persistent-failure / idle-sleep behaviour can be
     // exercised without a real database.
     internal TimeSpan ErrorBackoffDelay { get; set; } = TimeSpan.FromSeconds(5);
     internal TimeSpan IdleDelay { get; set; } = TimeSpan.FromMinutes(1);
-    internal Func<CancellationToken, Task<(QueueItem? queueItem, Stream? queueNzbStream)>>?
+    internal Func<IReadOnlyCollection<Guid>, CancellationToken, Task<(QueueItem? queueItem, Stream? queueNzbStream)>>?
         GetTopQueueItemOverride
     { get; set; }
     internal Func<CancellationToken, Task<DateTime?>>? GetNextPauseUntilOverride { get; set; }
+    internal Func<DavDatabaseContext>? CreateDbContextOverride { get; set; }
+
+    private DavDatabaseContext CreateDbContext() =>
+        CreateDbContextOverride?.Invoke() ?? new DavDatabaseContext();
 
     public QueueManager(
         UsenetStreamingClient usenetClient,
@@ -87,12 +94,46 @@ public class QueueManager : IDisposable
     public void StartProcessing()
     {
         if (Interlocked.Exchange(ref _loopStarted, 1) == 1) return;
-        _ = ProcessQueueAsync(_cancellationTokenSource!.Token);
+        _coordinatorTask = ProcessQueueAsync(_cancellationTokenSource!.Token);
     }
 
+    /// <summary>True while any NZB queue item is actively processing.</summary>
+    public bool HasActiveQueueItems => !_inProgress.IsEmpty;
+
+    /// <summary>
+    /// Immutable snapshot of every in-flight queue item and its progress.
+    /// Primary (preferred) item is listed first when present.
+    /// </summary>
+    public IReadOnlyList<InProgressQueueItemSnapshot> GetInProgressQueueItems()
+    {
+        var items = _inProgress.Values
+            .Select(x => new InProgressQueueItemSnapshot(x.QueueItem, x.ProgressPercentage, x.IsPrimary))
+            .ToList();
+
+        items.Sort((a, b) =>
+        {
+            if (a.IsPrimary != b.IsPrimary) return a.IsPrimary ? -1 : 1;
+            return a.QueueItem.CreatedAt.CompareTo(b.QueueItem.CreatedAt);
+        });
+        return items;
+    }
+
+    /// <summary>
+    /// Compatibility helper: returns the primary in-progress item, or the oldest
+    /// active item when no primary is designated yet.
+    /// </summary>
     public (QueueItem? queueItem, int? progress) GetInProgressQueueItem()
     {
-        return (_inProgressQueueItem?.QueueItem, _inProgressQueueItem?.ProgressPercentage);
+        var items = GetInProgressQueueItems();
+        if (items.Count == 0) return (null, null);
+        return (items[0].QueueItem, items[0].ProgressPercentage);
+    }
+
+    public InProgressQueueItemSnapshot? FindInProgressQueueItem(Guid queueItemId)
+    {
+        return _inProgress.TryGetValue(queueItemId, out var item)
+            ? new InProgressQueueItemSnapshot(item.QueueItem, item.ProgressPercentage, item.IsPrimary)
+            : null;
     }
 
     public void AwakenQueue(DateTime? dateTime = null)
@@ -114,16 +155,29 @@ public class QueueManager : IDisposable
         CancellationToken ct = default
     )
     {
+        List<InProgressQueueItem> toCancel = [];
+        await LockAsync(() =>
+        {
+            toCancel = _inProgress.Values
+                .Where(x => queueItemIds.Contains(x.QueueItem.Id))
+                .ToList();
+        }).ConfigureAwait(false);
+
+        foreach (var item in toCancel)
+        {
+            try
+            {
+                await item.CancellationTokenSource.CancelAsync().ConfigureAwait(false);
+                await item.ProcessingTask.ConfigureAwait(false);
+            }
+            catch (Exception e) when (!e.IsCancellationException())
+            {
+                Log.Debug(e, "Queue item {QueueItemId} exited with error after cancel", item.QueueItem.Id);
+            }
+        }
+
         await LockAsync(async () =>
         {
-            var inProgressId = _inProgressQueueItem?.QueueItem?.Id;
-            if (inProgressId is not null && queueItemIds.Contains(inProgressId.Value))
-            {
-                await _inProgressQueueItem!.CancellationTokenSource.CancelAsync().ConfigureAwait(false);
-                await _inProgressQueueItem.ProcessingTask.ConfigureAwait(false);
-                _inProgressQueueItem = null;
-            }
-
             await dbClient.RemoveQueueItemsAsync(queueItemIds, ct).ConfigureAwait(false);
             await dbClient.Ctx.SaveChangesAsync(ct).ConfigureAwait(false);
             foreach (var id in queueItemIds) _retryAttempts.TryRemove(id, out _);
@@ -147,96 +201,323 @@ public class QueueManager : IDisposable
 
             try
             {
-                // get the next queue-item from the database (or test override)
-                (QueueItem? queueItem, Stream? queueNzbStream) topItem;
-                DavDatabaseClient? dbClient = null;
-                DavDatabaseContext? dbContext = null;
+                // Reap before fill so completed primaries do not occupy slots or
+                // block secondary promotion while new workers are claimed.
+                await ReapCompletedWorkersAsync().ConfigureAwait(false);
+                await FillWorkerSlotsAsync(ct).ConfigureAwait(false);
+
+                if (_inProgress.IsEmpty)
+                {
+                    await IdleSleepAsync(ct).ConfigureAwait(false);
+                    continue;
+                }
+
+                // Wait for any worker to finish, an awaken signal, or a short
+                // poll so worker-count increases can fill new slots promptly.
+                var workerTasks = _inProgress.Values.Select(x => x.CompletionSignal.Task).ToArray();
+                using var wakeWait = CancellationTokenSource.CreateLinkedTokenSource(
+                    ct, _sleepingQueueToken.Token);
                 try
                 {
-                    if (GetTopQueueItemOverride is not null)
-                    {
-                        topItem = await GetTopQueueItemOverride(ct).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        dbContext = new DavDatabaseContext();
-                        dbClient = new DavDatabaseClient(dbContext);
-                        topItem = await LockAsync(() => dbClient.GetTopQueueItem(ct)).ConfigureAwait(false);
-                    }
-
-                    if (topItem.queueItem is null)
-                    {
-                        try
-                        {
-                            // if we're done with the queue, wait until the next retry pause
-                            // expires (or IdleDelay, whichever is sooner). Also wake early
-                            // on cancellation of _sleepingQueueToken / process shutdown (ct).
-                            var idleDelay = await ComputeIdleDelayAsync(dbClient, ct)
-                                .ConfigureAwait(false);
-                            using var idleWait = CancellationTokenSource.CreateLinkedTokenSource(
-                                ct, _sleepingQueueToken.Token);
-                            await Task.Delay(idleDelay, idleWait.Token).ConfigureAwait(false);
-                        }
-                        catch when (_sleepingQueueToken.IsCancellationRequested)
-                        {
-                            lock (_sleepingQueueLock)
-                            {
-                                if (!_sleepingQueueToken.TryReset())
-                                {
-                                    _sleepingQueueToken.Dispose();
-                                    _sleepingQueueToken = new CancellationTokenSource();
-                                }
-                            }
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            // ct fired: fall through; the while condition exits the loop
-                        }
-
-                        continue;
-                    }
-
-                    // create an article-caching nntp-client.
-                    // the cache will be scoped only to this single queue-item.
-                    using var cachingUsenetClient = new ArticleCachingNntpClient(_usenetClient);
-
-                    // process the queue-item
-                    try
-                    {
-                        using var queueItemCancellationTokenSource =
-                            CancellationTokenSource.CreateLinkedTokenSource(ct);
-                        await LockAsync(() =>
-                        {
-                            // ReSharper disable twice AccessToDisposedClosure
-                            _inProgressQueueItem = BeginProcessingQueueItem(
-                                dbClient!, cachingUsenetClient,
-                                topItem.queueItem, topItem.queueNzbStream,
-                                queueItemCancellationTokenSource);
-                        }).ConfigureAwait(false);
-                        await (_inProgressQueueItem?.ProcessingTask ?? Task.CompletedTask)
-                            .ConfigureAwait(false);
-                    }
-                    finally
-                    {
-                        if (topItem.queueNzbStream is not null)
-                            await topItem.queueNzbStream!.DisposeAsync();
-                    }
+                    var wakeDelay = Task.Delay(TimeSpan.FromSeconds(1), wakeWait.Token);
+                    await Task.WhenAny(Task.WhenAny(workerTasks), wakeDelay).ConfigureAwait(false);
                 }
-                finally
+                catch (OperationCanceledException) when (_sleepingQueueToken.IsCancellationRequested)
                 {
-                    if (dbContext is not null)
-                        await dbContext.DisposeAsync().ConfigureAwait(false);
+                    ResetSleepingQueueToken();
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    break;
                 }
             }
-            catch (Exception e)
+            catch (Exception e) when (!e.IsCancellationException(ct))
             {
                 Log.Error(e, "An unexpected error occurred while processing the queue");
                 try { await Task.Delay(ErrorBackoffDelay, ct).ConfigureAwait(false); }
                 catch (OperationCanceledException) { /* shutting down */ }
             }
+        }
+
+        // Shutdown: cancel remaining workers and observe their tasks.
+        foreach (var item in _inProgress.Values)
+            await item.CancellationTokenSource.CancelAsync().ConfigureAwait(false);
+
+        var remaining = _inProgress.Values.Select(x => x.ProcessingTask).ToArray();
+        if (remaining.Length > 0)
+        {
+            try { await Task.WhenAll(remaining).ConfigureAwait(false); }
+            catch (Exception e) when (!e.IsCancellationException())
+            {
+                Log.Debug(e, "Queue workers finished with errors during shutdown");
+            }
+        }
+
+        await ReapCompletedWorkersAsync().ConfigureAwait(false);
+    }
+
+    private async Task FillWorkerSlotsAsync(CancellationToken ct)
+    {
+        while (!_benchmarkGate.IsPaused && !ct.IsCancellationRequested)
+        {
+            var workerCount = _configManager.GetQueueWorkerCount();
+            if (_inProgress.Count >= workerCount)
+                return;
+
+            var started = await TryStartNextWorkerAsync(ct).ConfigureAwait(false);
+            if (!started)
+                return;
+        }
+    }
+
+    private async Task<bool> TryStartNextWorkerAsync(CancellationToken ct)
+    {
+        DavDatabaseContext? dbContext = null;
+        DavDatabaseClient? dbClient = null;
+        QueueItem? queueItem = null;
+        Stream? queueNzbStream = null;
+        InProgressQueueItem? inProgress = null;
+        CancellationTokenContext? queueContextRegistration = null;
+
+        try
+        {
+            await _stateLock.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                var workerCount = _configManager.GetQueueWorkerCount();
+                if (_inProgress.Count >= workerCount)
+                    return false;
+
+                var excludeIds = _inProgress.Keys.ToHashSet();
+                var reservedMountKeys = _inProgress.Values
+                    .Select(x => (x.QueueItem.Category, x.QueueItem.JobName))
+                    .ToHashSet();
+
+                // Skip mount-key conflicts by excluding them from subsequent queries.
+                while (true)
+                {
+                    (QueueItem? item, Stream? stream) claimed;
+                    if (GetTopQueueItemOverride is not null)
+                    {
+                        claimed = await GetTopQueueItemOverride(excludeIds, ct).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        dbContext ??= CreateDbContext();
+                        dbClient ??= new DavDatabaseClient(dbContext);
+                        claimed = await dbClient.GetTopQueueItem(excludeIds, ct).ConfigureAwait(false);
+                    }
+
+                    if (claimed.item is null)
+                    {
+                        if (claimed.stream is not null)
+                            await claimed.stream.DisposeAsync().ConfigureAwait(false);
+                        return false;
+                    }
+
+                    if (reservedMountKeys.Contains((claimed.item.Category, claimed.item.JobName)))
+                    {
+                        excludeIds.Add(claimed.item.Id);
+                        if (claimed.stream is not null)
+                            await claimed.stream.DisposeAsync().ConfigureAwait(false);
+                        continue;
+                    }
+
+                    queueItem = claimed.item;
+                    queueNzbStream = claimed.stream;
+                    break;
+                }
+
+                // Own a dedicated DB context for this worker (may already be
+                // created above when claiming from the database).
+                if (dbContext is null)
+                {
+                    dbContext = CreateDbContext();
+                    dbClient = new DavDatabaseClient(dbContext);
+                }
+
+                // Treat a completed-but-not-yet-reaped primary as vacant so Fill
+                // can claim a new preferred worker without waiting for the next loop.
+                var isPrimary = _primaryId is null ||
+                    !_inProgress.TryGetValue(_primaryId.Value, out var primaryItem) ||
+                    primaryItem.ProcessingTask.IsCompleted;
+                var queueDownloadContext = new QueueDownloadContext
+                {
+                    IsPrimary = isPrimary,
+                    GetFanOutConcurrency = () => ComputeFanOutConcurrency(queueItem.Id),
+                };
+
+                var workerCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                queueContextRegistration = workerCts.Token.SetContext(queueDownloadContext);
+
+                inProgress = BeginProcessingQueueItem(
+                    dbClient!,
+                    queueItem,
+                    queueNzbStream,
+                    workerCts,
+                    queueDownloadContext,
+                    queueContextRegistration,
+                    dbContext);
+
+                _inProgress[queueItem.Id] = inProgress;
+                if (isPrimary)
+                    _primaryId = queueItem.Id;
+                else
+                    EnsurePrimaryDesignation();
+
+                // Ownership transferred to InProgressQueueItem / worker task.
+                dbContext = null;
+                dbClient = null;
+                queueNzbStream = null;
+                queueContextRegistration = null;
+                inProgress = null;
+                return true;
+            }
             finally
             {
-                await LockAsync(() => { _inProgressQueueItem = null; }).ConfigureAwait(false);
+                _stateLock.Release();
+            }
+        }
+        catch
+        {
+            if (queueNzbStream is not null)
+                await queueNzbStream.DisposeAsync().ConfigureAwait(false);
+            if (dbContext is not null)
+                await dbContext.DisposeAsync().ConfigureAwait(false);
+            queueContextRegistration?.Dispose();
+            inProgress?.CancellationTokenSource.Dispose();
+            throw;
+        }
+    }
+
+    private int ComputeFanOutConcurrency(Guid queueItemId)
+    {
+        var maxQueue = _configManager.GetMaxQueueConnections();
+        var secondaryCount = _inProgress.Values.Count(x => !x.QueueDownloadContext.IsPrimary);
+        var isPrimary = _primaryId == queueItemId ||
+            (_inProgress.TryGetValue(queueItemId, out var item) && item.QueueDownloadContext.IsPrimary);
+
+        if (isPrimary)
+        {
+            return secondaryCount > 0
+                ? QueueFanOut.PrimaryFanOutWhenSharing(maxQueue, secondaryCount)
+                : QueueFanOut.PrimaryFanOut(maxQueue);
+        }
+
+        return QueueFanOut.SecondaryFanOut(maxQueue, secondaryCount);
+    }
+
+    private void EnsurePrimaryDesignation()
+    {
+        // Ignore completed workers still awaiting reap so a finished primary
+        // cannot block promotion or keep IsPrimary while Fill starts new work.
+        var live = _inProgress.Values
+            .Where(x => !x.ProcessingTask.IsCompleted)
+            .ToList();
+
+        if (_primaryId is not null &&
+            _inProgress.TryGetValue(_primaryId.Value, out var current) &&
+            !current.ProcessingTask.IsCompleted)
+        {
+            foreach (var item in _inProgress.Values)
+                item.QueueDownloadContext.IsPrimary = item.QueueItem.Id == _primaryId.Value;
+            return;
+        }
+
+        // Promote the oldest live secondary before claiming a new primary.
+        var oldest = live
+            .OrderBy(x => x.StartedAt)
+            .ThenBy(x => x.QueueItem.CreatedAt)
+            .FirstOrDefault();
+
+        if (oldest is null)
+        {
+            _primaryId = null;
+            foreach (var item in _inProgress.Values)
+                item.QueueDownloadContext.IsPrimary = false;
+            return;
+        }
+
+        _primaryId = oldest.QueueItem.Id;
+        foreach (var item in _inProgress.Values)
+            item.QueueDownloadContext.IsPrimary = item.QueueItem.Id == _primaryId.Value;
+    }
+
+    private async Task ReapCompletedWorkersAsync()
+    {
+        List<InProgressQueueItem> completed = [];
+        await LockAsync(() =>
+        {
+            completed = _inProgress.Values
+                .Where(x => x.ProcessingTask.IsCompleted)
+                .ToList();
+
+            foreach (var item in completed)
+            {
+                _inProgress.TryRemove(item.QueueItem.Id, out _);
+                if (_primaryId == item.QueueItem.Id)
+                    _primaryId = null;
+            }
+
+            if (completed.Count > 0)
+                EnsurePrimaryDesignation();
+        }).ConfigureAwait(false);
+
+        foreach (var item in completed)
+        {
+            try
+            {
+                await item.ProcessingTask.ConfigureAwait(false);
+            }
+            catch (Exception e) when (!e.IsCancellationException())
+            {
+                Log.Error(e, "Queue worker for {QueueItemId} faulted", item.QueueItem.Id);
+            }
+
+            await item.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    private async Task IdleSleepAsync(CancellationToken ct)
+    {
+        DavDatabaseContext? dbContext = null;
+        try
+        {
+            DavDatabaseClient? dbClient = null;
+            if (GetNextPauseUntilOverride is null && GetTopQueueItemOverride is null)
+            {
+                dbContext = CreateDbContext();
+                dbClient = new DavDatabaseClient(dbContext);
+            }
+
+            var idleDelay = await ComputeIdleDelayAsync(dbClient, ct).ConfigureAwait(false);
+            using var idleWait = CancellationTokenSource.CreateLinkedTokenSource(
+                ct, _sleepingQueueToken.Token);
+            await Task.Delay(idleDelay, idleWait.Token).ConfigureAwait(false);
+        }
+        catch when (_sleepingQueueToken.IsCancellationRequested)
+        {
+            ResetSleepingQueueToken();
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            // shutting down
+        }
+        finally
+        {
+            if (dbContext is not null)
+                await dbContext.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    private void ResetSleepingQueueToken()
+    {
+        lock (_sleepingQueueLock)
+        {
+            if (!_sleepingQueueToken.TryReset())
+            {
+                _sleepingQueueToken.Dispose();
+                _sleepingQueueToken = new CancellationTokenSource();
             }
         }
     }
@@ -244,25 +525,53 @@ public class QueueManager : IDisposable
     private InProgressQueueItem BeginProcessingQueueItem
     (
         DavDatabaseClient dbClient,
-        INntpClient usenetClient,
         QueueItem queueItem,
         Stream? queueNzbStream,
-        CancellationTokenSource cts
+        CancellationTokenSource cts,
+        QueueDownloadContext queueDownloadContext,
+        CancellationTokenContext queueContextRegistration,
+        DavDatabaseContext dbContext
     )
     {
+        // Per-item article cache; disposed with the worker.
+        var cachingUsenetClient = new ArticleCachingNntpClient(_usenetClient);
         var progressHook = new Progress<int>();
+        var completionSignal = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
         var task = new QueueItemProcessor(
-            queueItem, queueNzbStream, dbClient, usenetClient,
+            queueItem, queueNzbStream, dbClient, cachingUsenetClient,
             _configManager, _websocketManager, _providerUsageTracker,
-            _watchdogLog, _sourceTracker, progressHook, _retryAttempts, cts.Token
+            _watchdogLog, _sourceTracker, progressHook, _retryAttempts,
+            _finalizeLock, cts.Token
         ).ProcessAsync();
-        var inProgressQueueItem = new InProgressQueueItem()
+
+        _ = task.ContinueWith(
+            t =>
+            {
+                if (t.IsFaulted)
+                    Log.Error(t.Exception!.GetBaseException(),
+                        "Unhandled queue processor fault for {QueueItemId}", queueItem.Id);
+                completionSignal.TrySetResult();
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+
+        var inProgressQueueItem = new InProgressQueueItem
         {
             QueueItem = queueItem,
             ProcessingTask = task,
+            CompletionSignal = completionSignal,
             ProgressPercentage = 0,
-            CancellationTokenSource = cts
+            CancellationTokenSource = cts,
+            QueueDownloadContext = queueDownloadContext,
+            QueueContextRegistration = queueContextRegistration,
+            DbContext = dbContext,
+            QueueNzbStream = queueNzbStream,
+            CachingUsenetClient = cachingUsenetClient,
+            StartedAt = DateTime.UtcNow,
         };
+
         var debounce = DebounceUtil.CreateDebounce(TimeSpan.FromMilliseconds(200));
         var providersDebounce = DebounceUtil.CreateDebounce(TimeSpan.FromMilliseconds(500));
         var progressLock = new object();
@@ -333,27 +642,27 @@ public class QueueManager : IDisposable
 
     private async Task LockAsync(Func<Task> actionAsync)
     {
-        await _semaphore.WaitAsync().ConfigureAwait(false);
+        await _stateLock.WaitAsync().ConfigureAwait(false);
         try
         {
             await actionAsync().ConfigureAwait(false);
         }
         finally
         {
-            _semaphore.Release();
+            _stateLock.Release();
         }
     }
 
-    private async Task<T> LockAsync<T>(Func<Task<T>> actionAsync)
+    private async Task LockAsync(Action action)
     {
-        await _semaphore.WaitAsync().ConfigureAwait(false);
+        await _stateLock.WaitAsync().ConfigureAwait(false);
         try
         {
-            return await actionAsync().ConfigureAwait(false);
+            action();
         }
         finally
         {
-            _semaphore.Release();
+            _stateLock.Release();
         }
     }
 
@@ -385,30 +694,52 @@ public class QueueManager : IDisposable
         }
     }
 
-    private async Task LockAsync(Action action)
-    {
-        await _semaphore.WaitAsync().ConfigureAwait(false);
-        try
-        {
-            action();
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-    }
-
     public void Dispose()
     {
         _cancellationTokenSource?.Cancel();
+        try
+        {
+            _coordinatorTask?.GetAwaiter().GetResult();
+        }
+        catch (Exception e) when (!e.IsCancellationException())
+        {
+            Log.Debug(e, "Queue coordinator exited with error during dispose");
+        }
+
         _cancellationTokenSource?.Dispose();
+        _stateLock.Dispose();
+        _finalizeLock.Dispose();
+        _sleepingQueueToken.Dispose();
     }
 
-    private class InProgressQueueItem
+    public readonly record struct InProgressQueueItemSnapshot(
+        QueueItem QueueItem,
+        int ProgressPercentage,
+        bool IsPrimary);
+
+    private sealed class InProgressQueueItem
     {
         public QueueItem QueueItem { get; init; } = null!;
         public int ProgressPercentage { get; set; }
         public Task ProcessingTask { get; init; } = null!;
+        public TaskCompletionSource CompletionSignal { get; init; } = null!;
         public CancellationTokenSource CancellationTokenSource { get; init; } = null!;
+        public QueueDownloadContext QueueDownloadContext { get; init; } = null!;
+        public CancellationTokenContext QueueContextRegistration { get; init; } = null!;
+        public DavDatabaseContext DbContext { get; init; } = null!;
+        public Stream? QueueNzbStream { get; init; }
+        public ArticleCachingNntpClient CachingUsenetClient { get; init; } = null!;
+        public DateTime StartedAt { get; init; }
+        public bool IsPrimary => QueueDownloadContext.IsPrimary;
+
+        public async ValueTask DisposeAsync()
+        {
+            QueueContextRegistration.Dispose();
+            CancellationTokenSource.Dispose();
+            CachingUsenetClient.Dispose();
+            if (QueueNzbStream is not null)
+                await QueueNzbStream.DisposeAsync().ConfigureAwait(false);
+            await DbContext.DisposeAsync().ConfigureAwait(false);
+        }
     }
 }

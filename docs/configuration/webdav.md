@@ -13,6 +13,7 @@ WebDAV authentication and streaming/connection behavior for playback mounts.
 | WebDAV User | `webdav.user` | `admin` / `WEBDAV_USER` | Alphanumeric + `_` `-` |
 | WebDAV Password | `webdav.pass` | env `WEBDAV_PASSWORD` | Required for rclone/clients |
 | Queue Download Connections | `usenet.max-queue-connections` | blank = all | Cap queue NNTP use |
+| Concurrent Queue Downloads [since 0.9.0](https://github.com/nzbdav/nzbdav/releases/tag/v0.9.0){ .nzbdav-since } | `queue.worker-count` | `1` | Concurrent NZB imports (1–4); share the queue connection budget |
 | Enable Segment Cache | `usenet.segment-cache.enabled` | off | Disk cache; **restart required** |
 | Cache path | `usenet.segment-cache.path` | `/config/segment-cache` | |
 | Maximum size (GB) | `usenet.segment-cache.max-gb` | `10` | |

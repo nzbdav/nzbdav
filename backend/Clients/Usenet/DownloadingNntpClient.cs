@@ -146,12 +146,21 @@ public class DownloadingNntpClient : WrappingNntpClient
     }
 
     // Picks the semaphore (and its priority) a download should acquire from.
-    // High-priority streaming reads use the per-stream semaphore carried on the
-    // DownloadPriorityContext when "per stream" mode is enabled, otherwise the
-    // shared global streaming semaphore. Low-priority queue reads always use the
-    // queue semaphore.
+    // QueueDownloadContext always uses the shared queue semaphore: primary workers
+    // take the High lane (preferred admission), secondaries take Low. Streaming
+    // (DownloadPriorityContext High) uses the streaming semaphore. Default /
+    // background health STAT work uses the queue semaphore Low lane.
     private (PrioritizedSemaphore Semaphore, SemaphorePriority Priority) SelectSemaphore(CancellationToken cancellationToken)
     {
+        var queueContext = cancellationToken.GetContext<QueueDownloadContext>();
+        if (queueContext is not null)
+        {
+            var queuePriority = queueContext.IsPrimary
+                ? SemaphorePriority.High
+                : SemaphorePriority.Low;
+            return (_queueSemaphore, queuePriority);
+        }
+
         var context = cancellationToken.GetContext<DownloadPriorityContext>();
         var priority = context?.Priority ?? SemaphorePriority.Low;
         var semaphore = priority == SemaphorePriority.High

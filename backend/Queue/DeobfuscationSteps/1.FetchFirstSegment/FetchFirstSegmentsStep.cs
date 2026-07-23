@@ -1,12 +1,14 @@
 // ReSharper disable InconsistentNaming
 
 using NzbWebDAV.Clients.Usenet;
+using NzbWebDAV.Clients.Usenet.Contexts;
 using NzbWebDAV.Clients.Usenet.Models;
 using NzbWebDAV.Config;
 using NzbWebDAV.Exceptions;
 using NzbWebDAV.Extensions;
 using NzbWebDAV.Models;
 using NzbWebDAV.Models.Nzb;
+using NzbWebDAV.Queue;
 using Serilog;
 using UsenetSharp.Models;
 using UsenetSharp.Streams;
@@ -43,14 +45,15 @@ public static class FetchFirstSegmentsStep
         IProgress<int>? progress
     )
     {
-        using var abortCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // Preserve QueueDownloadContext so primary preference / fan-out survive abort linking.
+        using var abortCts = ContextualCancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var results = new List<NzbFileWithFirstSegment>(files.Count);
         var completed = 0;
 
         await foreach (var result in files
                            .Select(x => FetchFirstSegment(x, usenetClient, abortCts.Token))
                            .WithConcurrencyAsync(
-                               Math.Min(configManager.GetMaxQueueConnections() + 5, 50),
+                               QueueFanOut.GetConcurrency(abortCts.Token, configManager),
                                abortCts.Token)
                            .WithCancellation(abortCts.Token)
                            .ConfigureAwait(false))
@@ -62,7 +65,7 @@ public static class FetchFirstSegmentsStep
             {
                 Log.Warning("First segment for `{FileName}` missing across all providers",
                     result.NzbFile.GetSubjectFileName());
-                AbortRemainingFirstSegmentChecks(result.NzbFile, abortCts);
+                AbortRemainingFirstSegmentChecks(result.NzbFile, abortCts.Cancel);
             }
         }
 
@@ -92,7 +95,7 @@ public static class FetchFirstSegmentsStep
         }
         var completed = 0;
         NzbFile? abortFile = null;
-        using var abortCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var abortCts = ContextualCancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         try
         {
@@ -154,16 +157,16 @@ public static class FetchFirstSegmentsStep
         }
 
         if (abortFile is not null)
-            AbortRemainingFirstSegmentChecks(abortFile, abortCts: null);
+            AbortRemainingFirstSegmentChecks(abortFile, cancel: null);
 
         var pending = Enumerable.Range(0, files.Count).Where(i => results[i] is null).ToList();
         if (pending.Count > 0)
         {
-            using var rescueAbortCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            using var rescueAbortCts = ContextualCancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             await foreach (var (i, result) in pending
                                .Select(i => RescueFirstSegment(i, files[i], usenetClient, rescueAbortCts.Token))
                                .WithConcurrencyAsync(
-                                   Math.Min(configManager.GetMaxQueueConnections() + 5, 50),
+                                   QueueFanOut.GetConcurrency(rescueAbortCts.Token, configManager),
                                    rescueAbortCts.Token)
                                .WithCancellation(rescueAbortCts.Token)
                                .ConfigureAwait(false))
@@ -172,7 +175,7 @@ public static class FetchFirstSegmentsStep
                 progress?.Report(++completed);
 
                 if (result.MissingFirstSegment && DeadNzbFailFast.IsImportantNzbFile(result.NzbFile))
-                    AbortRemainingFirstSegmentChecks(result.NzbFile, rescueAbortCts);
+                    AbortRemainingFirstSegmentChecks(result.NzbFile, rescueAbortCts.Cancel);
             }
         }
 
@@ -181,12 +184,12 @@ public static class FetchFirstSegmentsStep
 
     private static void AbortRemainingFirstSegmentChecks(
         NzbFile nzbFile,
-        CancellationTokenSource? abortCts)
+        Action? cancel)
     {
         Log.Warning(
             "Aborting remaining first-segment checks after missing important file `{FileName}`",
             nzbFile.GetSubjectFileName());
-        abortCts?.Cancel();
+        cancel?.Invoke();
         DeadNzbFailFast.FailMissingImportantFile(nzbFile);
     }
 

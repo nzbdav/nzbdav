@@ -38,6 +38,7 @@ public class QueueItemProcessor(
     QueueItemSourceTracker sourceTracker,
     IProgress<int> progress,
     ConcurrentDictionary<Guid, int> retryAttempts,
+    SemaphoreSlim? finalizeLock,
     CancellationToken ct
 )
 {
@@ -62,6 +63,7 @@ public class QueueItemProcessor(
             new QueueItemSourceTracker(),
             progress,
             new ConcurrentDictionary<Guid, int>(),
+            finalizeLock: null,
             ct)
     {
     }
@@ -133,7 +135,8 @@ public class QueueItemProcessor(
                 queueItem.PauseUntil = DateTime.Now + backoff;
                 dbClient.Ctx.QueueItems.Attach(queueItem);
                 dbClient.Ctx.Entry(queueItem).Property(x => x.PauseUntil).IsModified = true;
-                await dbClient.Ctx.SaveChangesAsync().ConfigureAwait(false);
+                await WithFinalizeLockAsync(() => dbClient.Ctx.SaveChangesAsync(ct))
+                    .ConfigureAwait(false);
                 _ = websocketManager.SendMessage(WebsocketTopic.QueueItemStatus, $"{queueItem.Id}|Queued");
             }
             catch (Exception ex)
@@ -276,7 +279,7 @@ public class QueueItemProcessor(
             .ToMultiProgress(fileProcessors.Count);
         var fileProcessingResultsAll = await fileProcessors
             .Select(x => x!.ProcessAsync(part2Progress.SubProgress))
-            .WithConcurrencyAsync(Math.Min(configManager.GetMaxQueueConnections() + 5, 50))
+            .WithConcurrencyAsync(QueueFanOut.GetConcurrency(ct, configManager))
             .GetAllAsync(ct).ConfigureAwait(false);
         var fileProcessingResults = fileProcessingResultsAll
             .Where(x => x is not null)
@@ -300,7 +303,9 @@ public class QueueItemProcessor(
             var part3Progress = progress
                 .Offset(100)
                 .ToPercentage(articlesToCheck.Count);
-            var healthCheckConcurrency = configManager.GetHealthCheckConcurrency();
+            var healthCheckConcurrency = Math.Min(
+                configManager.GetHealthCheckConcurrency(),
+                QueueFanOut.GetConcurrency(ct, configManager));
             await ArticleExistenceChecker
                 .CheckAsync(usenetClient, articlesToCheck, healthCheckConcurrency, part3Progress, ct)
                 .ConfigureAwait(false);
@@ -501,19 +506,29 @@ public class QueueItemProcessor(
         Func<Task<DavItem?>>? databaseOperations = null
     )
     {
-        dbClient.Ctx.ClearChangeTracker();
-        var mountFolder = databaseOperations != null ? await databaseOperations.Invoke().ConfigureAwait(false) : null;
-        var historyItem = CreateHistoryItem(mountFolder, startTime, error);
-        var providerUsage = providerUsageTracker.Snapshot(queueItem.Id);
-        var displayByMetricsKey = ProviderUsageHelper
-            .BuildDisplayByMetricsKey(configManager.GetUsenetProviderConfig().Providers);
-        var historySlot = GetHistoryResponse.HistorySlot.FromHistoryItem(
-            historyItem, mountFolder, configManager, providerUsage, displayByMetricsKey);
-        dbClient.Ctx.QueueItems.Remove(queueItem);
-        dbClient.Ctx.HistoryItems.Add(historyItem);
-        await dbClient.Ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+        HistoryItem? historyItem = null;
+        GetHistoryResponse.HistorySlot? historySlot = null;
+        IReadOnlyDictionary<string, long>? providerUsage = null;
+
+        await WithFinalizeLockAsync(async () =>
+        {
+            dbClient.Ctx.ClearChangeTracker();
+            var mountFolder = databaseOperations != null
+                ? await databaseOperations.Invoke().ConfigureAwait(false)
+                : null;
+            historyItem = CreateHistoryItem(mountFolder, startTime, error);
+            providerUsage = providerUsageTracker.Snapshot(queueItem.Id);
+            var displayByMetricsKey = ProviderUsageHelper
+                .BuildDisplayByMetricsKey(configManager.GetUsenetProviderConfig().Providers);
+            historySlot = GetHistoryResponse.HistorySlot.FromHistoryItem(
+                historyItem, mountFolder, configManager, providerUsage, displayByMetricsKey);
+            dbClient.Ctx.QueueItems.Remove(queueItem);
+            dbClient.Ctx.HistoryItems.Add(historyItem);
+            await dbClient.Ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+        }).ConfigureAwait(false);
+
         _ = websocketManager.SendMessage(WebsocketTopic.QueueItemRemoved, queueItem.Id.ToString());
-        _ = websocketManager.SendMessage(WebsocketTopic.HistoryItemAdded, historySlot.ToJson());
+        _ = websocketManager.SendMessage(WebsocketTopic.HistoryItemAdded, historySlot!.ToJson());
         _ = DavDatabaseContext.RcloneVfsForget(["/nzbs"]);
         _ = RefreshMonitoredDownloads();
         if (error is null)
@@ -522,7 +537,7 @@ public class QueueItemProcessor(
                 "Completed queue item {JobName} ({QueueItemId}) in {ElapsedSeconds} seconds",
                 queueItem.JobName,
                 queueItem.Id,
-                historyItem.DownloadTimeSeconds);
+                historyItem!.DownloadTimeSeconds);
         }
         else
         {
@@ -530,12 +545,31 @@ public class QueueItemProcessor(
                 "Failed queue item {JobName} ({QueueItemId}) after {ElapsedSeconds} seconds: {Reason}",
                 queueItem.JobName,
                 queueItem.Id,
-                historyItem.DownloadTimeSeconds,
+                historyItem!.DownloadTimeSeconds,
                 error);
         }
 
-        RecordWatchdogAttemptIfExternal(startTime, error, providerUsage);
+        RecordWatchdogAttemptIfExternal(startTime, error, providerUsage!);
         retryAttempts.TryRemove(queueItem.Id, out _);
+    }
+
+    private async Task WithFinalizeLockAsync(Func<Task> action)
+    {
+        if (finalizeLock is null)
+        {
+            await action().ConfigureAwait(false);
+            return;
+        }
+
+        await finalizeLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await action().ConfigureAwait(false);
+        }
+        finally
+        {
+            finalizeLock.Release();
+        }
     }
 
     // Emits a Watchdog attempt entry for queue items that didn't come through

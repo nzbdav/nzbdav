@@ -22,6 +22,7 @@ public class ContextualCancellationTokenSource : IDisposable
         var contextualCts = new ContextualCancellationTokenSource(cts);
         contextualCts.SetContext(linkedToken.GetContext<DownloadPriorityContext>());
         contextualCts.SetContext(linkedToken.GetContext<StreamingTimeoutContext>());
+        contextualCts.SetContext(linkedToken.GetContext<QueueDownloadContext>());
         return contextualCts;
     }
 
@@ -37,6 +38,8 @@ public class ContextualCancellationTokenSource : IDisposable
         contextualCts.SetContext(linkedToken2.GetContext<DownloadPriorityContext>());
         contextualCts.SetContext(linkedToken1.GetContext<StreamingTimeoutContext>());
         contextualCts.SetContext(linkedToken2.GetContext<StreamingTimeoutContext>());
+        contextualCts.SetContext(linkedToken1.GetContext<QueueDownloadContext>());
+        contextualCts.SetContext(linkedToken2.GetContext<QueueDownloadContext>());
         return contextualCts;
     }
 

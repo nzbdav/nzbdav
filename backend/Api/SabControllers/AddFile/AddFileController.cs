@@ -176,8 +176,7 @@ public class AddFileController(
             .ConfigureAwait(false);
         if (existingId is null) return;
 
-        var (inProgress, _) = queueManager.GetInProgressQueueItem();
-        var wasInProgress = inProgress?.Id == existingId.Value;
+        var wasInProgress = queueManager.FindInProgressQueueItem(existingId.Value) is not null;
         Log.Warning(
             "Replacing existing queue item {QueueItemId} ({FileName} in {Category}) on re-add{InProgressSuffix}",
             existingId.Value,
@@ -204,8 +203,7 @@ public class AddFileController(
             .ConfigureAwait(false);
         if (conflictingId is null) return;
 
-        var (inProgress, _) = queueManager.GetInProgressQueueItem();
-        var wasInProgress = inProgress?.Id == conflictingId.Value;
+        var wasInProgress = queueManager.FindInProgressQueueItem(conflictingId.Value) is not null;
         Log.Warning(
             "Replacing existing queue item {QueueItemId} ({FileName} in {Category}) after UNIQUE conflict on re-add{InProgressSuffix}",
             conflictingId.Value,

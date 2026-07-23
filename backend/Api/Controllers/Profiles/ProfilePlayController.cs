@@ -995,8 +995,9 @@ public class ProfilePlayController(
 
             if (stallFailover)
             {
-                var (inProg, inProgPct) = queueManager.GetInProgressQueueItem();
-                var isMine = inProg?.Id == nzoId;
+                var inProg = queueManager.FindInProgressQueueItem(nzoId);
+                var isMine = inProg is not null;
+                var inProgPct = inProg?.ProgressPercentage;
                 var now = DateTimeOffset.UtcNow;
                 if (!isMine)
                     lastProgressAt = now;

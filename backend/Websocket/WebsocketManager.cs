@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using System.Diagnostics;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Channels;
 using Microsoft.AspNetCore.Http;
@@ -71,12 +72,7 @@ public class WebsocketManager
 
         var bytes = SerializeMessage(topic, message);
         foreach (var session in sessions)
-        {
-            if (session.TryEnqueue(topic, bytes)) continue;
-
-            Log.Warning("Disconnecting websocket client because its outbound event queue is full");
-            AbortSocket(session);
-        }
+            session.TryEnqueue(topic, bytes);
 
         return Task.CompletedTask;
     }
@@ -167,6 +163,13 @@ public class WebsocketManager
                     var stateMessages = session.TakePendingState();
                     var eventMessages = session.TakePendingEvents();
                     if (stateMessages.Count == 0 && eventMessages.Count == 0) break;
+
+                    if (session.TryTakeDroppedEventMessageCount(out var droppedEventMessageCount))
+                    {
+                        Log.Warning(
+                            "Websocket client is consuming events too slowly; dropped {Count} event messages",
+                            droppedEventMessageCount);
+                    }
 
                     foreach (var message in stateMessages)
                         await SendToSocket(session, message).ConfigureAwait(false);
@@ -279,13 +282,7 @@ public class WebsocketManager
     {
         private readonly object _stateLock = new();
         private readonly Dictionary<WebsocketTopic, ArraySegment<byte>> _pendingState = new();
-        private readonly Channel<ArraySegment<byte>> _eventMessages =
-            Channel.CreateBounded<ArraySegment<byte>>(new BoundedChannelOptions(EventQueueCapacity)
-            {
-                FullMode = BoundedChannelFullMode.Wait,
-                SingleReader = true,
-                SingleWriter = false
-            });
+        private readonly Channel<ArraySegment<byte>> _eventMessages;
         private readonly Channel<bool> _workSignal =
             Channel.CreateBounded<bool>(new BoundedChannelOptions(1)
             {
@@ -295,11 +292,21 @@ public class WebsocketManager
             });
         private readonly CancellationTokenSource _cancellation =
             CancellationTokenSource.CreateLinkedTokenSource(SigtermUtil.GetCancellationToken());
+        private long _droppedEventMessageCount;
+        private long _lastDroppedEventWarningTimestamp;
         private int _stopped;
 
         public SocketSession(WebSocket socket)
         {
             Socket = socket;
+            _eventMessages = Channel.CreateBounded<ArraySegment<byte>>(
+                new BoundedChannelOptions(EventQueueCapacity)
+                {
+                    FullMode = BoundedChannelFullMode.DropOldest,
+                    SingleReader = true,
+                    SingleWriter = false
+                },
+                _ => Interlocked.Increment(ref _droppedEventMessageCount));
         }
 
         public WebSocket Socket { get; }
@@ -349,6 +356,24 @@ public class WebsocketManager
             while (messages.Count < EventQueueCapacity && _eventMessages.Reader.TryRead(out var message))
                 messages.Add(message);
             return messages;
+        }
+
+        public bool TryTakeDroppedEventMessageCount(out long count)
+        {
+            count = 0;
+            if (Volatile.Read(ref _droppedEventMessageCount) == 0) return false;
+
+            var now = Stopwatch.GetTimestamp();
+            var lastWarning = Volatile.Read(ref _lastDroppedEventWarningTimestamp);
+            if (lastWarning != 0 &&
+                Stopwatch.GetElapsedTime(lastWarning, now) < TimeSpan.FromMinutes(1))
+                return false;
+
+            if (Interlocked.CompareExchange(ref _lastDroppedEventWarningTimestamp, now, lastWarning) != lastWarning)
+                return false;
+
+            count = Interlocked.Exchange(ref _droppedEventMessageCount, 0);
+            return count > 0;
         }
 
         public bool Stop()

@@ -69,7 +69,7 @@ public class WebsocketManagerTests
     }
 
     [Fact]
-    public async Task EventQueueOverflow_AbortsAndRemovesSlowSocket()
+    public async Task EventQueueOverflow_DropsOldestEventsAndKeepsSocketConnected()
     {
         var manager = new WebsocketManager();
         using var socket = new TestWebSocket(blockSends: true);
@@ -83,8 +83,16 @@ public class WebsocketManagerTests
             for (var i = 0; i <= 64; i++)
                 await manager.SendMessage(WebsocketTopic.QueueItemAdded, $"event-{i}");
 
-            await WaitUntil(() => socket.Aborted);
-            Assert.Equal(0, manager.GetAuthenticatedSocketCount());
+            socket.ReleaseSends();
+            await WaitUntil(() => socket.Messages.Count == 65);
+
+            Assert.False(socket.Aborted);
+            Assert.Equal(1, manager.GetAuthenticatedSocketCount());
+            var messages = socket.Messages.Select(Parse).ToList();
+            Assert.Equal("blocked", messages[0].Message);
+            Assert.Equal(
+                Enumerable.Range(1, 64).Select(i => $"event-{i}"),
+                messages.Skip(1).Select(x => x.Message));
         }
         finally
         {

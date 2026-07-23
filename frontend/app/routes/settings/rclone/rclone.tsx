@@ -1,6 +1,6 @@
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/feedback";
-import { ManagedSetting, SettingsPage } from "~/components/ui";
+import { ManagedSetting, SettingsCard, SettingsIntro, SettingsPage } from "~/components/ui";
 import { Checkbox, Input } from "~/components/ui/form";
 import { Icon } from "~/components/ui/icon";
 import { type Dispatch, type SetStateAction, useState, useCallback, useEffect } from "react";
@@ -51,6 +51,17 @@ export function RcloneSettings({ config, setNewConfig }: RcloneSettingsProps) {
 
     return (
         <SettingsPage>
+            <SettingsIntro>
+                Connect NzbDAV to an rclone Remote Control server so mounted directory caches can be
+                refreshed automatically when files change.
+            </SettingsIntro>
+
+            <div className="flex flex-col gap-4">
+            <SettingsCard
+                icon="notifications_active"
+                title="RC notifications"
+                description="Notify the rclone mount whenever WebDAV content is added or removed."
+            >
             <ManagedSetting configKey="rclone.rc-enabled">
             <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm text-base-content/80">
@@ -66,8 +77,15 @@ export function RcloneSettings({ config, setNewConfig }: RcloneSettingsProps) {
                 </p>
             </div>
             </ManagedSetting>
-            <hr />
-            <ManagedSetting configKey="rclone.host">
+            </SettingsCard>
+
+            <SettingsCard
+                icon="dns"
+                title="Server connection"
+                description="Configure and test access to the rclone Remote Control API."
+                contentClassName="grid grid-cols-1 gap-4 lg:grid-cols-2"
+            >
+            <ManagedSetting configKey="rclone.host" className="lg:col-span-2">
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-base-content" htmlFor="rclone-host-input">Rclone Server Host</label>
                 <div className="flex w-full">
@@ -105,7 +123,6 @@ export function RcloneSettings({ config, setNewConfig }: RcloneSettingsProps) {
                 </p>
             </div>
             </ManagedSetting>
-            <hr />
             <ManagedSetting configKey="rclone.user">
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-base-content" htmlFor="rclone-user-input">Rclone Server User</label>
@@ -121,7 +138,6 @@ export function RcloneSettings({ config, setNewConfig }: RcloneSettingsProps) {
                 </p>
             </div>
             </ManagedSetting>
-            <hr />
             <ManagedSetting configKey="rclone.pass">
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-base-content" htmlFor="rclone-pass-input">Rclone Server Password</label>
@@ -137,6 +153,8 @@ export function RcloneSettings({ config, setNewConfig }: RcloneSettingsProps) {
                 </p>
             </div>
             </ManagedSetting>
+            </SettingsCard>
+            </div>
         </SettingsPage>
     );
 }

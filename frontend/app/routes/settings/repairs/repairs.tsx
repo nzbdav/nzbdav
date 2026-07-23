@@ -1,4 +1,4 @@
-import { ManagedSetting, SettingsPage } from "~/components/ui";
+import { ManagedSetting, SettingsCard, SettingsIntro, SettingsPage } from "~/components/ui";
 import { Checkbox, Input, Select } from "~/components/ui/form";
 import { type Dispatch, type SetStateAction } from "react";
 import { isPositiveInteger } from "../usenet/usenet";
@@ -28,6 +28,18 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
 
     return (
         <SettingsPage>
+            <SettingsIntro>
+                Monitor mounted media for missing articles, tune health-check coverage, and control how
+                broken files are removed or replaced.
+            </SettingsIntro>
+
+            <div className="flex flex-col gap-4">
+            <SettingsCard
+                icon="build"
+                title="Background repairs"
+                description="Connect repair monitoring to the organized media library."
+                contentClassName="grid grid-cols-1 gap-4 lg:grid-cols-2"
+            >
             <ManagedSetting configKey="repair.enable">
             <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm text-base-content/80">
@@ -44,7 +56,30 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
                 </p>
             </div>
             </ManagedSetting>
-            <hr />
+
+            <ManagedSetting configKey="media.library-dir">
+            <div className="space-y-2">
+                <label className="block text-sm font-medium text-base-content" htmlFor="library-dir-input">Library Directory</label>
+                <Input
+                    className={'w-full'}
+                    type="text"
+                    id="library-dir-input"
+                    aria-describedby="library-dir-help"
+                    value={config["media.library-dir"]}
+                    onChange={e => setNewConfig({ ...config, "media.library-dir": e.target.value })} />
+                <p className="text-[11px] leading-relaxed text-base-content/45" id="library-dir-help">
+                    The path to your organized media library that contains all your imported symlinks or *.strm files.
+                    Make sure this path is visible to your NzbDAV container.
+                </p>
+            </div>
+            </ManagedSetting>
+            </SettingsCard>
+
+            <SettingsCard
+                icon="monitor_heart"
+                title="Health checks"
+                description="Balance verification coverage against provider connection pressure."
+            >
             <ManagedSetting configKey="repair.healthcheck-concurrency">
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-base-content" htmlFor="healthcheck-concurrency-input">Health Check Concurrency</label>
@@ -63,8 +98,10 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
                 </p>
             </div>
             </ManagedSetting>
-            <hr />
-            <ManagedSetting configKeys={["repair.healthcheck-depth", "repair.healthcheck-aging"]}>
+            <ManagedSetting
+                configKeys={["repair.healthcheck-depth", "repair.healthcheck-aging"]}
+                className="grid grid-cols-1 gap-4 lg:grid-cols-2"
+            >
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-base-content" htmlFor="healthcheck-depth-input">Health Check Depth</label>
                 <Select
@@ -104,7 +141,14 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
                 </p>
             </div>
             </ManagedSetting>
-            <hr />
+            </SettingsCard>
+
+            <SettingsCard
+                icon="delete_sweep"
+                title="Automatic cleanup"
+                description="Choose when repeated playback failures should remove broken files."
+                contentClassName="grid grid-cols-1 gap-4 lg:grid-cols-2"
+            >
             <ManagedSetting configKey="repair.auto-remove-after-failures">
             <div className="space-y-2">
                 <label className="block text-sm font-medium text-base-content" htmlFor="auto-remove-after-failures-input">Auto-Remove After Streaming Failures</label>
@@ -141,23 +185,8 @@ export function RepairsSettings({ config, setNewConfig }: RepairsSettingsProps) 
                 </p>
             </div>
             </ManagedSetting>
-            <hr />
-            <ManagedSetting configKey="media.library-dir">
-            <div className="space-y-2">
-                <label className="block text-sm font-medium text-base-content" htmlFor="library-dir-input">Library Directory</label>
-                <Input
-                    className={'w-full'}
-                    type="text"
-                    id="library-dir-input"
-                    aria-describedby="library-dir-help"
-                    value={config["media.library-dir"]}
-                    onChange={e => setNewConfig({ ...config, "media.library-dir": e.target.value })} />
-                <p className="text-[11px] leading-relaxed text-base-content/45" id="library-dir-help">
-                    The path to your organized media library that contains all your imported symlinks or *.strm files.
-                    Make sure this path is visible to your NzbDAV container.
-                </p>
+            </SettingsCard>
             </div>
-            </ManagedSetting>
         </SettingsPage>
     );
 }

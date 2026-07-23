@@ -1,5 +1,5 @@
 import { type Dispatch, type SetStateAction } from "react";
-import { Field, Input, Label, ManagedSetting, Select, SettingsIntro, SettingsPage } from "~/components/ui";
+import { Field, Input, Label, ManagedSetting, Select, SettingsCard, SettingsIntro, SettingsPage } from "~/components/ui";
 
 type PreflightSettingsProps = {
     config: Record<string, string>
@@ -20,6 +20,12 @@ export function PreflightSettings({ config, setNewConfig }: PreflightSettingsPro
                 more it does.
             </SettingsIntro>
 
+            <SettingsCard
+                icon="fact_check"
+                title="Preflight behavior"
+                description="Choose how much speculative work runs and how long its warm state is reused."
+                contentClassName="grid grid-cols-1 gap-4 lg:grid-cols-2"
+            >
             <ManagedSetting configKey="preflight.mode">
             <Field>
                 <Label htmlFor="preflight-mode">Mode</Label>
@@ -105,6 +111,7 @@ export function PreflightSettings({ config, setNewConfig }: PreflightSettingsPro
                 </p>
             </Field>
             </ManagedSetting>
+            </SettingsCard>
         </SettingsPage>
     );
 }

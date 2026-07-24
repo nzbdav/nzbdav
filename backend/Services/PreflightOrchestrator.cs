@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using NzbWebDAV.Config;
 using NzbWebDAV.Database;
 using NzbWebDAV.Database.Models;
+using NzbWebDAV.Exceptions;
 using NzbWebDAV.Extensions;
 using NzbWebDAV.Utils;
 using Serilog;
@@ -151,9 +152,22 @@ public class PreflightOrchestrator(
                 var client = ProxyHttpClientPool.GetClient(c.ProxyUrl, skipTlsVerification);
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(innerCt);
                 cts.CancelAfter(FetchTimeout);
-                using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseContentRead, cts.Token).ConfigureAwait(false);
+                using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
                 if (!resp.IsSuccessStatusCode) return null;
-                return await resp.Content.ReadAsByteArrayAsync(cts.Token).ConfigureAwait(false);
+                try
+                {
+                    return await HttpContentReadUtil
+                        .ReadBoundedAsync(resp.Content, NzbFetchLimits.MaxResponseBytes, cts.Token)
+                        .ConfigureAwait(false);
+                }
+                catch (NzbResponseTooLargeException e)
+                {
+                    Log.Warning(
+                        "Preflight rejected oversized NZB response from {Url}. Limit: {Limit} bytes. Reason: {Reason}",
+                        c.NzbUrl, e.MaxBytes, e.Message);
+                    Log.Debug(e, "Preflight oversized NZB response stack");
+                    return null;
+                }
             }
             catch (Exception e) when (!e.IsCancellationException())
             {

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using NzbWebDAV.Config;
 using NzbWebDAV.Database;
 using NzbWebDAV.Database.Models;
+using NzbWebDAV.Exceptions;
 using NzbWebDAV.Utils;
 using Serilog;
 
@@ -1139,14 +1140,28 @@ public class WatchtowerService(
                     var client = ProxyHttpClientPool.GetClient(c.ProxyUrl, skipTlsVerification);
                     using var cts = CancellationTokenSource.CreateLinkedTokenSource(innerCt);
                     cts.CancelAfter(NzbFetchTimeout);
-                    using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseContentRead, cts.Token).ConfigureAwait(false);
+                    using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
                     if (!resp.IsSuccessStatusCode)
                     {
                         LogActivity("Watchtower: NZB fetch HTTP {Status} from {Indexer} for {Url}",
                             (int)resp.StatusCode, c.IndexerName, c.NzbUrl);
                         return null;
                     }
-                    var bytes = await resp.Content.ReadAsByteArrayAsync(cts.Token).ConfigureAwait(false);
+                    byte[] bytes;
+                    try
+                    {
+                        bytes = await HttpContentReadUtil
+                            .ReadBoundedAsync(resp.Content, NzbFetchLimits.MaxResponseBytes, cts.Token)
+                            .ConfigureAwait(false);
+                    }
+                    catch (NzbResponseTooLargeException e)
+                    {
+                        Log.Warning(
+                            "Watchtower rejected oversized NZB response from {Url}. Limit: {Limit} bytes. Reason: {Reason}",
+                            c.NzbUrl, e.MaxBytes, e.Message);
+                        Log.Debug(e, "Watchtower oversized NZB response stack");
+                        return null;
+                    }
                     _ = hitTracker.RecordAsync(c.IndexerName, IndexerApiHit.HitType.Download, CancellationToken.None);
                     return bytes;
                 }

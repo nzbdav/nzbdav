@@ -8,6 +8,7 @@ using NzbWebDAV.Api.SabControllers.AddFile;
 using NzbWebDAV.Config;
 using NzbWebDAV.Database;
 using NzbWebDAV.Database.Models;
+using NzbWebDAV.Exceptions;
 using NzbWebDAV.Extensions;
 using NzbWebDAV.Models.Nzb;
 using NzbWebDAV.Queue;
@@ -842,9 +843,23 @@ public class ProfilePlayController(
                 var client = ProxyHttpClientPool.GetClient(c.ProxyUrl, skipTlsVerification);
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(innerCt);
                 cts.CancelAfter(NzbFetchTimeout);
-                using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseContentRead, cts.Token).ConfigureAwait(false);
+                using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
                 if (!resp.IsSuccessStatusCode) return null;
-                var bytes = await resp.Content.ReadAsByteArrayAsync(cts.Token).ConfigureAwait(false);
+                byte[] bytes;
+                try
+                {
+                    bytes = await HttpContentReadUtil
+                        .ReadBoundedAsync(resp.Content, NzbFetchLimits.MaxResponseBytes, cts.Token)
+                        .ConfigureAwait(false);
+                }
+                catch (NzbResponseTooLargeException e)
+                {
+                    Log.Warning(
+                        "NZB fetch rejected oversized response from {Url}. Limit: {Limit} bytes. Reason: {Reason}",
+                        c.NzbUrl, e.MaxBytes, e.Message);
+                    Log.Debug(e, "NZB fetch oversized response stack");
+                    return null;
+                }
                 _ = hitTracker.RecordAsync(c.IndexerName, IndexerApiHit.HitType.Download, CancellationToken.None);
                 return bytes;
             }

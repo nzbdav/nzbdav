@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using NzbWebDAV.Config;
+using NzbWebDAV.Exceptions;
 using NzbWebDAV.Extensions;
 using NzbWebDAV.Services;
 using NzbWebDAV.Utils;
@@ -55,7 +56,20 @@ public class NzbProxyController(
                         .SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token)
                         .ConfigureAwait(false);
                     if (!resp.IsSuccessStatusCode) return null;
-                    return await resp.Content.ReadAsByteArrayAsync(cts.Token).ConfigureAwait(false);
+                    try
+                    {
+                        return await HttpContentReadUtil
+                            .ReadBoundedAsync(resp.Content, NzbFetchLimits.MaxResponseBytes, cts.Token)
+                            .ConfigureAwait(false);
+                    }
+                    catch (NzbResponseTooLargeException e)
+                    {
+                        Log.Warning(
+                            "NZB proxy rejected oversized response from {Url}. Limit: {Limit} bytes. Reason: {Reason}",
+                            candidate.NzbUrl, e.MaxBytes, e.Message);
+                        Log.Debug(e, "NZB proxy oversized response stack");
+                        return null;
+                    }
                 },
                 HttpContext.RequestAborted).ConfigureAwait(false);
         }

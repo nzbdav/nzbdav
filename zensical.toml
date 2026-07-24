@@ -58,6 +58,7 @@ nav = [
     { "Repairs" = "configuration/repairs.md" },
     { "Maintenance" = "configuration/maintenance.md" },
     { "Backup and restore" = "configuration/backup.md" },
+    { "Support" = "configuration/support.md" },
     { "Environment variables" = "configuration/environment-variables.md" },
   ]},
   { "Use cases" = [

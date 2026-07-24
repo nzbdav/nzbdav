@@ -36,4 +36,6 @@ See [Deletion audit](../operations/deletion-audit.md) — history retention ≠ 
 
 ## Still stuck
 
-[Open an issue](https://github.com/nzbdav/nzbdav/issues) with logs (redact credentials). For local stream debugging, see [Contributing](../community/contributing.md).
+Generate a [technical support pack](../configuration/support.md) from **Settings → Support**,
+review it for personal paths and names, then [open an issue](https://github.com/nzbdav/nzbdav/issues).
+For local stream debugging, see [Contributing](../community/contributing.md).

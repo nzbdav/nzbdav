@@ -15,7 +15,7 @@ For **authoritative headless** configuration of those same Settings keys via `NZ
 -   **Connections** — [Usenet](usenet.md) · [Indexers](indexers.md) · [Search profiles](profiles.md)
 -   **Playback & automation** — [Watchdog](watchdog.md) · [Preflight](preflight.md) · [Watchtower](watchtower.md) · [Warden](warden.md)
 -   **Integrations** — [SABnzbd](sabnzbd.md) · [WebDAV](webdav.md) · [Radarr/Sonarr](arrs.md) · [Rclone](rclone.md)
--   **System** — [Repairs](repairs.md) · [Maintenance](maintenance.md) · [Backup](backup.md)
+-   **System** — [Repairs](repairs.md) · [Maintenance](maintenance.md) · [Backup](backup.md) · [Support](support.md)
 -   **Headless / ops** — [Headless ENV config](headless.md) · [Environment variables](environment-variables.md)
 
 </div>

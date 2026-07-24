@@ -86,8 +86,14 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Relevant logs or screenshots
-      description: Paste redacted logs (wrap them in ```text fences if helpful) or attach screenshots. Remove credentials, API keys, paths that identify you, and NZB contents.
+      label: Technical support pack, relevant logs, or screenshots
+      description: |
+        For the most useful diagnostics, open **Settings → Support** in NzbDav and select
+        **Generate & download**. Review the downloaded ZIP, then drag it into this field to upload it.
+        The pack automatically redacts credentials, API keys, tokens, URL credentials, sensitive URL
+        parameters, and IP addresses; it can still contain file names, paths, account usernames, and DNS
+        names. Do not attach NZB contents or other private data. You can also paste redacted logs (inside
+        ```text fences) or attach screenshots.
 
   - type: textarea
     id: environment

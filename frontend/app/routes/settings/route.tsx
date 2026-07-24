@@ -17,6 +17,7 @@ import { isPreflightSettingsUpdated, PreflightSettings } from "./preflight/prefl
 import { isWatchtowerSettingsUpdated, WatchtowerSettings } from "./watchtower/watchtower";
 import { isWardenSettingsUpdated, WardenSettings } from "./warden/warden";
 import { isRcloneSettingsUpdated, RcloneSettings } from "./rclone/rclone";
+import { SupportSettings } from "./support/support";
 import { useCallback, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useBlocker, useSearchParams } from "react-router";
 import { ConfirmModal } from "~/components/confirm-modal/confirm-modal";
@@ -303,6 +304,7 @@ function Body(props: BodyProps) {
                 {activeTab === "rclone" && <RcloneSettings config={newConfig} setNewConfig={setNewConfig} />}
                 {activeTab === "maintenance" && <Maintenance savedConfig={config} config={newConfig} setNewConfig={setNewConfig} />}
                 {activeTab === "backup" && <BackupSettings config={newConfig} setNewConfig={setNewConfig} />}
+                {activeTab === "support" && <SupportSettings />}
             </SettingsPanel>
 
             {saveError && (
@@ -310,7 +312,7 @@ function Body(props: BodyProps) {
                     {saveError}
                 </Alert>
             )}
-            <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap justify-end gap-2 border-t border-base-content/10 bg-base-300/95 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
+            {(activeTab !== "support" || isUpdated) && <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap justify-end gap-2 border-t border-base-content/10 bg-base-300/95 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
                 {isUpdated && <Button
                     className="min-w-28"
                     variant="outline"
@@ -327,7 +329,7 @@ function Body(props: BodyProps) {
                     <Icon name={isSaving ? "progress_activity" : saveButtonLabel === "Saved" ? "check" : "save"} className={`!text-[18px] ${isSaving ? "animate-spin" : ""}`} />
                     {saveButtonLabel}
                 </Button>
-            </div>
+            </div>}
             <ConfirmModal
                 show={navigationBlocker.showConfirmation}
                 title="Unsaved Changes"

@@ -19,6 +19,7 @@ using NzbWebDAV.Middlewares;
 using NzbWebDAV.Queue;
 using NzbWebDAV.Services;
 using NzbWebDAV.Services.Metrics;
+using NzbWebDAV.Services.SupportPack;
 using NzbWebDAV.Services.StreamTrace;
 using NzbWebDAV.Utils;
 using NzbWebDAV.WebDav;
@@ -188,6 +189,7 @@ class Program
                 .AddSingleton(websocketManager)
                 .AddSingleton(logBufferSink)
                 .AddSingleton(streamTraceBuffer)
+                .AddSingleton<SupportPackService>()
                 .AddSingleton<BenchmarkGate>()
                 .AddSingleton<NzbWebDAV.Services.Benchmark.BenchmarkRunControl>()
                 .AddHostedService<LogBroadcaster>()

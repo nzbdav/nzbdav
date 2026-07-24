@@ -93,6 +93,35 @@ public class ConfigManager
         }
     }
 
+    /// <summary>
+    /// Takes a consistent snapshot of the public Settings inputs for diagnostics
+    /// exports. Callers must still redact values before exposing the snapshot.
+    /// </summary>
+    internal IReadOnlyList<ConfigDiagnosticSnapshot> GetDiagnosticSnapshot()
+    {
+        lock (_config)
+        {
+            return ConfigEnvMapping.PublicConfigKeys
+                .OrderBy(key => key, StringComparer.Ordinal)
+                .Select(key =>
+                {
+                    if (_environmentOverlay.TryGetValue(key, out var environmentValue))
+                    {
+                        return new ConfigDiagnosticSnapshot(
+                            key,
+                            environmentValue,
+                            "NZBDAV_CONFIG",
+                            _environmentOverlay.GetEnvironmentVariableName(key));
+                    }
+
+                    return _config.TryGetValue(key, out var persistedValue)
+                        ? new ConfigDiagnosticSnapshot(key, persistedValue, "SQLite", null)
+                        : new ConfigDiagnosticSnapshot(key, null, "default-or-unset", null);
+                })
+                .ToList();
+        }
+    }
+
     private string? GetConfigValue(string configName)
     {
         lock (_config)
@@ -1467,3 +1496,9 @@ public class ConfigManager
         public required Dictionary<string, string> ChangedConfig { get; init; }
     }
 }
+
+internal sealed record ConfigDiagnosticSnapshot(
+    string Key,
+    string? Value,
+    string Source,
+    string? EnvironmentVariableName);

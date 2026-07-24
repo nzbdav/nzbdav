@@ -1,5 +1,60 @@
 # Changelog
 
+## [0.9.0](https://github.com/nzbdav/nzbdav/compare/v0.8.1...v0.9.0) (2026-07-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **usenet:** allow trusted providers and indexers with invalid TLS certificates ([#566](https://github.com/nzbdav/nzbdav/issues/566))
+
+### Features
+
+* **config:** configure all Settings via authoritative NZBDAV_CONFIG environment variables ([#590](https://github.com/nzbdav/nzbdav/issues/590)) ([f80d123](https://github.com/nzbdav/nzbdav/commit/f80d123c74fc262c1e1ee1abffe61dbbd7088186))
+* **health:** download redacted support packs from Settings ([#610](https://github.com/nzbdav/nzbdav/issues/610)) ([ff6e143](https://github.com/nzbdav/nzbdav/commit/ff6e14360ee76732bd0ce6d3cde960ff5d71eaeb))
+* **queue:** process multiple NZB downloads at once ([#591](https://github.com/nzbdav/nzbdav/issues/591)) ([fc4ae06](https://github.com/nzbdav/nzbdav/commit/fc4ae06b2104f7419af87b33063f3be8214dd709))
+* **ui:** identify the client on 4xx/5xx request-log lines ([#551](https://github.com/nzbdav/nzbdav/issues/551)) ([56cdf82](https://github.com/nzbdav/nzbdav/commit/56cdf82cc30845b670c5257b92e9c12b7475b93a))
+* **usenet:** allow trusted providers and indexers with invalid TLS certificates ([#566](https://github.com/nzbdav/nzbdav/issues/566)) ([1f26282](https://github.com/nzbdav/nzbdav/commit/1f26282a90dbe0536f114b3f710332ebe72ad607))
+
+
+### Bug Fixes
+
+* **arr:** stop hung Radarr or Sonarr hosts from blocking shutdown and monitoring ([#619](https://github.com/nzbdav/nzbdav/issues/619)) ([2071127](https://github.com/nzbdav/nzbdav/commit/207112781000f3791c2e93f164d9161af74ae55b))
+* **db:** deny unsafe SQLite operations during restore import ([#615](https://github.com/nzbdav/nzbdav/issues/615)) ([3495793](https://github.com/nzbdav/nzbdav/commit/34957937f90426fbe4c7cda06e74f2f7b065f2b4))
+* **db:** prevent oversized backups from exhausting disk or memory during restore ([#616](https://github.com/nzbdav/nzbdav/issues/616)) ([fc7563c](https://github.com/nzbdav/nzbdav/commit/fc7563c4989041d1140c3cc657577678c77db598))
+* **deps:** bump the github-actions group across 1 directory with 3 updates ([#565](https://github.com/nzbdav/nzbdav/issues/565)) ([a6d87be](https://github.com/nzbdav/nzbdav/commit/a6d87bea666bd7c09cb63ada10fe3247b859983e))
+* **deps:** Bump the nuget-minor-and-patch group with 2 updates ([#564](https://github.com/nzbdav/nzbdav/issues/564)) ([116cfe4](https://github.com/nzbdav/nzbdav/commit/116cfe4169c25f797a3e20ad06a068fbf2067ae5))
+* **deps:** bump ws in /frontend in the npm-minor-and-patch group ([#563](https://github.com/nzbdav/nzbdav/issues/563)) ([f493f53](https://github.com/nzbdav/nzbdav/commit/f493f538fb8d8b9087fec7b571a165858b11268b))
+* **health:** allow urgent repairs for files still linked to SAB history ([#571](https://github.com/nzbdav/nzbdav/issues/571)) ([3ef8449](https://github.com/nzbdav/nzbdav/commit/3ef8449ca3d6b72de32f8e478dcf51cce8d48c5e)), closes [#568](https://github.com/nzbdav/nzbdav/issues/568)
+* **health:** defer unexpected item failures to prevent queue starvation ([#606](https://github.com/nzbdav/nzbdav/issues/606)) ([4947b43](https://github.com/nzbdav/nzbdav/commit/4947b43959d4e18aa971305498360c3593faabd9))
+* **health:** delay streaming repairs until failure threshold ([#621](https://github.com/nzbdav/nzbdav/issues/621)) ([a16b4fb](https://github.com/nzbdav/nzbdav/commit/a16b4fb7efc51af79c048a85e3356d503fc793eb))
+* **nntp:** route pooled requests by free capacity ([#611](https://github.com/nzbdav/nzbdav/issues/611)) ([cb5d9cd](https://github.com/nzbdav/nzbdav/commit/cb5d9cd8340d69d49f2e28f236614ab801fd04e7))
+* **nntp:** stop provider selection spending the half-open probe slot ([#549](https://github.com/nzbdav/nzbdav/issues/549)) ([69755e7](https://github.com/nzbdav/nzbdav/commit/69755e7f00adc125a2aab0d4f71f407d76a9a810))
+* **queue:** make queue and WebDAV requests fail safely ([#608](https://github.com/nzbdav/nzbdav/issues/608)) ([b7fb6cb](https://github.com/nzbdav/nzbdav/commit/b7fb6cba232502b8b82d256ecff48148f807411a))
+* **queue:** prevent concurrent worker starvation ([#607](https://github.com/nzbdav/nzbdav/issues/607)) ([9223dce](https://github.com/nzbdav/nzbdav/commit/9223dce8d672530d668be7859011831bbe682c84))
+* **rclone:** log RC timeouts and connection failures without stack dumps ([#603](https://github.com/nzbdav/nzbdav/issues/603)) ([d16c2d1](https://github.com/nzbdav/nzbdav/commit/d16c2d1f0524060d39c4d12d5c35135dd249fc5b))
+* restore preview and attachments on bug report logs field ([0e3a062](https://github.com/nzbdav/nzbdav/commit/0e3a062892f84d91a826505af2c2a1942370a3d3))
+* **search:** bound NZB response and cache memory ([#614](https://github.com/nzbdav/nzbdav/issues/614)) ([4335d47](https://github.com/nzbdav/nzbdav/commit/4335d478f51f744db7f8485f81a06aa2cded9b30))
+* **test:** remove native yEnc dependency from prefetch budget tests ([#609](https://github.com/nzbdav/nzbdav/issues/609)) ([452e845](https://github.com/nzbdav/nzbdav/commit/452e845a07ca8ac62921b6009d1b841335ea0533))
+* **ui:** keep auto-tune confidence tooltip inside the provider modal ([#561](https://github.com/nzbdav/nzbdav/issues/561)) ([9b28633](https://github.com/nzbdav/nzbdav/commit/9b28633d7a97d1d4bd7415dd3727511d3ca281bc))
+* **ui:** keep Test Connection available when editing Usenet providers ([#554](https://github.com/nzbdav/nzbdav/issues/554)) ([f939c97](https://github.com/nzbdav/nzbdav/commit/f939c97291f738cdb3f409a793e8931cd442c911)), closes [#553](https://github.com/nzbdav/nzbdav/issues/553)
+* **ui:** prevent queue category badges from wrapping ([#597](https://github.com/nzbdav/nzbdav/issues/597)) ([6a9002d](https://github.com/nzbdav/nzbdav/commit/6a9002d6d4d0210c1b15e241cd0c6721d579a23b))
+* **ui:** recover failed uploads and preserve encoded Explore paths ([#605](https://github.com/nzbdav/nzbdav/issues/605)) ([f3af128](https://github.com/nzbdav/nzbdav/commit/f3af128e239f4d7a7fd1b1a56cc7e5fc45818b06))
+* **ui:** restore frontend startup after compression-filter ESM import failure ([#600](https://github.com/nzbdav/nzbdav/issues/600)) ([eec0df9](https://github.com/nzbdav/nzbdav/commit/eec0df984410df25fae515dcf7fe0e5cde661f14))
+* **ui:** stop MaxListenersExceededWarning spam when refreshing the UI ([#598](https://github.com/nzbdav/nzbdav/issues/598)) ([25f7015](https://github.com/nzbdav/nzbdav/commit/25f7015487af3e0b794f9b8b597619f1ce7403ef))
+* **utils:** make Linux library scanning argv-safe and record-safe ([#612](https://github.com/nzbdav/nzbdav/issues/612)) ([bba1643](https://github.com/nzbdav/nzbdav/commit/bba164325bc1d1b2558346269e5cf7e3f47e163d))
+* **warden:** cap decompressed source bytes and record length ([#617](https://github.com/nzbdav/nzbdav/issues/617)) ([dc6dab4](https://github.com/nzbdav/nzbdav/commit/dc6dab48243276b22a239935273b137c92cbfbbe))
+* **warden:** keep the previous dead-release source if a refresh is interrupted ([#618](https://github.com/nzbdav/nzbdav/issues/618)) ([190938c](https://github.com/nzbdav/nzbdav/commit/190938ccaead6f93094146d6619f95d446f85cca))
+* **webdav:** emit true GMT for getlastmodified and Last-Modified ([#558](https://github.com/nzbdav/nzbdav/issues/558)) ([31a5acc](https://github.com/nzbdav/nzbdav/commit/31a5acce776e7e5003f845b5e32fb3db726fd051))
+* **webdav:** ignore malformed Range headers on GET/HEAD ([#557](https://github.com/nzbdav/nzbdav/issues/557)) ([45b7e3b](https://github.com/nzbdav/nzbdav/commit/45b7e3b531a5ee698bf8410c34eddd9961dc0a65))
+* **webdav:** stop cancelled directory scans from flooding logs ([#599](https://github.com/nzbdav/nzbdav/issues/599)) ([b1722a3](https://github.com/nzbdav/nzbdav/commit/b1722a3c86263a6e579884b4575245556974510b))
+* **websocket:** drop oldest events for slow clients ([#604](https://github.com/nzbdav/nzbdav/issues/604)) ([f68d77f](https://github.com/nzbdav/nzbdav/commit/f68d77f5563867854d9f296b88474e0ca101b528))
+
+
+### UX
+
+* **ui:** clarify WebDAV settings with grouped layout cards ([#593](https://github.com/nzbdav/nzbdav/issues/593)) ([6d58d0b](https://github.com/nzbdav/nzbdav/commit/6d58d0bf98bdebf262e5a2a3a2c90345f21fda0a))
+* **ui:** use NzbDAV casing on pre-server-ready splash ([#592](https://github.com/nzbdav/nzbdav/issues/592)) ([f473b37](https://github.com/nzbdav/nzbdav/commit/f473b37574e8e460a0baf253d5f4498af77c0927))
+
 ## [0.8.1](https://github.com/nzbdav/nzbdav/compare/v0.8.0...v0.8.1) (2026-07-21)
 
 
